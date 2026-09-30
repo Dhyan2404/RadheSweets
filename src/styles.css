@@ -4,7 +4,25 @@
              shadcn/ui design tokens, GSAP Chart curves & Warm Terracotta Theme
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;1,500;1,600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-cream: #FAF7F2;
+  --color-brand-card: #FFFFFF;
+  --color-brand-border: #F0ECE4;
+  --color-brand-primary: #C86D3B;
+  --color-brand-primary-hover: #B25D2E;
+  --color-brand-dark: #2A1F1D;
+  --color-brand-muted: #7C7267;
+  --color-brand-accent: #E07A5F;
+  --color-brand-gold: #DDA15E;
+
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+
+  --shadow-subtle: 0 2px 10px rgba(74, 58, 47, 0.04);
+  --shadow-card: 0 4px 20px -2px rgba(92, 64, 43, 0.06);
+}
 
 :root {
   /* Default: Radhe Warm Terracotta Theme */

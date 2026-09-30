@@ -1,5 +1,5 @@
 // Radhe Sweets - Master Controller & Application Runtime
-
+import './styles.css';
 import './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.js';
