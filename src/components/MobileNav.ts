@@ -57,7 +57,7 @@ export function renderMobileBottomNav(currentTab) {
         <div class="relative -mt-7 sm:-mt-8 flex flex-col items-center shrink-0 px-1">
           <button 
             data-tab="pos" 
-            class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#B25D2E] via-[#C86D3B] to-[#E07A5F] text-white shadow-[0_10px_25px_rgba(200,109,59,0.5)] border-[3.5px] border-[#FAF7F2] ring-4 ring-orange-200/50 flex items-center justify-center transform active:scale-90 hover:scale-105 transition-all duration-200 cursor-pointer ${
+            class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#B25D2E] via-[#C86D3B] to-[#E07A5F] text-white shadow-[0_10px_25px_rgba(200,109,59,0.5)] border-[3.5px] border-[#FAF7F2] ring-4 ring-orange-200/50 flex items-center justify-center transform active:scale-90 hover:scale-105 transition-all duration-200 cursor-pointer pulse-glow ${
               isPos ? 'scale-105 ring-orange-400/60' : ''
             }"
             aria-label="Express Sell POS"

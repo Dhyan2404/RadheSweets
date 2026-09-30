@@ -250,7 +250,7 @@ export function renderApp() {
         ${renderTopBar(state)}
 
         <!-- Active Tab Body -->
-        <main class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8">
+        <main class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter">
           ${renderTabContent()}
         </main>
       </div>
@@ -357,6 +357,11 @@ function attachEventListeners() {
   });
 
   // Google SEO & Sitemap Modal
+  // Google SEO & Sitemap Modal (Controlled from Settings)
+  document.getElementById('settings-open-seo-modal-btn')?.addEventListener('click', () => {
+    state.showSeoModal = true;
+    renderApp();
+  });
   document.getElementById('open-seo-modal-btn')?.addEventListener('click', () => {
     state.showSeoModal = true;
     renderApp();
@@ -398,12 +403,181 @@ function attachEventListeners() {
 
   document.getElementById('desktop-search-trigger')?.addEventListener('click', () => openSearchModal());
   document.getElementById('mobile-search-btn')?.addEventListener('click', () => openSearchModal());
+  document.getElementById('mobile-hero-search-trigger')?.addEventListener('click', () => openSearchModal());
   document.getElementById('drawer-search-trigger-btn')?.addEventListener('click', () => openSearchModal());
   document.getElementById('close-search-modal-btn')?.addEventListener('click', closeSearchModal);
 
   document.getElementById('global-search-modal-backdrop')?.addEventListener('click', (e: any) => {
     if (e.target.id === 'global-search-modal-backdrop') {
       closeSearchModal();
+    }
+  });
+
+  // Real-Time TopBar Search Input & Floating Dropdown (Instant Direct Typing in Upper Bar)
+  const topbarSearchInput = document.getElementById('global-search-input') as HTMLInputElement;
+  const topbarDropdown = document.getElementById('topbar-search-dropdown');
+  const topbarClearBtn = document.getElementById('topbar-clear-search-btn');
+
+  const bindDropdownItemActions = () => {
+    if (!topbarDropdown) return;
+
+    // Sweets Add to POS
+    topbarDropdown.querySelectorAll('[data-search-action="add-sweet-pos"]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const sweetId = el.getAttribute('data-sweet-id');
+        const sweetName = el.getAttribute('data-sweet-name') || 'Sweet';
+        const price = Number(el.getAttribute('data-sweet-price')) || 450;
+        
+        if (!state.posCart) state.posCart = [];
+        const existing = state.posCart.find((item: any) => item.id === sweetId || item.name === sweetName);
+        if (existing) {
+          existing.qty = (existing.qty || 1) + 1;
+          existing.total = Math.round(existing.qty * (existing.rate || existing.price || price));
+        } else {
+          const foundSweet = (state.sweets || []).find((s: any) => s.id === sweetId) || { id: sweetId, name: sweetName, pricePerKg: price, category: 'Traditional' };
+          state.posCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
+        }
+
+        if (!state.quickCart) state.quickCart = [];
+        const existingQuick = state.quickCart.find((item: any) => item.id === sweetId || item.name === sweetName);
+        if (existingQuick) {
+          existingQuick.qty = (existingQuick.qty || 1) + 1;
+          existingQuick.total = Math.round(existingQuick.qty * (existingQuick.rate || existingQuick.price || price));
+        } else {
+          const foundSweet = (state.sweets || []).find((s: any) => s.id === sweetId) || { id: sweetId, name: sweetName, pricePerKg: price, category: 'Traditional' };
+          state.quickCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
+        }
+        saveState();
+        showToast(`Added ${sweetName} (1 kg) to POS Counter Cart!`, 'success');
+      });
+    });
+
+    // Customer profile
+    topbarDropdown.querySelectorAll('[data-search-action="view-customer"]').forEach(el => {
+      el.addEventListener('click', () => {
+        const custId = el.getAttribute('data-customer-id');
+        const found = (state.customers || []).find((c: any) => c.id === custId);
+        if (found) {
+          state.selectedCustomer = found;
+          state.profileCustomer = found;
+          topbarDropdown?.classList.add('hidden');
+          state.showCustomerProfileModal = true;
+          renderApp();
+        }
+      });
+    });
+
+    // Order details
+    topbarDropdown.querySelectorAll('[data-search-action="view-order"]').forEach(el => {
+      el.addEventListener('click', () => {
+        const ordId = el.getAttribute('data-order-id');
+        const found = (state.orders || []).find((o: any) => o.id === ordId);
+        if (found) {
+          state.activeOrder = found;
+          topbarDropdown?.classList.add('hidden');
+          state.showOrderDetailsModal = true;
+          renderApp();
+        }
+      });
+    });
+
+    // Quick nav / actions
+    topbarDropdown.querySelectorAll('[data-search-action]').forEach(el => {
+      const action = el.getAttribute('data-search-action');
+      if (action === 'add-sweet-pos' || action === 'view-customer' || action === 'view-order') return;
+      el.addEventListener('click', () => {
+        topbarDropdown?.classList.add('hidden');
+        if (action === 'nav') {
+          const tab = el.getAttribute('data-search-tab');
+          if (tab) state.activeTab = tab;
+        } else if (action === 'add-product') {
+          state.showAddProductModal = true;
+        } else if (action === 'add-customer') {
+          state.showAddCustomerModal = true;
+        } else if (action === 'add-expense') {
+          state.showAddExpenseModal = true;
+        } else if (action === 'open-seo') {
+          state.showSeoModal = true;
+        } else if (action === 'toggle-theme') {
+          state.currentTheme = state.currentTheme === 'warm' ? 'ice' : 'warm';
+        } else if (action === 'toggle-dark') {
+          state.isDarkMode = !state.isDarkMode;
+        } else if (action === 'open-dialer') {
+          state.showCustomerDialerModal = true;
+        }
+        saveState();
+        renderApp();
+      });
+    });
+
+    // View all tabs
+    topbarDropdown.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = btn.getAttribute('data-tab');
+        if (tab) {
+          state.activeTab = tab;
+          topbarDropdown?.classList.add('hidden');
+          saveState();
+          renderApp();
+        }
+      });
+    });
+
+    // Quick search pills
+    topbarDropdown.querySelectorAll('[data-quick-search-term]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const term = btn.getAttribute('data-quick-search-term') || '';
+        state.searchModalQuery = term;
+        if (topbarSearchInput) topbarSearchInput.value = term;
+        updateTopbarDropdown();
+      });
+    });
+  };
+
+  const updateTopbarDropdown = () => {
+    if (!topbarDropdown) return;
+    const resultsEl = document.getElementById('topbar-dropdown-results');
+    if (resultsEl) {
+      resultsEl.innerHTML = renderSearchResultsBody(state);
+      bindDropdownItemActions();
+    }
+    topbarDropdown.classList.remove('hidden');
+    if (topbarClearBtn) {
+      if (state.searchModalQuery) topbarClearBtn.classList.remove('hidden');
+      else topbarClearBtn.classList.add('hidden');
+    }
+  };
+
+  topbarSearchInput?.addEventListener('input', (e: any) => {
+    state.searchModalQuery = e.target.value;
+    updateTopbarDropdown();
+  });
+
+  topbarSearchInput?.addEventListener('focus', () => {
+    updateTopbarDropdown();
+  });
+
+  topbarSearchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      openSearchModal(state.searchModalQuery);
+      topbarDropdown?.classList.add('hidden');
+    } else if (e.key === 'Escape') {
+      topbarDropdown?.classList.add('hidden');
+    }
+  });
+
+  topbarClearBtn?.addEventListener('click', () => {
+    state.searchModalQuery = '';
+    if (topbarSearchInput) topbarSearchInput.value = '';
+    topbarDropdown?.classList.add('hidden');
+    topbarClearBtn?.classList.add('hidden');
+  });
+
+  document.addEventListener('click', (e: any) => {
+    if (!document.getElementById('topbar-search-container')?.contains(e.target)) {
+      topbarDropdown?.classList.add('hidden');
     }
   });
 

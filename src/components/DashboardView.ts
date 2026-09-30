@@ -46,6 +46,21 @@ export function renderDashboardView(state) {
         </div>
       </section>
 
+      <!-- Mobile Quick Search Trigger (10000x Better Mobile Search) -->
+      <div class="md:hidden w-full -mt-2" data-purpose="mobile-hero-search">
+        <button 
+          type="button" 
+          id="mobile-hero-search-trigger"
+          class="w-full flex items-center justify-between px-4 py-3 bg-white border border-[#F0ECE4] shadow-xs rounded-2xl text-left text-stone-400 text-xs font-medium cursor-pointer active:scale-98 transition-all hover:border-[#C86D3B]/40"
+        >
+          <span class="flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <span class="text-stone-600 font-semibold">Search sweets, customers, bills...</span>
+          </span>
+          <span class="px-2.5 py-1 rounded-xl bg-orange-50 text-[#C86D3B] text-[10px] font-bold border border-orange-200/60 shadow-2xs">🔍 Search</span>
+        </button>
+      </div>
+
       <!-- Sticky Floating Quick-KPI Ribbon (Desktop only - smoothly slides in when scrolling past tiles) -->
       <div 
         id="sticky-kpi-bar" 
@@ -94,7 +109,7 @@ export function renderDashboardView(state) {
       <section id="kpi-tiles-container" class="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5" data-purpose="kpi-metrics-grid">
         
         <!-- CARD 1: Customers -->
-        <article class="bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
+        <article class="animate-card-pop stagger-1 interactive-scale bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
             <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FCEEE3] text-[#C86D3B] flex items-center justify-center shadow-2xs">
@@ -137,7 +152,7 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 2: Sales -->
-        <article class="bg-gradient-to-br from-[#F4FAF6] via-[#EAF5EE] to-[#E2F2E7] border border-[#E0EFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
+        <article class="animate-card-pop stagger-2 interactive-scale bg-gradient-to-br from-[#F4FAF6] via-[#EAF5EE] to-[#E2F2E7] border border-[#E0EFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
             <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF7EE] text-[#16A34A] flex items-center justify-center shadow-2xs">
@@ -180,7 +195,7 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 3: Orders -->
-        <article class="bg-gradient-to-br from-[#F8F5FD] via-[#EFEBF9] to-[#E8E0F7] border border-[#E9E2F5] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="orders">
+        <article class="animate-card-pop stagger-3 interactive-scale bg-gradient-to-br from-[#F8F5FD] via-[#EFEBF9] to-[#E8E0F7] border border-[#E9E2F5] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="orders">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
             <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#F3EEFC] text-[#7C3AED] flex items-center justify-center shadow-2xs">
@@ -223,7 +238,7 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 4: Profit -->
-        <article class="bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="analytics">
+        <article class="animate-card-pop stagger-4 interactive-scale bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="analytics">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
             <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E8F6EF] text-[#0D9488] flex items-center justify-center shadow-2xs">
@@ -265,7 +280,7 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 5: Cost -->
-        <article class="bg-gradient-to-br from-[#FDF5F4] via-[#FCECEB] to-[#FADEDB] border border-[#F7DDDC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="expenses">
+        <article class="animate-card-pop stagger-5 interactive-scale bg-gradient-to-br from-[#FDF5F4] via-[#FCECEB] to-[#FADEDB] border border-[#F7DDDC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="expenses">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
             <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FEECEB] text-[#E11D48] flex items-center justify-center shadow-2xs">
@@ -307,7 +322,7 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 6: Returning -->
-        <article class="bg-gradient-to-br from-[#F2F7FD] via-[#ECF3FC] to-[#E0EDFA] border border-[#DBE7F6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
+        <article class="animate-card-pop stagger-6 interactive-scale bg-gradient-to-br from-[#F2F7FD] via-[#ECF3FC] to-[#E0EDFA] border border-[#DBE7F6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
             <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF4FD] text-[#0284C7] flex items-center justify-center shadow-2xs">
@@ -457,7 +472,7 @@ export function renderDashboardView(state) {
                 <tbody class="divide-y divide-[#F0ECE4]/60">
                   
                   <!-- Item 1: Kaju Katli -->
-                  <tr class="hover:bg-amber-50/30 transition-colors">
+                  <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
                       <div class="w-8 h-8 rounded-lg bg-amber-100/70 border border-amber-200 flex items-center justify-center font-bold text-amber-800 text-xs shadow-2xs">
                         KK
@@ -473,7 +488,7 @@ export function renderDashboardView(state) {
                     </td>
                     <td class="py-3 px-4 text-right">
                       <button 
-                        class="quick-add-to-cart-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all"
+                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
                         data-id="sw-1" 
                         data-name="Kaju Katli" 
                         data-price="450"
@@ -484,7 +499,7 @@ export function renderDashboardView(state) {
                   </tr>
 
                   <!-- Item 2: Rasgulla -->
-                  <tr class="hover:bg-amber-50/30 transition-colors">
+                  <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
                       <div class="w-8 h-8 rounded-lg bg-orange-100/70 border border-orange-200 flex items-center justify-center font-bold text-orange-800 text-xs shadow-2xs">
                         RG
@@ -500,7 +515,7 @@ export function renderDashboardView(state) {
                     </td>
                     <td class="py-3 px-4 text-right">
                       <button 
-                        class="quick-add-to-cart-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all"
+                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
                         data-id="sw-2" 
                         data-name="Rasgulla" 
                         data-price="320"
@@ -511,7 +526,7 @@ export function renderDashboardView(state) {
                   </tr>
 
                   <!-- Item 3: Gulab Jamun -->
-                  <tr class="hover:bg-amber-50/30 transition-colors">
+                  <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
                       <div class="w-8 h-8 rounded-lg bg-amber-900/10 border border-amber-900/20 flex items-center justify-center font-bold text-amber-900 text-xs shadow-2xs">
                         GJ
@@ -527,7 +542,7 @@ export function renderDashboardView(state) {
                     </td>
                     <td class="py-3 px-4 text-right">
                       <button 
-                        class="quick-add-to-cart-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all"
+                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
                         data-id="sw-3" 
                         data-name="Gulab Jamun" 
                         data-price="180"
@@ -538,7 +553,7 @@ export function renderDashboardView(state) {
                   </tr>
 
                   <!-- Item 4: Motichoor Ladoo (Low Stock) -->
-                  <tr class="hover:bg-amber-50/30 transition-colors">
+                  <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
                       <div class="w-8 h-8 rounded-lg bg-yellow-100 border border-yellow-200 flex items-center justify-center font-bold text-amber-800 text-xs shadow-2xs">
                         ML
@@ -554,7 +569,7 @@ export function renderDashboardView(state) {
                     </td>
                     <td class="py-3 px-4 text-right">
                       <button 
-                        class="quick-add-to-cart-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all"
+                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
                         data-id="sw-4" 
                         data-name="Motichoor Ladoo" 
                         data-price="160"
@@ -565,7 +580,7 @@ export function renderDashboardView(state) {
                   </tr>
 
                   <!-- Item 5: Kesar Peda -->
-                  <tr class="hover:bg-amber-50/30 transition-colors">
+                  <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
                       <div class="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center font-bold text-amber-900 text-xs shadow-2xs">
                         KP
@@ -581,7 +596,7 @@ export function renderDashboardView(state) {
                     </td>
                     <td class="py-3 px-4 text-right">
                       <button 
-                        class="quick-add-to-cart-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all"
+                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
                         data-id="sw-5" 
                         data-name="Kesar Peda" 
                         data-price="380"
@@ -592,7 +607,7 @@ export function renderDashboardView(state) {
                   </tr>
 
                   <!-- Item 6: Milk Cake -->
-                  <tr class="hover:bg-amber-50/30 transition-colors">
+                  <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
                       <div class="w-8 h-8 rounded-lg bg-orange-100/60 border border-orange-200 flex items-center justify-center font-bold text-orange-900 text-xs shadow-2xs">
                         MC
@@ -608,7 +623,7 @@ export function renderDashboardView(state) {
                     </td>
                     <td class="py-3 px-4 text-right">
                       <button 
-                        class="quick-add-to-cart-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all"
+                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
                         data-id="sw-7" 
                         data-name="Milk Cake" 
                         data-price="300"

@@ -213,6 +213,58 @@ export function renderSettingsView(state) {
         </div>
       </section>
 
+      <!-- Google SEO, Search Console & Sitemap Management (Cleanly moved to Settings) -->
+      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
+        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-[#E6F4EA] border border-[#CDE9D3] text-[#1E7E34] flex items-center justify-center font-bold text-sm shadow-2xs">
+              <span class="w-3 h-3 rounded-full bg-[#34A853] animate-pulse"></span>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-[var(--text-main)]">Google SEO, Sitemap &amp; Rich Schema Hub</h3>
+              <p class="text-[11px] text-[var(--text-light)]">Technical search engine indexation, dynamic meta tags &amp; canonical routing</p>
+            </div>
+          </div>
+          <button 
+            type="button"
+            id="settings-open-seo-modal-btn"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-[#E6F4EA] hover:bg-[#D5EEDC] text-[#1E7E34] border border-[#CDE9D3] transition-all cursor-pointer shadow-2xs interactive-scale flex items-center gap-1.5"
+          >
+            <span>Launch Audit Hub</span>
+            <span>→</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-stone-700">XML Sitemap</span>
+              <span class="text-emerald-700 text-[10px] font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Active ✓</span>
+            </div>
+            <p class="text-[11px] text-stone-500 mt-1">public/sitemap.xml (8 tabs indexed)</p>
+            <a href="/sitemap.xml" target="_blank" class="text-[10px] text-[#C86D3B] font-semibold hover:underline mt-1 inline-block">View XML →</a>
+          </div>
+
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-stone-700">Robots.txt</span>
+              <span class="text-emerald-700 text-[10px] font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Crawling Allowed ✓</span>
+            </div>
+            <p class="text-[11px] text-stone-500 mt-1">public/robots.txt (Allow: /)</p>
+            <a href="/robots.txt" target="_blank" class="text-[10px] text-[#C86D3B] font-semibold hover:underline mt-1 inline-block">View File →</a>
+          </div>
+
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-stone-700">Schema.org JSON-LD</span>
+              <span class="text-emerald-700 text-[10px] font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Rich Snippets ✓</span>
+            </div>
+            <p class="text-[11px] text-stone-500 mt-1">Bakery / Confectionery Store Schema</p>
+            <span class="text-[10px] text-stone-400 mt-1 inline-block">Geo &amp; Opening Hours active</span>
+          </div>
+        </div>
+      </section>
+
       <!-- Store Profile & Tax Localization Form -->
       <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
         <h3 class="text-sm font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3">
