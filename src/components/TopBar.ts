@@ -1,7 +1,7 @@
 // Top Navigation Bar Component - 100% 1:1 Match with Reference Design
 // Features: Pill Search Input, Date Widget ("25 Sep 2026 Today"), Notification Bell with dot, Admin User Dropdown
 
-export function renderTopBar(state) {
+export function renderTopBar(state: any): string {
   const { searchQuery, unreadNotifications = 1 } = state;
 
   return `

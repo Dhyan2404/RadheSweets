@@ -1,7 +1,7 @@
 // Desktop Sidebar Component - 100% 1:1 Match with Reference Design
 // Features: RadheSweets Confectionery Lotus Emblem, Exact Nav Items, and Sweet Moments illustration at bottom
 
-export function renderSidebar(currentTab) {
+export function renderSidebar(currentTab: string): string {
   const navItems = [
     { 
       id: 'dashboard', 
