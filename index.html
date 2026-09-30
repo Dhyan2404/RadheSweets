@@ -1,19 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Radhe Sweets - Shop Management Dashboard</title>
-  <meta name="description" content="Official Radhe Sweets Confectionery Shop Management Suite. Streamlined Point of Sale (POS), real-time inventory, customer orders, and analytics." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Radhe Sweets Ahmedabad | Pure Desi Ghee Sweets, Kaju Katli & Mithai Shop</title>
+  
+  <!-- SEO Primary Meta Tags -->
+  <meta name="description" content="Order authentic Indian sweets, pure desi ghee Kaju Katli, soft Gulab Jamun, festive sweet hampers & namkeen from Radhe Sweets in Ahmedabad. Shop online with fresh counter delivery." />
+  <meta name="keywords" content="Radhe Sweets, Indian sweets Ahmedabad, buy Kaju Katli online, pure ghee sweets, Gulab Jamun, Motichoor Ladoo, dry fruit barfi, Diwali sweet box, sweet shop S.G. Highway, mithai shop near me, Gujarati farsan" />
+  <meta name="author" content="Radhe Sweets" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large" />
+  <link rel="canonical" href="https://radhesweets.com/" />
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+  <link rel="manifest" href="/site.webmanifest" />
+  
+  <!-- Geo Meta Tags for Local Google Search (Ahmedabad, Gujarat, India) -->
+  <meta name="geo.region" content="IN-GJ" />
+  <meta name="geo.placename" content="Ahmedabad" />
+  <meta name="geo.position" content="23.0225;72.5714" />
+  <meta name="ICBM" content="23.0225, 72.5714" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://radhesweets.com/" />
+  <meta property="og:title" content="Radhe Sweets Ahmedabad | Pure Desi Ghee Sweets & Confectionery" />
+  <meta property="og:description" content="Discover hand-crafted Indian sweets made with pure Shuddh Desi Ghee, premium cashews and saffron. Order online for instant counter delivery in Ahmedabad." />
+  <meta property="og:image" content="https://radhesweets.com/image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Radhe Sweets" />
+  <meta property="og:locale" content="en_IN" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://radhesweets.com/" />
+  <meta name="twitter:title" content="Radhe Sweets Ahmedabad | Pure Desi Ghee Sweets & Confectionery" />
+  <meta name="twitter:description" content="Authentic Indian confectionery, Kaju Katli, Gulab Jamun, festive gift boxes & Namkeen. Rated 4.9/5 by 840+ sweet lovers in Ahmedabad." />
+  <meta name="twitter:image" content="https://radhesweets.com/image.png" />
+
+  <!-- Mobile Browser Theme Color -->
   <meta name="theme-color" content="#FAF7F2" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Radhe Sweets" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
 
   <!-- Google Fonts: Plus Jakarta Sans & Playfair Display & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind CSS CDN with forms and container queries plugins (1:1 with Stitch) -->
+  <!-- Tailwind CSS CDN with forms and container queries plugins -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <!-- Tailwind Configuration matching Stitch 1:1 -->
   <script>
@@ -45,6 +84,178 @@
         }
       }
     }
+  </script>
+
+  <!-- Google JSON-LD Structured Data Schema Markup (LocalBusiness / Bakery / SweetShop) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": ["Bakery", "Store", "LocalBusiness"],
+        "@id": "https://radhesweets.com/#store",
+        "name": "Radhe Sweets - Sweets & More",
+        "alternateName": "Radhe Sweets Ahmedabad",
+        "description": "Authentic confectionery and artisanal sweet shop in Ahmedabad. Handcrafting pure desi ghee sweets, fresh Kaju Katli, traditional Gujarati delicacies, and festival gift hampers.",
+        "url": "https://radhesweets.com/",
+        "logo": "https://radhesweets.com/favicon.svg",
+        "image": "https://radhesweets.com/image.png",
+        "telephone": "+91-98765-43210",
+        "priceRange": "₹₹",
+        "currenciesAccepted": "INR",
+        "paymentAccepted": "Cash, UPI, Credit Card, Debit Card, Net Banking",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Opposite Iscon Mall, S.G. Highway, Satellite",
+          "addressLocality": "Ahmedabad",
+          "addressRegion": "Gujarat",
+          "postalCode": "380015",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 23.0225,
+          "longitude": 72.5714
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            "opens": "08:00",
+            "closes": "22:30"
+          }
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "842",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "servesCuisine": ["Indian Sweets", "Gujarati Farsan", "Traditional Mithai", "Pure Desi Ghee Confectionery"],
+        "hasMenu": "https://radhesweets.com/#/products",
+        "potentialAction": {
+          "@type": "OrderAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://radhesweets.com/#/pos",
+            "inLanguage": "en-IN",
+            "actionPlatform": [
+              "http://schema.org/DesktopWebPlatform",
+              "http://schema.org/MobileWebPlatform"
+            ]
+          },
+          "deliveryMethod": "http://purl.org/goodrelations/v1#DeliveryModePickUp"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://radhesweets.com/#website",
+        "url": "https://radhesweets.com/",
+        "name": "Radhe Sweets",
+        "description": "Authentic Indian Sweets & Shop Management Suite",
+        "publisher": {
+          "@id": "https://radhesweets.com/#store"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://radhesweets.com/#/products?search={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "ItemList",
+        "name": "Popular Indian Sweets & Mithai",
+        "description": "Best-selling pure desi ghee sweets available at Radhe Sweets Ahmedabad",
+        "numberOfItems": 5,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "item": {
+              "@type": "Product",
+              "name": "Kaju Katli (Diamond Cut)",
+              "description": "Pure Goan cashew diamond fudge with edible pure silver vark.",
+              "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28",
+              "offers": {
+                "@type": "Offer",
+                "price": "450",
+                "priceCurrency": "INR",
+                "availability": "https://schema.org/InStock"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "item": {
+              "@type": "Product",
+              "name": "Gulab Jamun (Shuddh Desi Ghee)",
+              "description": "Soft fried khoya dumplings soaked in fragrant green cardamom and saffron rose syrup.",
+              "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950",
+              "offers": {
+                "@type": "Offer",
+                "price": "180",
+                "priceCurrency": "INR",
+                "availability": "https://schema.org/InStock"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "item": {
+              "@type": "Product",
+              "name": "Motichoor Ladoo",
+              "description": "Fine gram flour pearls slow cooked in Bilona cow ghee with melon seeds.",
+              "image": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc",
+              "offers": {
+                "@type": "Offer",
+                "price": "160",
+                "priceCurrency": "INR",
+                "availability": "https://schema.org/InStock"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "item": {
+              "@type": "Product",
+              "name": "Kesar Peda",
+              "description": "Rich caramelized mawa peda infused with pure Kashmiri saffron threads and pistachio.",
+              "image": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46",
+              "offers": {
+                "@type": "Offer",
+                "price": "420",
+                "priceCurrency": "INR",
+                "availability": "https://schema.org/InStock"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 5,
+            "item": {
+              "@type": "Product",
+              "name": "Dry Fruit Barfi",
+              "description": "Sugar-free luxury barfi made with dates, figs, roasted almonds, cashews and pistachios.",
+              "image": "https://images.unsplash.com/photo-1553530666-ba11a7da3888",
+              "offers": {
+                "@type": "Offer",
+                "price": "650",
+                "priceCurrency": "INR",
+                "availability": "https://schema.org/InStock"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body class="bg-[#FAF7F2] text-[#2A1F1D] min-h-screen antialiased selection:bg-[#C86D3B] selection:text-white">

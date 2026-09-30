@@ -1,0 +1,17 @@
+# Robots.txt for Radhe Sweets Confectionery
+# Allows full indexing of sweets catalog, online ordering & store locations
+
+User-agent: *
+Allow: /
+Allow: /#/products
+Allow: /#/pos
+Allow: /#/orders
+Allow: /#/customers
+Allow: /sitemap.xml
+Allow: /favicon.svg
+
+# Host
+Host: https://radhesweets.com
+
+# XML Sitemap
+Sitemap: https://radhesweets.com/sitemap.xml

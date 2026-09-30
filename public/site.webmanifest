@@ -1,0 +1,19 @@
+{
+  "name": "Radhe Sweets - Sweets & More",
+  "short_name": "Radhe Sweets",
+  "description": "Authentic Indian Confectionery, Pure Desi Ghee Sweets & Shop Management Suite in Ahmedabad, Gujarat",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#C86D3B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "food", "lifestyle"]
+}

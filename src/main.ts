@@ -30,6 +30,7 @@ import { renderAnalyticsView } from './components/AnalyticsView.js';
 import { renderSettingsView } from './components/SettingsView.js';
 import { renderSplashView } from './components/SplashView.js';
 import { renderCustomerDialerModal } from './components/CustomerDialerModal.js';
+import { renderSeoModal } from './components/SeoModal.js';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 
@@ -129,6 +130,7 @@ const state = {
   showSplashModal: false,
   showCustomerDialerModal: false,
   showMobileDrawer: false,
+  showSeoModal: false,
   dialerInput: '',
   activeOrder: null,
   lastPlacedOrder: null,
@@ -170,10 +172,63 @@ function saveState() {
   }
 }
 
+// Dynamic SEO Metadata & URL Hash Synchronization for Google Crawling
+function updatePageSeoMetadata(activeTab: string) {
+  const titles: Record<string, { title: string; desc: string }> = {
+    dashboard: {
+      title: 'Radhe Sweets Ahmedabad | Shop Management & Live Kitchen Console',
+      desc: 'Radhe Sweets master confectionery dashboard in Ahmedabad. Track live sales, fast selling sweets, kitchen stock valuation and order fulfillment.'
+    },
+    pos: {
+      title: 'Order Sweets & Counter POS Billing | Radhe Sweets Ahmedabad',
+      desc: 'Point of sale counter billing and sweet orders. Quick weight calculator (kg/pcs), discount calculation, customer mobile dialer and thermal receipts.'
+    },
+    products: {
+      title: 'Pure Desi Ghee Sweets & Confectionery Catalog | Radhe Sweets',
+      desc: 'Browse handcrafted Indian sweets made with pure desi ghee, Goan cashews, Kashmiri saffron, and Bilona butter. Kaju Katli, Peda, Gulab Jamun & Namkeen.'
+    },
+    customers: {
+      title: 'Customer Khata, Udhar Ledger & Loyalty Club | Radhe Sweets',
+      desc: 'Patron loyalty points, VIP tier benefits, and institutional Khata credit ledger. Settle partial or full payments with live balance recalculation.'
+    },
+    orders: {
+      title: 'Live Orders, Kitchen Prep & Bulk Delivery | Radhe Sweets',
+      desc: 'Manage daily sweet orders, festive hampers, advance wedding booking deliveries, and halwai kitchen dispatch tracking.'
+    },
+    expenses: {
+      title: 'Store Expenses & Halwai Kitchen Accounts | Radhe Sweets',
+      desc: 'Track dairy, sugar, raw material inward costs, staff payroll, and daily confectionery store operational expenditures.'
+    },
+    analytics: {
+      title: 'Business Analytics & Confectionery Reports | Radhe Sweets',
+      desc: 'Detailed gross profit margins, inventory asset valuations, peak rush hour analytics, and daily shift Z-reports.'
+    },
+    settings: {
+      title: 'Store Configuration & Multi-Branch Management | Radhe Sweets',
+      desc: 'Manage SG Highway and Satellite sweet branch profiles, thermal printer configurations, taxes and system preferences.'
+    }
+  };
+
+  const meta = titles[activeTab] || titles['dashboard'];
+  document.title = meta.title;
+
+  const descEl = document.querySelector('meta[name="description"]');
+  if (descEl) descEl.setAttribute('content', meta.desc);
+
+  // Sync hash route for deep linking & Google sitemap crawling
+  const expectedHash = `#/${activeTab}`;
+  if (window.location.hash !== expectedHash) {
+    history.replaceState(null, '', expectedHash);
+  }
+}
+
 // Master Render Function
 export function renderApp() {
   const appContainer = document.getElementById('app');
   if (!appContainer) return;
+
+  // Sync Document Title, Meta Description & Canonical Hash Route
+  updatePageSeoMetadata(state.activeTab);
 
   // Apply theme classes to body
   document.body.classList.toggle('theme-serene-ice', state.currentTheme === 'ice');
@@ -274,6 +329,7 @@ function renderModals() {
     ${state.showSplashModal ? renderSplashView({ isModal: true }) : ''}
     ${state.showCustomerDialerModal ? renderCustomerDialerModal(state) : ''}
     ${state.showMobileDrawer ? renderMobileDrawer(state) : ''}
+    ${state.showSeoModal ? renderSeoModal(state) : ''}
   `;
 }
 
@@ -291,6 +347,26 @@ function attachEventListeners() {
   document.getElementById('mobile-drawer-backdrop')?.addEventListener('click', (e) => {
     if (e.target.id === 'mobile-drawer-backdrop') {
       state.showMobileDrawer = false;
+      renderApp();
+    }
+  });
+
+  // Google SEO & Sitemap Modal
+  document.getElementById('open-seo-modal-btn')?.addEventListener('click', () => {
+    state.showSeoModal = true;
+    renderApp();
+  });
+  document.getElementById('close-seo-modal-btn')?.addEventListener('click', () => {
+    state.showSeoModal = false;
+    renderApp();
+  });
+  document.getElementById('close-seo-modal-bottom-btn')?.addEventListener('click', () => {
+    state.showSeoModal = false;
+    renderApp();
+  });
+  document.getElementById('seo-modal')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'seo-modal') {
+      state.showSeoModal = false;
       renderApp();
     }
   });
@@ -1836,7 +1912,21 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Initialize when DOM is ready
+// Initialize when DOM is ready with Google Deep Linking & Sitemap Hash Routing
 window.addEventListener('DOMContentLoaded', () => {
+  const initialHash = window.location.hash.replace('#/', '').replace('#', '');
+  if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'settings'].includes(initialHash)) {
+    state.activeTab = initialHash;
+  }
   renderApp();
+});
+
+// Google Sitemap Deep Linking - Listen for browser URL hash changes
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.replace('#/', '').replace('#', '');
+  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'settings'].includes(hash) && state.activeTab !== hash) {
+    state.activeTab = hash;
+    saveState();
+    renderApp();
+  }
 });

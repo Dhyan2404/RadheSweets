@@ -58,6 +58,16 @@ export function renderTopBar(state) {
           <span class="font-medium">25 Sep 2026, <span class="text-stone-400 font-normal">Today</span></span>
         </div>
 
+        <!-- Google SEO & Sitemap Live Status Button -->
+        <button 
+          id="open-seo-modal-btn" 
+          class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E6F4EA] hover:bg-[#D5EEDC] text-[#1E7E34] border border-[#CDE9D3] transition-all cursor-pointer shadow-2xs"
+          title="Google SEO, Sitemap.xml & Rich Schema Validator"
+        >
+          <span class="w-2 h-2 rounded-full bg-[#34A853] animate-pulse"></span>
+          <span>Google SEO & Sitemap</span>
+        </button>
+
         <!-- Notifications Bell -->
         <button 
           id="notifications-bell-btn"
