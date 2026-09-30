@@ -1,34 +1,117 @@
-// Mobile Navigation Components: Bottom Tab Bar & Mobile Drawer Component
+// Mobile Navigation Components: Curved Floating Bottom Dock & Slide-Out Drawer
 
 export function renderMobileBottomNav(currentTab) {
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"></path></svg>` },
-    { id: 'pos', label: 'Sell', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" stroke-linecap="round" stroke-linejoin="round"></path></svg>` },
-    { id: 'orders', label: 'Orders', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round"></path></svg>` },
-    { id: 'products', label: 'Products', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="3" y="3"></rect><rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="14" y="3"></rect><rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="14" y="14"></rect><rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="3" y="14"></rect></svg>` },
-    { id: 'settings', label: 'Settings', icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>` }
-  ];
+  const isPos = currentTab === 'pos';
 
   return `
-    <nav class="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-[var(--border-color)] px-2 py-1.5 flex justify-around items-center z-40 shadow-lg md:hidden">
-      ${tabs.map(tab => {
-        const isActive = currentTab === tab.id;
-        return `
+    <!-- Floating Curved Mobile Island Navbar (iOS / Super-App Style) -->
+    <nav class="fixed bottom-3 inset-x-3 sm:inset-x-6 max-w-md mx-auto z-40 select-none pointer-events-auto md:hidden" data-purpose="mobile-curved-navbar">
+      <div class="relative bg-white/95 backdrop-blur-2xl border border-[#F0ECE4] shadow-[0_16px_36px_rgba(42,31,29,0.18)] rounded-[32px] px-2 py-1.5 flex items-center justify-between">
+        
+        <!-- Tab 1: Home / Dashboard -->
+        <button 
+          data-tab="dashboard" 
+          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer ${
+            currentTab === 'dashboard' 
+              ? 'text-[#C86D3B] font-bold' 
+              : 'text-stone-400 hover:text-stone-700 font-medium'
+          }"
+          aria-label="Dashboard"
+        >
+          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+            currentTab === 'dashboard' ? 'bg-orange-50 text-[#C86D3B] scale-105' : ''
+          }">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+          <span class="text-[10px] tracking-tight mt-0.5">Home</span>
+          ${currentTab === 'dashboard' ? '<span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
+        </button>
+
+        <!-- Tab 2: Orders -->
+        <button 
+          data-tab="orders" 
+          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer ${
+            currentTab === 'orders' 
+              ? 'text-[#C86D3B] font-bold' 
+              : 'text-stone-400 hover:text-stone-700 font-medium'
+          }"
+          aria-label="Orders"
+        >
+          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+            currentTab === 'orders' ? 'bg-orange-50 text-[#C86D3B] scale-105' : ''
+          }">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <span class="text-[10px] tracking-tight mt-0.5">Orders</span>
+          ${currentTab === 'orders' ? '<span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
+        </button>
+
+        <!-- Tab 3 (CENTER): HERO ROUND FLOATING POS BUTTON -->
+        <div class="relative -mt-7 sm:-mt-8 flex flex-col items-center shrink-0 px-1">
           <button 
-            data-tab="${tab.id}" 
-            class="mobile-bottom-tab flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all ${
-              isActive 
-                ? 'text-[var(--brand-primary)] font-bold' 
-                : 'text-stone-400 hover:text-stone-600'
+            data-tab="pos" 
+            class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#B25D2E] via-[#C86D3B] to-[#E07A5F] text-white shadow-[0_10px_25px_rgba(200,109,59,0.5)] border-[3.5px] border-[#FAF7F2] ring-4 ring-orange-200/50 flex items-center justify-center transform active:scale-90 hover:scale-105 transition-all duration-200 cursor-pointer ${
+              isPos ? 'scale-105 ring-orange-400/60' : ''
             }"
+            aria-label="Express Sell POS"
           >
-            <div class="${isActive ? 'scale-110 transition-transform' : ''}">
-              ${tab.icon}
-            </div>
-            <span class="text-[10px] tracking-tight mt-1 font-semibold">${tab.label}</span>
+            <svg class="w-6 h-6 text-white drop-shadow-xs" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+              <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
           </button>
-        `;
-      }).join('')}
+          <span class="text-[10px] font-black text-[#C86D3B] tracking-tight mt-0.5">Sell POS</span>
+        </div>
+
+        <!-- Tab 4: Customers -->
+        <button 
+          data-tab="customers" 
+          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer ${
+            currentTab === 'customers' 
+              ? 'text-[#C86D3B] font-bold' 
+              : 'text-stone-400 hover:text-stone-700 font-medium'
+          }"
+          aria-label="Customers"
+        >
+          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+            currentTab === 'customers' ? 'bg-orange-50 text-[#C86D3B] scale-105' : ''
+          }">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+          <span class="text-[10px] tracking-tight mt-0.5">Khata</span>
+          ${currentTab === 'customers' ? '<span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
+        </button>
+
+        <!-- Tab 5: Sweets / Products -->
+        <button 
+          data-tab="products" 
+          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer ${
+            currentTab === 'products' 
+              ? 'text-[#C86D3B] font-bold' 
+              : 'text-stone-400 hover:text-stone-700 font-medium'
+          }"
+          aria-label="Sweets Menu"
+        >
+          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+            currentTab === 'products' ? 'bg-orange-50 text-[#C86D3B] scale-105' : ''
+          }">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+          <span class="text-[10px] tracking-tight mt-0.5">Sweets</span>
+          ${currentTab === 'products' ? '<span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
+        </button>
+
+      </div>
     </nav>
   `;
 }

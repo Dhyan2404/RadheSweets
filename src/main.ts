@@ -246,7 +246,7 @@ export function renderApp() {
         ${renderTopBar(state)}
 
         <!-- Active Tab Body -->
-        <main class="flex-1 p-6 sm:p-8 space-y-6 pb-24 md:pb-8">
+        <main class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8">
           ${renderTabContent()}
         </main>
       </div>
@@ -498,14 +498,15 @@ function attachEventListeners() {
     showToast('Redirected to POS Counter', 'info');
   });
 
-  // Dashboard Scroll-Driven Tiles Animation & Current Section Reveal (1:1 with Stitch screen.png)
-  if (state.activeTab === 'dashboard') {
+  // Dashboard Scroll-Driven Tiles Animation & Current Section Reveal (Desktop only)
+  if (state.activeTab === 'dashboard' && window.innerWidth >= 768) {
     const kpiContainer = document.getElementById('kpi-tiles-container');
     const stickyBar = document.getElementById('sticky-kpi-bar');
     const currentViewLabel = document.getElementById('current-view-label');
     const scrollContainer = document.getElementById('main-content-scroll-container');
 
     const handleDashboardScroll = () => {
+      if (window.innerWidth < 768) return; // Prevent mobile glitch
       const scrollY = (scrollContainer ? scrollContainer.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
       
       // When scrolled down, tiles slide/scale up and sticky KPI bar smoothly slides into view
@@ -569,6 +570,9 @@ function attachEventListeners() {
     } else {
       revealItems.forEach(item => item.classList.add('is-visible'));
     }
+  } else if (state.activeTab === 'dashboard') {
+    // On mobile screens, immediately ensure all sections are visible without transform delay
+    document.querySelectorAll('.scroll-reveal-item').forEach(item => item.classList.add('is-visible'));
   }
 
   // Dashboard Time Filter Dropdown
