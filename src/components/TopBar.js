@@ -5,7 +5,7 @@ export function renderTopBar(state) {
   const { searchQuery, unreadNotifications = 1 } = state;
 
   return `
-    <header class="h-18 bg-white border-b border-[#F0ECE4] px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 select-none" data-purpose="top-bar">
+    <header class="h-[72px] bg-white border-b border-[#F0ECE4] px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 select-none" data-purpose="top-bar">
       
       <!-- Mobile Hamburger & Brand (Visible on mobile < 768px) -->
       <div class="flex items-center space-x-3 md:hidden">
@@ -51,9 +51,9 @@ export function renderTopBar(state) {
         <div class="hidden sm:flex items-center space-x-2 bg-stone-50 border border-[#F0ECE4] px-3 py-1.5 rounded-xl text-xs text-stone-600">
           <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <line x1="16" x2="16" y1="2" y2="6"></line>
+            <line x1="8" x2="8" y1="2" y2="6"></line>
+            <line x1="3" x2="21" y1="10" y2="10"></line>
           </svg>
           <span class="font-medium">25 Sep 2026, <span class="text-stone-400 font-normal">Today</span></span>
         </div>

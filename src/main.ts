@@ -164,9 +164,7 @@ export function renderApp() {
   appContainer.innerHTML = `
     <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D]">
       <!-- Desktop Sidebar Navigation (Visible on md and up) -->
-      <div class="hidden md:flex flex-shrink-0">
-        ${renderSidebar(state.activeTab)}
-      </div>
+      ${renderSidebar(state.activeTab)}
 
       <!-- Main Content Area -->
       <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
@@ -174,7 +172,7 @@ export function renderApp() {
         ${renderTopBar(state)}
 
         <!-- Active Tab Body -->
-        <main class="flex-1 p-5 sm:p-7 lg:p-8 space-y-6 pb-24 md:pb-8">
+        <main class="flex-1 p-6 sm:p-8 space-y-6 pb-24 md:pb-8">
           ${renderTabContent()}
         </main>
       </div>

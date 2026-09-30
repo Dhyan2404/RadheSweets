@@ -46,7 +46,7 @@ export function renderSidebar(currentTab) {
   ];
 
   return `
-    <aside class="w-64 bg-white border-r border-[#F0ECE4] flex-shrink-0 flex flex-col justify-between p-5 min-h-screen sticky top-0 select-none overflow-y-auto" data-purpose="desktop-sidebar">
+    <aside class="hidden md:flex w-64 bg-white border-r border-[#F0ECE4] flex-shrink-0 flex-col justify-between p-5 h-screen sticky top-0 select-none overflow-y-auto" data-purpose="desktop-sidebar">
       <div class="space-y-6">
         
         <!-- Brand Header (1:1 with Stitch screen.png) -->

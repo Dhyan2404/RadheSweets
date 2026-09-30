@@ -5,7 +5,7 @@ export function renderTopBar(state) {
   const { searchQuery, unreadNotifications = 1 } = state;
 
   return `
-    <header class="h-18 bg-white border-b border-[#F0ECE4] px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 select-none" data-purpose="top-bar">
+    <header class="h-[72px] bg-white border-b border-[#F0ECE4] px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 select-none" data-purpose="top-bar">
       
       <!-- Mobile Hamburger & Brand (Visible on mobile < 768px) -->
       <div class="flex items-center space-x-3 md:hidden">
