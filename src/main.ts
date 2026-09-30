@@ -12,7 +12,12 @@ import { renderOrderSuccessModal } from './components/OrderSuccessModal.js';
 import { renderThermalReceiptModal } from './components/ThermalReceiptModal.js';
 import { renderOrdersView } from './components/OrdersView.js';
 import { renderOrderDetailsModal } from './components/OrderDetailsModal.js';
-import { renderCustomersView, renderAddCustomerModal } from './components/CustomersView.js';
+import { 
+  renderCustomersView, 
+  renderAddCustomerModal, 
+  renderSettleKhataModal, 
+  renderCustomerProfileModal 
+} from './components/CustomersView.js';
 import { 
   renderProductsView, 
   renderAddProductModal, 
@@ -47,7 +52,15 @@ const state = {
   kpis: stored?.kpis || { ...initialData.kpis },
   orderStatusCounts: stored?.orderStatusCounts || { ...initialData.orderStatusCounts },
   sweets: stored?.sweets || [...initialData.sweets],
-  customers: stored?.customers || [...initialData.customers],
+  customers: (stored?.customers && stored.customers.length > 0)
+    ? stored.customers.map((c: any) => {
+        const match = initialData.customers.find((ic: any) => ic.id === c.id || ic.name === c.name);
+        if (match && (c.khataBalance === undefined || c.khataBalance === null || (c.khataBalance === 0 && match.khataBalance > 0 && (!c.khataHistory || c.khataHistory.length === 0)))) {
+          return { ...c, khataBalance: match.khataBalance, creditLimit: c.creditLimit || match.creditLimit };
+        }
+        return c;
+      })
+    : [...initialData.customers],
   orders: stored?.orders || [...initialData.orders],
   expenses: stored?.expenses || { ...initialData.expenses },
   analytics: stored?.analytics || { ...initialData.analytics },
@@ -64,7 +77,7 @@ const state = {
   selectedWeightUnit: stored?.selectedWeightUnit || 'kg',
 
   // Navigation & View Mode
-  activeTab: (stored?.activeTab && stored.activeTab !== 'recipes' && stored.activeTab !== 'products') ? stored.activeTab : 'dashboard',
+  activeTab: (stored?.activeTab && stored.activeTab !== 'recipes') ? stored.activeTab : 'dashboard',
   deviceMode: stored?.deviceMode || 'desktop', // 'desktop' or 'mobile'
   currentTheme: stored?.currentTheme || 'warm', // 'warm' or 'ice'
   isDarkMode: stored?.isDarkMode || false,
@@ -75,6 +88,7 @@ const state = {
   ordersSearchQuery: '',
   customersSearchQuery: '',
   productsSearchQuery: '',
+  productsViewMode: stored?.productsViewMode || 'table',
   activeCategory: 'All',
   ordersFilterTab: 'all',
   customersFilterTab: 'all',
@@ -103,6 +117,10 @@ const state = {
   showThermalModal: false,
   showOrderDetailsModal: false,
   showAddCustomerModal: false,
+  showSettleKhataModal: false,
+  settlingCustomer: null,
+  showCustomerProfileModal: false,
+  profileCustomer: null,
   showAddProductModal: false,
   showEditProductModal: false,
   editingSweet: null,
@@ -143,7 +161,8 @@ function saveState() {
       isDarkMode: state.isDarkMode,
       selectedCustomer: state.selectedCustomer,
       posCart: state.posCart,
-      quickCart: state.quickCart
+      quickCart: state.quickCart,
+      productsViewMode: state.productsViewMode
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   } catch (e) {
@@ -245,6 +264,8 @@ function renderModals() {
     ${state.showThermalModal ? renderThermalReceiptModal(state.activeOrder || state.lastPlacedOrder, state.shopInfo) : ''}
     ${state.showOrderDetailsModal ? renderOrderDetailsModal(state.activeOrder) : ''}
     ${state.showAddCustomerModal ? renderAddCustomerModal() : ''}
+    ${state.showSettleKhataModal ? renderSettleKhataModal(state.settlingCustomer) : ''}
+    ${state.showCustomerProfileModal ? renderCustomerProfileModal(state.profileCustomer, state.orders) : ''}
     ${state.showAddProductModal ? renderAddProductModal() : ''}
     ${state.showEditProductModal ? renderEditProductModal(state.editingSweet) : ''}
     ${state.showRestockBatchModal ? renderRestockBatchModal(state) : ''}
@@ -846,22 +867,183 @@ function attachEventListeners() {
     });
   });
 
-  document.getElementById('customers-search-input')?.addEventListener('input', (e) => {
+  document.getElementById('customers-search-input')?.addEventListener('input', (e: any) => {
     state.customersSearchQuery = e.target.value;
+    renderApp();
+  });
+
+  document.getElementById('clear-customers-search-btn')?.addEventListener('click', () => {
+    state.customersSearchQuery = '';
+    renderApp();
+  });
+
+  document.getElementById('reset-customers-filter-btn')?.addEventListener('click', () => {
+    state.customersFilterTab = 'all';
+    state.customersSearchQuery = '';
     renderApp();
   });
 
   document.querySelectorAll('[data-select-for-pos]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-select-for-pos');
-      const customer = state.customers.find(c => c.id === id);
+      const customer = state.customers.find((c: any) => c.id === id);
       if (customer) {
         state.selectedCustomer = customer;
         state.activeTab = 'pos';
+        state.showCustomerProfileModal = false;
         saveState();
         renderApp();
       }
     });
+  });
+
+  // Open Customer Profile & Ledger Modal
+  document.querySelectorAll('[data-view-customer]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-view-customer');
+      const cust = state.customers.find((c: any) => c.id === id);
+      if (cust) {
+        state.profileCustomer = cust;
+        state.showCustomerProfileModal = true;
+        renderApp();
+      }
+    });
+  });
+
+  document.getElementById('close-customer-profile-btn')?.addEventListener('click', () => {
+    state.showCustomerProfileModal = false;
+    state.profileCustomer = null;
+    renderApp();
+  });
+  document.getElementById('close-customer-profile-bottom-btn')?.addEventListener('click', () => {
+    state.showCustomerProfileModal = false;
+    state.profileCustomer = null;
+    renderApp();
+  });
+  document.getElementById('customer-profile-modal')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'customer-profile-modal') {
+      state.showCustomerProfileModal = false;
+      state.profileCustomer = null;
+      renderApp();
+    }
+  });
+
+  // Settle Khata Modal Triggers (Settle some amount or all)
+  document.querySelectorAll('[data-settle-khata]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-settle-khata');
+      const cust = state.customers.find((c: any) => c.id === id);
+      if (cust) {
+        state.settlingCustomer = cust;
+        state.showSettleKhataModal = true;
+        state.showCustomerProfileModal = false;
+        renderApp();
+      }
+    });
+  });
+
+  document.getElementById('close-settle-khata-btn')?.addEventListener('click', () => {
+    state.showSettleKhataModal = false;
+    state.settlingCustomer = null;
+    renderApp();
+  });
+  document.getElementById('cancel-settle-khata-btn')?.addEventListener('click', () => {
+    state.showSettleKhataModal = false;
+    state.settlingCustomer = null;
+    renderApp();
+  });
+  document.getElementById('settle-khata-modal')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'settle-khata-modal') {
+      state.showSettleKhataModal = false;
+      state.settlingCustomer = null;
+      renderApp();
+    }
+  });
+
+  // Quick Amount Chips in Settle Khata Modal
+  document.querySelectorAll('[data-quick-settle-amt]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const amt = btn.getAttribute('data-quick-settle-amt');
+      const input = document.getElementById('settle-amount-input') as HTMLInputElement;
+      const form = document.getElementById('settle-khata-form');
+      if (input && amt && form) {
+        input.value = amt;
+        const currentDue = Number(form.getAttribute('data-current-due')) || 0;
+        const entered = Number(amt) || 0;
+        const rem = Math.max(0, currentDue - entered);
+        const remEl = document.getElementById('settle-remaining-calc');
+        if (remEl) remEl.textContent = `₹${rem.toLocaleString()}`;
+        const btnText = document.getElementById('settle-submit-btn-text');
+        if (btnText) btnText.textContent = `Confirm Settlement (₹${entered.toLocaleString()})`;
+      }
+    });
+  });
+
+  // Dynamic input calculation on Settle Amount Input
+  document.getElementById('settle-amount-input')?.addEventListener('input', (e: any) => {
+    const form = document.getElementById('settle-khata-form');
+    if (form) {
+      const currentDue = Number(form.getAttribute('data-current-due')) || 0;
+      const val = Number(e.target.value) || 0;
+      const rem = Math.max(0, currentDue - val);
+      const remEl = document.getElementById('settle-remaining-calc');
+      if (remEl) remEl.textContent = `₹${rem.toLocaleString()}`;
+      const btnText = document.getElementById('settle-submit-btn-text');
+      if (btnText) btnText.textContent = val > 0 ? `Confirm Settlement (₹${val.toLocaleString()})` : 'Confirm Settlement';
+    }
+  });
+
+  // Settle Khata Form Submission
+  document.getElementById('settle-khata-form')?.addEventListener('submit', (e: any) => {
+    e.preventDefault();
+    const form = e.target;
+    const customerId = form.getAttribute('data-customer-id');
+    const cust = state.customers.find((c: any) => c.id === customerId);
+    if (!cust) return;
+
+    const fd = new FormData(form);
+    const settleAmt = Number(fd.get('amount')) || 0;
+    const paymentMode = (fd.get('paymentMode') as string) || 'Cash';
+    const note = (fd.get('note') as string) || '';
+
+    if (settleAmt <= 0) {
+      alert('Please enter a valid settlement amount greater than 0');
+      return;
+    }
+
+    const prevBal = Number(cust.khataBalance) || 0;
+    const newBal = Math.max(0, prevBal - settleAmt);
+    cust.khataBalance = newBal;
+    cust.totalSpent = (Number(cust.totalSpent) || 0) + settleAmt;
+
+    // Record in customer settlement history ledger
+    if (!cust.khataHistory) cust.khataHistory = [];
+    const now = new Date();
+    const dateFormatted = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    cust.khataHistory.unshift({
+      id: `SETTLE-${Date.now()}`,
+      date: dateFormatted,
+      amount: settleAmt,
+      paymentMode: paymentMode,
+      note: note || 'Counter Payment Settlement',
+      previousBalance: prevBal,
+      remainingBalance: newBal
+    });
+
+    // Record in global shop audit logs
+    state.auditLogs.unshift({
+      time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      user: 'Admin (AS)',
+      action: 'Khata Payment Settled',
+      details: `Received ₹${settleAmt.toLocaleString()} from ${cust.name} via ${paymentMode}. Balance: ₹${newBal.toLocaleString()}`
+    });
+
+    state.showSettleKhataModal = false;
+    state.settlingCustomer = null;
+    saveState();
+    renderApp();
+    showToast(`Received ₹${settleAmt.toLocaleString()} payment from ${cust.name}! Remaining Khata: ₹${newBal.toLocaleString()}`, 'success');
   });
 
   // Add Customer Modal
@@ -877,21 +1059,34 @@ function attachEventListeners() {
     state.showAddCustomerModal = false;
     renderApp();
   });
+  document.getElementById('cancel-add-customer-btn')?.addEventListener('click', () => {
+    state.showAddCustomerModal = false;
+    renderApp();
+  });
+  document.getElementById('add-customer-modal')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'add-customer-modal') {
+      state.showAddCustomerModal = false;
+      renderApp();
+    }
+  });
 
-  document.getElementById('add-customer-form')?.addEventListener('submit', (e) => {
+  document.getElementById('add-customer-form')?.addEventListener('submit', (e: any) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const newCust = {
       id: `cust-${Date.now()}`,
-      name: fd.get('name'),
+      name: fd.get('name') as string,
       phone: `+91 ${fd.get('phone')}`,
-      email: fd.get('email') || '',
-      address: fd.get('address') || 'Ahmedabad, Gujarat',
-      type: fd.get('tier') || 'Regular',
-      tier: fd.get('tier') || 'Regular',
+      email: (fd.get('email') as string) || '',
+      address: (fd.get('address') as string) || 'Ahmedabad, Gujarat',
+      type: (fd.get('tier') as string) || 'Regular',
+      tier: (fd.get('tier') as string) || 'Regular',
+      khataBalance: Number(fd.get('khataBalance')) || 0,
+      creditLimit: Number(fd.get('creditLimit')) || 5000,
       totalOrders: 0,
       totalSpent: 0,
-      notes: fd.get('notes') || ''
+      loyaltyPoints: 50,
+      notes: (fd.get('notes') as string) || ''
     };
     state.customers.unshift(newCust);
     state.selectedCustomer = newCust;
@@ -899,9 +1094,22 @@ function attachEventListeners() {
     state.showAddCustomerModal = false;
     saveState();
     renderApp();
+    showToast(`Customer ${newCust.name} registered successfully!`, 'success');
   });
 
   // Products & Confectionery Inventory Management Handlers
+  // View mode switcher: Table vs Grid
+  document.getElementById('view-mode-table-btn')?.addEventListener('click', () => {
+    state.productsViewMode = 'table';
+    saveState();
+    renderApp();
+  });
+  document.getElementById('view-mode-grid-btn')?.addEventListener('click', () => {
+    state.productsViewMode = 'grid';
+    saveState();
+    renderApp();
+  });
+
   document.querySelectorAll('[data-products-category]').forEach(btn => {
     btn.addEventListener('click', () => {
       state.productsFilterCategory = btn.getAttribute('data-products-category');
@@ -909,7 +1117,7 @@ function attachEventListeners() {
     });
   });
 
-  document.getElementById('products-search-input')?.addEventListener('input', (e) => {
+  document.getElementById('products-search-input')?.addEventListener('input', (e: any) => {
     state.productsSearchQuery = e.target.value;
     renderApp();
   });

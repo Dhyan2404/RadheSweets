@@ -1,11 +1,12 @@
 // Products Catalog & Inventory Management Component
-// Comprehensive Confectionery Inventory System with Valuation, Real-time Stock Gauges, Batch Restocking & Audit
+// Radhe Sweets - Warm Terracotta Confectionery Design System
 
-export function renderProductsView(state) {
+export function renderProductsView(state: any) {
   const { 
     sweets = [], 
     productsFilterCategory = 'All', 
     productsSearchQuery = '', 
+    productsViewMode = 'table', // 'table' or 'grid'
     rawMaterials = [] 
   } = state;
 
@@ -15,17 +16,17 @@ export function renderProductsView(state) {
 
   // Compute Live Inventory Metrics
   const totalItemsCount = sweets.length;
-  const totalStockKg = sweets.reduce((acc, s) => acc + (Number(s.stock) || 0), 0);
-  const totalRetailValuation = sweets.reduce((acc, s) => acc + ((Number(s.stock) || 0) * (Number(s.pricePerKg) || 0)), 0);
-  const totalCostValuation = sweets.reduce((acc, s) => acc + ((Number(s.stock) || 0) * (Number(s.costPrice) || Number(s.pricePerKg) * 0.6)), 0);
+  const totalStockKg = sweets.reduce((acc: number, s: any) => acc + (Number(s.stock) || 0), 0);
+  const totalRetailValuation = sweets.reduce((acc: number, s: any) => acc + ((Number(s.stock) || 0) * (Number(s.pricePerKg) || 0)), 0);
+  const totalCostValuation = sweets.reduce((acc: number, s: any) => acc + ((Number(s.stock) || 0) * (Number(s.costPrice) || Number(s.pricePerKg) * 0.6)), 0);
   const totalEstimatedProfit = Math.max(0, totalRetailValuation - totalCostValuation);
   const averageMargin = totalRetailValuation > 0 ? Math.round((totalEstimatedProfit / totalRetailValuation) * 100) : 38;
 
-  const lowStockItems = sweets.filter(item => (Number(item.stock) || 0) <= (item.minStock || 15));
-  const outOfStockItems = sweets.filter(item => (Number(item.stock) || 0) <= 0);
+  const lowStockItems = sweets.filter((item: any) => (Number(item.stock) || 0) <= (item.minStock || 15));
+  const outOfStockItems = sweets.filter((item: any) => (Number(item.stock) || 0) <= 0);
 
   // Filter products based on search and category
-  const filteredProducts = sweets.filter(item => {
+  const filteredProducts = sweets.filter((item: any) => {
     const matchesSearch = !productsSearchQuery || 
       item.name.toLowerCase().includes(productsSearchQuery.toLowerCase()) ||
       (item.code && item.code.toLowerCase().includes(productsSearchQuery.toLowerCase())) ||
@@ -42,19 +43,19 @@ export function renderProductsView(state) {
     return item.category === productsFilterCategory;
   });
 
-  // Avatar initials colors
-  const getBadgeColors = (code) => {
+  // Badge Colors matching palette
+  const getBadgeColors = (code: string) => {
     switch (code) {
-      case 'KK': return 'bg-amber-100 text-amber-900 border-amber-300';
-      case 'RG': return 'bg-sky-100 text-sky-900 border-sky-300';
-      case 'GJ': return 'bg-orange-100 text-orange-900 border-orange-300';
-      case 'ML': return 'bg-yellow-100 text-yellow-900 border-yellow-300';
-      case 'KP': return 'bg-amber-100 text-amber-900 border-amber-300';
-      case 'DF': return 'bg-emerald-100 text-emerald-900 border-emerald-300';
-      case 'MC': return 'bg-amber-200/80 text-amber-950 border-amber-400';
-      case 'SP': return 'bg-stone-100 text-stone-900 border-stone-300';
-      case 'SM': return 'bg-orange-100 text-orange-900 border-orange-300';
-      default: return 'bg-[#FAF7F2] text-[#3D271D] border-[#EFE9DF]';
+      case 'KK': return 'bg-[#FFF7ED] text-[#C86D3B] border-[#FED7AA]';
+      case 'RG': return 'bg-[#F0FDF4] text-[#166534] border-[#BBF7D0]';
+      case 'GJ': return 'bg-[#FEF9C3] text-[#854D0E] border-[#FEF08A]';
+      case 'ML': return 'bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]';
+      case 'KP': return 'bg-[#FFF7ED] text-[#C86D3B] border-[#FED7AA]';
+      case 'DF': return 'bg-[#F0FDF4] text-[#166534] border-[#BBF7D0]';
+      case 'MC': return 'bg-[#FFF7ED] text-[#9A3412] border-[#FDBA74]';
+      case 'SP': return 'bg-[#FAF7F2] text-[#2A1F1D] border-[#EFE7DE]';
+      case 'SM': return 'bg-[#FFF7ED] text-[#C86D3B] border-[#FED7AA]';
+      default: return 'bg-[#FAF7F2] text-[#2A1F1D] border-[#EFE7DE]';
     }
   };
 
@@ -78,7 +79,7 @@ export function renderProductsView(state) {
           <!-- Restock Batch Button -->
           <button 
             id="open-restock-batch-modal-btn" 
-            class="px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#3D271D] border border-[#E0D7CC] text-xs font-bold rounded-2xl shadow-2xs transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            class="px-4 py-2.5 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C86D3B] border border-[#FED7AA] text-xs font-bold rounded-2xl shadow-xs transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
           >
             <span class="text-sm">✨</span>
             <span>+ Kitchen Restock</span>
@@ -87,7 +88,7 @@ export function renderProductsView(state) {
           <!-- Stock Adjust Button -->
           <button 
             id="open-stock-adjust-modal-btn" 
-            class="px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#3D271D] border border-[#E0D7CC] text-xs font-bold rounded-2xl shadow-2xs transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            class="px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#2A1F1D] border border-[#EFE7DE] text-xs font-bold rounded-2xl shadow-xs transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
           >
             <span class="text-sm">⚖️</span>
             <span>Audit / Adjust</span>
@@ -96,7 +97,7 @@ export function renderProductsView(state) {
           <!-- Export CSV Button -->
           <button 
             id="export-inventory-csv-btn" 
-            class="px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#3D271D] border border-[#E0D7CC] text-xs font-bold rounded-2xl shadow-2xs transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            class="px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#7C7267] border border-[#EFE7DE] text-xs font-bold rounded-2xl shadow-xs transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
             title="Download full inventory CSV report"
           >
             <svg class="w-4 h-4 text-[#7C7267]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -108,7 +109,7 @@ export function renderProductsView(state) {
           <!-- Add Product Button -->
           <button 
             id="open-add-product-modal-btn" 
-            class="px-4 py-2.5 bg-[#3D271D] hover:bg-[#2A1F1D] text-white text-xs font-bold rounded-2xl shadow-sm transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            class="px-4 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white text-xs font-bold rounded-2xl shadow-sm transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
           >
             <span class="text-base leading-none">+</span>
             <span>Add New Sweet</span>
@@ -120,7 +121,7 @@ export function renderProductsView(state) {
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         
         <!-- CARD 1: Total Inventory Stock Valuation -->
-        <article class="bg-white rounded-3xl p-5 border border-[#F2ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between">
+        <article class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-[#7C7267]">Stock Valuation (Retail)</span>
             <div class="w-9 h-9 rounded-2xl bg-[#E6F4EA] flex items-center justify-center text-[#1E7E34]">
@@ -140,20 +141,20 @@ export function renderProductsView(state) {
         </article>
 
         <!-- CARD 2: Total Tracked Sweets & Volume -->
-        <article class="bg-white rounded-3xl p-5 border border-[#F2ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between">
+        <article class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-[#7C7267]">Total Finished Stock</span>
-            <div class="w-9 h-9 rounded-2xl bg-[#F0EBF8] flex items-center justify-center text-[#734BB5]">
+            <div class="w-9 h-9 rounded-2xl bg-[#FFF7ED] flex items-center justify-center text-[#C86D3B]">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
           </div>
           <div class="mt-3">
-            <p class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">${totalStockKg} <span class="text-sm font-normal text-[#7C7267]">units/kg</span></p>
+            <p class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">${totalStockKg} <span class="text-sm font-normal text-[#7C7267]">kg/units</span></p>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
-              <span>${totalItemsCount} Active Sweets</span>
-              <span class="font-bold text-[#3D271D]">Kitchen Fresh</span>
+              <span>${totalItemsCount} Confectionery Items</span>
+              <span class="font-bold text-[#C86D3B]">Pure Desi Ghee</span>
             </div>
           </div>
         </article>
@@ -161,11 +162,11 @@ export function renderProductsView(state) {
         <!-- CARD 3: Low Stock Alerts -->
         <article 
           data-products-category="⚠️ Low Stock"
-          class="bg-white rounded-3xl p-5 border border-[#F2ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between cursor-pointer hover:border-[#E89B67] hover:shadow-md transition-all group"
+          class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between cursor-pointer hover:border-[#C86D3B] hover:shadow-md transition-all group"
         >
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-[#7C7267] group-hover:text-[#2A1F1D]">Low Stock Warnings</span>
-            <div class="w-9 h-9 rounded-2xl ${lowStockItems.length > 0 ? 'bg-[#FCEFE3] text-[#D96B27]' : 'bg-[#E6F4EA] text-[#1E7E34]'} flex items-center justify-center">
+            <div class="w-9 h-9 rounded-2xl ${lowStockItems.length > 0 ? 'bg-[#FFF7ED] text-[#C86D3B]' : 'bg-[#E6F4EA] text-[#1E7E34]'} flex items-center justify-center">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -173,12 +174,12 @@ export function renderProductsView(state) {
           </div>
           <div class="mt-3">
             <div class="flex items-baseline gap-2">
-              <p class="text-2xl sm:text-3xl font-extrabold ${lowStockItems.length > 0 ? 'text-[#D96B27]' : 'text-[#1E7E34]'} tracking-tight">${lowStockItems.length}</p>
+              <p class="text-2xl sm:text-3xl font-extrabold ${lowStockItems.length > 0 ? 'text-[#C86D3B]' : 'text-[#1E7E34]'} tracking-tight">${lowStockItems.length}</p>
               <span class="text-xs font-semibold text-[#7C7267]">items below threshold</span>
             </div>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
               <span>${outOfStockItems.length} Out of Stock</span>
-              <span class="font-bold text-[#D96B27] underline group-hover:text-[#B24F15]">Click to View &rarr;</span>
+              <span class="font-bold text-[#C86D3B] underline group-hover:text-[#B25D2E]">Click to View &rarr;</span>
             </div>
           </div>
         </article>
@@ -186,30 +187,27 @@ export function renderProductsView(state) {
         <!-- CARD 4: Raw Material Pantry Ledger -->
         <article 
           data-products-category="🌾 Raw Materials"
-          class="bg-white rounded-3xl p-5 border border-[#F2ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between cursor-pointer hover:border-[#734BB5] hover:shadow-md transition-all group"
+          class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between cursor-pointer hover:border-[#DDA15E] hover:shadow-md transition-all group"
         >
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-[#7C7267] group-hover:text-[#2A1F1D]">Raw Materials & PO</span>
-            <div class="w-9 h-9 rounded-2xl bg-[#E8F3FA] flex items-center justify-center text-[#1976D2]">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M9 9h6M9 13h6M9 17h4" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+            <div class="w-9 h-9 rounded-2xl bg-[#FEF9C3] flex items-center justify-center text-[#A16207]">
+              🌾
             </div>
           </div>
           <div class="mt-3">
             <p class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">${rawMaterials.length} <span class="text-sm font-normal text-[#7C7267]">ingredients</span></p>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
-              <span>Ghee, Mawa, Cashew, Sugar</span>
-              <span class="font-bold text-[#1976D2] underline group-hover:text-[#115293]">View Pantry &rarr;</span>
+              <span>Ghee, Mawa, Sugar, Dry Fruits</span>
+              <span class="font-bold text-[#A16207] underline">View Pantry &rarr;</span>
             </div>
           </div>
         </article>
 
       </section>
 
-      <!-- Search & Category Filters -->
-      <section class="bg-white rounded-3xl p-4 sm:p-5 border border-[#F2ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4">
+      <!-- Search, Category Filters & View Switcher -->
+      <section class="bg-white rounded-3xl p-4 sm:p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
           
           <!-- Category Filter Pills -->
@@ -221,37 +219,68 @@ export function renderProductsView(state) {
                   data-products-category="${cat}"
                   class="px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
                     isActive 
-                      ? 'bg-[#3D271D] text-white shadow-xs' 
-                      : 'bg-[#FAF7F2] text-[#6C635B] hover:text-[#2A1F1D] hover:bg-[#F2ECE3] border border-[#EFE9DF]'
+                      ? 'bg-[#C86D3B] text-white shadow-xs' 
+                      : 'bg-[#FAF7F2] text-[#7C7267] hover:text-[#2A1F1D] hover:bg-[#F0ECE4] border border-[#EFE7DE]'
                   }"
                 >
                   ${cat}
                   ${cat === '⚠️ Low Stock' && lowStockItems.length > 0 ? `
-                    <span class="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] bg-[#E05A47] text-white">${lowStockItems.length}</span>
+                    <span class="ml-1.5 px-2 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-800 font-extrabold'}">${lowStockItems.length}</span>
                   ` : ''}
                 </button>
               `;
             }).join('')}
           </div>
 
-          <!-- Search Input -->
-          <div class="relative w-full md:max-w-xs">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8C7E72]">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-            <input 
-              id="products-search-input"
-              type="text" 
-              value="${productsSearchQuery || ''}"
-              placeholder="Search sweet name, code (KK, RG)..." 
-              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs text-[#2A1F1D] placeholder-[#A3968A] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
-            />
-            ${productsSearchQuery ? `
-              <button id="clear-products-search-btn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#8C7E72] hover:text-[#2A1F1D]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-              </button>
+          <!-- Search Input & View Switcher Toggle -->
+          <div class="flex items-center gap-2.5 w-full md:w-auto">
+            <!-- Search -->
+            <div class="relative flex-1 md:w-64">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#A89F95]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <input 
+                id="products-search-input"
+                type="text" 
+                value="${productsSearchQuery || ''}"
+                placeholder="Search sweet name, code (KK, RG)..." 
+                class="w-full pl-10 pr-8 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs text-[#2A1F1D] placeholder-[#A89F95] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+              />
+              ${productsSearchQuery ? `
+                <button id="clear-products-search-btn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#A89F95] hover:text-[#2A1F1D]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- View Switcher (Table vs Grid) -->
+            ${!isRawMaterialTab ? `
+              <div class="flex items-center p-1 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl">
+                <button 
+                  id="view-mode-table-btn"
+                  class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    productsViewMode === 'table' 
+                      ? 'bg-white text-[#C86D3B] shadow-xs' 
+                      : 'text-[#7C7267] hover:text-[#2A1F1D]'
+                  }"
+                  title="Table Ledger View"
+                >
+                  📋
+                </button>
+                <button 
+                  id="view-mode-grid-btn"
+                  class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    productsViewMode === 'grid' 
+                      ? 'bg-white text-[#C86D3B] shadow-xs' 
+                      : 'text-[#7C7267] hover:text-[#2A1F1D]'
+                  }"
+                  title="Grid Cards View"
+                >
+                  🎴
+                </button>
+              </div>
             ` : ''}
           </div>
 
@@ -260,21 +289,22 @@ export function renderProductsView(state) {
 
       ${isRawMaterialTab ? `
         <!-- Raw Material Stock Ledger Table -->
-        <section class="bg-white rounded-3xl border border-[#F2ECE4] shadow-[0_4px_25px_-5px_rgba(74,58,47,0.04)] overflow-hidden">
+        <section class="bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_4px_25px_-5px_rgba(74,58,47,0.04)] overflow-hidden">
           <div class="p-5 sm:p-6 border-b border-[#F4EFE9] flex items-center justify-between">
             <div>
               <h2 class="text-base font-bold text-[#2A1F1D]">Raw Material Stock Ledger & Pantry</h2>
               <p class="text-xs text-[#7C7267]">Inward procurement rates, safe threshold limits & expiry schedules</p>
             </div>
-            <button id="open-add-rm-modal-btn" class="px-3.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#3D271D] border border-[#E0D7CC] text-xs font-bold rounded-xl transition-all">
-              + Inward PO
+            <button id="open-add-rm-modal-btn" class="px-3.5 py-2 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C86D3B] border border-[#FED7AA] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5">
+              <span>+</span>
+              <span>Inward PO</span>
             </button>
           </div>
 
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
-                <tr class="bg-[#FAF7F2] border-b border-[#EFE9DF] text-[#7C7267] font-bold text-[11px] uppercase tracking-wider">
+                <tr class="bg-[#FAF7F2] border-b border-[#EFE7DE] text-[#7C7267] font-bold text-[11px] uppercase tracking-wider">
                   <th class="py-3.5 px-5">Ingredient / Consumable</th>
                   <th class="py-3.5 px-4 text-center">Available Stock</th>
                   <th class="py-3.5 px-4 text-center">Procurement Cost</th>
@@ -285,13 +315,13 @@ export function renderProductsView(state) {
                 </tr>
               </thead>
               <tbody class="divide-y divide-[#F7F3EE]">
-                ${rawMaterials.map(rm => {
+                ${rawMaterials.map((rm: any) => {
                   const isLow = (rm.stock || 0) <= (rm.reorderLevel || 20);
                   return `
                     <tr class="hover:bg-[#FAF7F2]/60 transition-colors">
                       <td class="py-4 px-5">
                         <p class="font-bold text-[#2A1F1D] text-sm">${rm.name}</p>
-                        <span class="text-[10px] font-mono font-semibold text-[#8C7E72]">${rm.id}</span>
+                        <span class="text-[10px] font-mono font-semibold text-[#A89F95]">${rm.id}</span>
                       </td>
                       <td class="py-4 px-4 text-center">
                         <span class="text-sm font-extrabold text-[#2A1F1D] tabular-nums">${rm.stock}</span>
@@ -306,8 +336,8 @@ export function renderProductsView(state) {
                       <td class="py-4 px-4 text-center">
                         <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold ${
                           rm.isPerishable 
-                            ? 'bg-[#FCEFE3] text-[#D96B27] border border-[#FAD7BC]' 
-                            : 'bg-[#FAF7F2] text-[#6C635B] border border-[#EFE9DF]'
+                            ? 'bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA]' 
+                            : 'bg-[#FAF7F2] text-[#7C7267] border border-[#EFE7DE]'
                         }">
                           ${rm.expiry}
                         </span>
@@ -315,17 +345,17 @@ export function renderProductsView(state) {
                       <td class="py-4 px-4 text-center">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
                           isLow 
-                            ? 'bg-[#FCEFE3] text-[#D96B27] border border-[#FAD7BC]' 
+                            ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]' 
                             : 'bg-[#E6F4EA] text-[#1E7E34] border border-[#CDE9D3]'
                         }">
-                          <span class="w-1.5 h-1.5 rounded-full ${isLow ? 'bg-[#E05A47] animate-pulse' : 'bg-[#34A853]'}"></span>
+                          <span class="w-1.5 h-1.5 rounded-full ${isLow ? 'bg-[#DC2626] animate-pulse' : 'bg-[#1E7E34]'}"></span>
                           ${isLow ? 'Order Needed' : 'Adequate'}
                         </span>
                       </td>
                       <td class="py-4 px-5 text-right">
                         <button 
                           data-restock-rm="${rm.id}" 
-                          class="px-3 py-1.5 bg-[#FAF7F2] hover:bg-[#3D271D] hover:text-white text-[#3D271D] border border-[#E0D7CC] rounded-xl text-xs font-bold transition-all shadow-2xs"
+                          class="px-3.5 py-1.5 bg-[#FFF7ED] hover:bg-[#C86D3B] hover:text-white text-[#C86D3B] border border-[#FED7AA] rounded-xl text-xs font-bold transition-all shadow-2xs"
                         >
                           + Inward PO
                         </button>
@@ -338,36 +368,140 @@ export function renderProductsView(state) {
           </div>
         </section>
       ` : `
-        <!-- Main Finished Confectionery Products Catalog Table -->
-        <section class="bg-white rounded-3xl border border-[#F2ECE4] shadow-[0_4px_25px_-5px_rgba(74,58,47,0.04)] overflow-hidden">
-          <div class="p-5 sm:p-6 border-b border-[#F4EFE9] flex items-center justify-between">
-            <div>
-              <h2 class="text-base font-bold text-[#2A1F1D]">Confectionery Stock Ledger</h2>
-              <p class="text-xs text-[#7C7267]">Showing ${filteredProducts.length} items (${productsFilterCategory || 'All'})</p>
+        <!-- Main Finished Confectionery Products Catalog -->
+        ${filteredProducts.length === 0 ? `
+          <div class="bg-white rounded-3xl border border-[#F0ECE4] p-12 text-center shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)]">
+            <div class="w-16 h-16 rounded-full bg-[#FAF7F2] border border-[#F0ECE4] flex items-center justify-center mx-auto text-2xl mb-3 text-[#C86D3B]">
+              🍬
             </div>
-            
-            <div class="text-right">
-              <span class="text-xs font-bold text-[#7C7267]">Total Batch Value: </span>
-              <span class="text-sm font-extrabold text-[#2A1F1D]">₹${filteredProducts.reduce((sum, item) => sum + ((item.stock || 0) * (item.pricePerKg || 0)), 0).toLocaleString()}</span>
-            </div>
+            <h3 class="text-base font-bold text-[#2A1F1D]">No sweet items found</h3>
+            <p class="text-xs text-[#7C7267] mt-1 max-w-sm mx-auto">No sweet items match your current filter or search query. Try clearing the search or adding a new sweet.</p>
+            <button id="reset-products-filter-btn" class="mt-4 px-4 py-2 bg-[#C86D3B] text-white text-xs font-bold rounded-2xl shadow-sm">
+              Reset All Filters
+            </button>
           </div>
+        ` : productsViewMode === 'grid' ? `
+          <!-- Visual Grid Cards View -->
+          <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            ${filteredProducts.map((item: any) => {
+              const badgeClass = getBadgeColors(item.code || item.name.substring(0, 2).toUpperCase());
+              const currentStock = Number(item.stock) || 0;
+              const minStock = Number(item.minStock) || 15;
+              const isLow = currentStock <= minStock;
+              const isZero = currentStock <= 0;
+              const stockPct = Math.min(100, Math.round((currentStock / 60) * 100));
 
-          ${filteredProducts.length === 0 ? `
-            <div class="p-12 text-center">
-              <div class="w-16 h-16 rounded-full bg-[#FAF7F2] border border-[#EFE9DF] flex items-center justify-center mx-auto text-2xl mb-3">
-                🔍
+              return `
+                <div class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] hover:shadow-card hover:border-[#FED7AA] transition-all flex flex-col justify-between group">
+                  <div>
+                    <div class="flex items-start justify-between">
+                      <div class="w-12 h-12 rounded-2xl ${badgeClass} border flex items-center justify-center font-extrabold text-sm shadow-xs shrink-0">
+                        ${item.code || item.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        isZero 
+                          ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]' 
+                          : (isLow ? 'bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA]' : 'bg-[#E6F4EA] text-[#1E7E34] border border-[#CDE9D3]')
+                      }">
+                        <span class="w-1.5 h-1.5 rounded-full ${isZero ? 'bg-[#DC2626]' : (isLow ? 'bg-[#C86D3B] animate-pulse' : 'bg-[#1E7E34]')}"></span>
+                        ${isZero ? 'Out of Stock' : (isLow ? 'Low Stock' : 'Fresh Stock')}
+                      </span>
+                    </div>
+
+                    <div class="mt-3">
+                      <h3 class="font-bold text-base text-[#2A1F1D] group-hover:text-[#C86D3B] transition-colors line-clamp-1">${item.name}</h3>
+                      <p class="text-xs text-[#7C7267] mt-0.5">${item.category} • SKU: ${item.id}</p>
+                    </div>
+
+                    <!-- Price & Stock Stats -->
+                    <div class="mt-4 p-3 bg-[#FAF7F2] rounded-2xl border border-[#F0ECE4] space-y-2">
+                      <div class="flex items-baseline justify-between">
+                        <span class="text-xs text-[#7C7267]">Selling Rate</span>
+                        <span class="text-base font-extrabold text-[#2A1F1D]">₹${item.pricePerKg} <span class="text-xs font-normal text-[#7C7267]">/${item.unit}</span></span>
+                      </div>
+
+                      <div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                          <span class="text-[#7C7267]">Stock Level:</span>
+                          <span class="font-bold ${isZero ? 'text-[#DC2626]' : (isLow ? 'text-[#C86D3B]' : 'text-[#2A1F1D]')}">${currentStock} ${item.unit}</span>
+                        </div>
+                        <div class="w-full bg-[#EFE7DE] h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            class="h-full rounded-full transition-all duration-300 ${isZero ? 'bg-[#DC2626]' : (isLow ? 'bg-[#C86D3B]' : 'bg-[#1E7E34]')}" 
+                            style="width: ${Math.max(4, stockPct)}%;"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Quick Stock Adjusters & Sell Button -->
+                  <div class="mt-4 pt-3 border-t border-[#F4EFE9] space-y-2">
+                    <div class="flex items-center justify-between gap-1.5">
+                      <button 
+                        data-stock-adjust="${item.id}" 
+                        data-stock-delta="-1"
+                        class="flex-1 py-1 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#2A1F1D] border border-[#EFE7DE] rounded-xl text-xs font-bold transition-all text-center"
+                        title="Deduct 1 kg"
+                      >
+                        -1
+                      </button>
+                      <button 
+                        data-stock-adjust="${item.id}" 
+                        data-stock-delta="5"
+                        class="flex-1 py-1 bg-[#FAF7F2] hover:bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA] rounded-xl text-xs font-bold transition-all text-center"
+                        title="Add 5 kg fresh batch"
+                      >
+                        +5
+                      </button>
+                      <button 
+                        data-stock-adjust="${item.id}" 
+                        data-stock-delta="10"
+                        class="flex-1 py-1 bg-[#FAF7F2] hover:bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA] rounded-xl text-xs font-bold transition-all text-center"
+                        title="Add 10 kg fresh batch"
+                      >
+                        +10
+                      </button>
+                      <button 
+                        data-edit-product="${item.id}"
+                        class="px-2.5 py-1 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#7C7267] hover:text-[#2A1F1D] border border-[#EFE7DE] rounded-xl text-xs transition-all"
+                        title="Edit Details"
+                      >
+                        ✏️
+                      </button>
+                    </div>
+
+                    <button 
+                      data-add-to-pos="${item.id}"
+                      class="w-full py-2 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
+                    >
+                      <span>⚡</span>
+                      <span>+ Sell in Counter POS</span>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </section>
+        ` : `
+          <!-- Full Confectionery Stock Ledger Table View -->
+          <section class="bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_4px_25px_-5px_rgba(74,58,47,0.04)] overflow-hidden">
+            <div class="p-5 sm:p-6 border-b border-[#F4EFE9] flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-bold text-[#2A1F1D]">Confectionery Stock Ledger</h2>
+                <p class="text-xs text-[#7C7267]">Showing ${filteredProducts.length} items (${productsFilterCategory || 'All'})</p>
               </div>
-              <h3 class="text-base font-bold text-[#2A1F1D]">No items found</h3>
-              <p class="text-xs text-[#7C7267] mt-1 max-w-sm mx-auto">No sweet items match your current filter or search query. Try clearing the search or adding a new sweet.</p>
-              <button id="reset-products-filter-btn" class="mt-4 px-4 py-2 bg-[#3D271D] text-white text-xs font-bold rounded-2xl shadow-sm">
-                Reset All Filters
-              </button>
+              
+              <div class="text-right">
+                <span class="text-xs font-bold text-[#7C7267]">Total Batch Value: </span>
+                <span class="text-sm font-extrabold text-[#2A1F1D]">₹${filteredProducts.reduce((sum: number, item: any) => sum + ((item.stock || 0) * (item.pricePerKg || 0)), 0).toLocaleString()}</span>
+              </div>
             </div>
-          ` : `
+
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
-                  <tr class="bg-[#FAF7F2] border-b border-[#EFE9DF] text-[#7C7267] font-bold text-[11px] uppercase tracking-wider">
+                  <tr class="bg-[#FAF7F2] border-b border-[#EFE7DE] text-[#7C7267] font-bold text-[11px] uppercase tracking-wider">
                     <th class="py-3.5 px-5">Sweet & Details</th>
                     <th class="py-3.5 px-4">Category</th>
                     <th class="py-3.5 px-4 text-center">Stock Level & Gauge</th>
@@ -378,7 +512,7 @@ export function renderProductsView(state) {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-[#F7F3EE]">
-                  ${filteredProducts.map(item => {
+                  ${filteredProducts.map((item: any) => {
                     const badgeClass = getBadgeColors(item.code || item.name.substring(0, 2).toUpperCase());
                     const currentStock = Number(item.stock) || 0;
                     const minStock = Number(item.minStock) || 15;
@@ -386,8 +520,6 @@ export function renderProductsView(state) {
                     const isZero = currentStock <= 0;
                     const cost = Number(item.costPrice) || Math.round(item.pricePerKg * 0.62);
                     const marginPct = Math.round(((item.pricePerKg - cost) / item.pricePerKg) * 100);
-                    
-                    // Stock capacity bar (out of 60kg normal max capacity)
                     const stockPct = Math.min(100, Math.round((currentStock / 60) * 100));
 
                     return `
@@ -402,8 +534,8 @@ export function renderProductsView(state) {
                             <div class="min-w-0">
                               <p class="font-bold text-[#2A1F1D] text-sm group-hover:text-[#C86D3B] transition-colors truncate">${item.name}</p>
                               <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[10px] text-[#8C7E72] font-mono">SKU: ${item.id}</span>
-                                <span class="text-[10px] text-[#A3968A]">•</span>
+                                <span class="text-[10px] text-[#A89F95] font-mono">SKU: ${item.id}</span>
+                                <span class="text-[10px] text-[#A89F95]">•</span>
                                 <span class="text-[10px] text-[#7C7267] font-medium">Batch #${item.batchNumber || 'B-260925'}</span>
                               </div>
                             </div>
@@ -412,7 +544,7 @@ export function renderProductsView(state) {
 
                         <!-- Category Pill -->
                         <td class="py-4 px-4 whitespace-nowrap">
-                          <span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-[#FAF7F2] text-[#6C635B] border border-[#EFE9DF]">
+                          <span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-[#FAF7F2] text-[#7C7267] border border-[#EFE7DE]">
                             ${item.category}
                           </span>
                         </td>
@@ -420,29 +552,29 @@ export function renderProductsView(state) {
                         <!-- Stock Level with Visual Gauge Bar -->
                         <td class="py-4 px-4 text-center min-w-[140px]">
                           <div class="flex items-center justify-center gap-1.5">
-                            <span class="text-base font-black ${isZero ? 'text-[#E05A47]' : (isLow ? 'text-[#D96B27]' : 'text-[#2A1F1D]')} tabular-nums">
+                            <span class="text-base font-black ${isZero ? 'text-[#DC2626]' : (isLow ? 'text-[#C86D3B]' : 'text-[#2A1F1D]')} tabular-nums">
                               ${currentStock}
                             </span>
-                            <span class="text-xs font-semibold text-[#8C7E72]">${item.unit}</span>
+                            <span class="text-xs font-semibold text-[#7C7267]">${item.unit}</span>
                           </div>
 
                           <!-- Mini Capacity Progress Bar -->
-                          <div class="w-full max-w-[110px] mx-auto bg-[#EFE9DF] h-1.5 rounded-full overflow-hidden mt-1.5">
+                          <div class="w-full max-w-[110px] mx-auto bg-[#EFE7DE] h-1.5 rounded-full overflow-hidden mt-1.5">
                             <div 
                               class="h-full rounded-full transition-all duration-300 ${
                                 isZero 
-                                  ? 'bg-[#E05A47] w-1' 
-                                  : (isLow ? 'bg-[#E07A5F]' : 'bg-[#34A853]')
+                                  ? 'bg-[#DC2626] w-1' 
+                                  : (isLow ? 'bg-[#C86D3B]' : 'bg-[#1E7E34]')
                               }" 
                               style="width: ${Math.max(4, stockPct)}%;"
                             ></div>
                           </div>
-                          <span class="text-[10px] text-[#8C7E72] mt-1 block">Min alert: ${minStock} ${item.unit}</span>
+                          <span class="text-[10px] text-[#A89F95] mt-1 block">Min alert: ${minStock} ${item.unit}</span>
                         </td>
 
                         <!-- Selling Rate & Total Asset Value -->
                         <td class="py-4 px-4 whitespace-nowrap">
-                          <p class="font-extrabold text-[#2A1F1D] text-sm tabular-nums">₹${item.pricePerKg} <span class="text-xs font-normal text-[#8C7E72]">/${item.unit}</span></p>
+                          <p class="font-extrabold text-[#2A1F1D] text-sm tabular-nums">₹${item.pricePerKg} <span class="text-xs font-normal text-[#7C7267]">/${item.unit}</span></p>
                           <p class="text-[10px] text-[#7C7267] mt-0.5">Asset: ₹${(currentStock * item.pricePerKg).toLocaleString()}</p>
                         </td>
 
@@ -458,12 +590,12 @@ export function renderProductsView(state) {
                         <td class="py-4 px-4 text-center whitespace-nowrap">
                           <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                             isZero 
-                              ? 'bg-[#FCEBE6] text-[#D84A38] border border-[#F8ECE8]'
+                              ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
                               : (isLow 
-                                  ? 'bg-[#FCEFE3] text-[#D96B27] border border-[#FAD7BC]' 
+                                  ? 'bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA]' 
                                   : 'bg-[#E6F4EA] text-[#1E7E34] border border-[#CDE9D3]')
                           }">
-                            <span class="w-1.5 h-1.5 rounded-full ${isZero ? 'bg-[#D84A38] animate-ping' : (isLow ? 'bg-[#D96B27] animate-pulse' : 'bg-[#34A853]')}"></span>
+                            <span class="w-1.5 h-1.5 rounded-full ${isZero ? 'bg-[#DC2626] animate-ping' : (isLow ? 'bg-[#C86D3B] animate-pulse' : 'bg-[#1E7E34]')}"></span>
                             ${isZero ? 'Out of Stock' : (isLow ? 'Low Stock' : 'Optimal')}
                           </span>
                         </td>
@@ -474,7 +606,7 @@ export function renderProductsView(state) {
                           <button 
                             data-stock-adjust="${item.id}" 
                             data-stock-delta="-1"
-                            class="px-2.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#2A1F1D] border border-[#EFE9DF] rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
+                            class="px-2.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#2A1F1D] border border-[#EFE7DE] rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
                             title="Decrease 1 kg (Sale or Wastage)"
                           >
                             -1
@@ -484,7 +616,7 @@ export function renderProductsView(state) {
                           <button 
                             data-stock-adjust="${item.id}" 
                             data-stock-delta="5"
-                            class="px-2.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#3D271D] border border-[#E0D7CC] rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
+                            class="px-2.5 py-1.5 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C86D3B] border border-[#FED7AA] rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
                             title="Add 5 kg fresh batch"
                           >
                             +5
@@ -494,7 +626,7 @@ export function renderProductsView(state) {
                           <button 
                             data-stock-adjust="${item.id}" 
                             data-stock-delta="10"
-                            class="px-2.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#3D271D] border border-[#E0D7CC] rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
+                            class="px-2.5 py-1.5 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C86D3B] border border-[#FED7AA] rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
                             title="Add 10 kg fresh batch"
                           >
                             +10
@@ -503,7 +635,7 @@ export function renderProductsView(state) {
                           <!-- Edit Product -->
                           <button 
                             data-edit-product="${item.id}"
-                            class="px-2.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE3] text-[#6C635B] hover:text-[#2A1F1D] border border-[#EFE9DF] rounded-xl text-xs font-semibold transition-all shadow-2xs"
+                            class="px-2.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#7C7267] hover:text-[#2A1F1D] border border-[#EFE7DE] rounded-xl text-xs font-semibold transition-all shadow-2xs"
                             title="Edit Product Details & Thresholds"
                           >
                             ✏️
@@ -512,7 +644,7 @@ export function renderProductsView(state) {
                           <!-- Sell in POS -->
                           <button 
                             data-add-to-pos="${item.id}"
-                            class="px-3 py-1.5 bg-[#3D271D] hover:bg-[#2A1F1D] text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
+                            class="px-3.5 py-1.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95"
                             title="Add directly to Counter POS Cart"
                           >
                             ⚡ + Sell
@@ -525,8 +657,8 @@ export function renderProductsView(state) {
                 </tbody>
               </table>
             </div>
-          `}
-        </section>
+          </section>
+        `}
       `}
     </div>
   `;
@@ -536,11 +668,11 @@ export function renderProductsView(state) {
 export function renderAddProductModal() {
   return `
     <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn select-none" id="add-product-modal">
-      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F2ECE4] shadow-2xl animate-scaleUp">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp">
         
         <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-2xl bg-[#FCEFE3] text-[#7C4A28] flex items-center justify-center font-bold text-lg">
+            <div class="w-10 h-10 rounded-2xl bg-[#FFF7ED] text-[#C86D3B] flex items-center justify-center font-bold text-lg border border-[#FED7AA]">
               🍬
             </div>
             <div>
@@ -548,7 +680,7 @@ export function renderAddProductModal() {
               <p class="text-xs text-[#7C7267]">Register a new confectionery item into catalog and stock ledger</p>
             </div>
           </div>
-          <button id="close-add-product-btn" class="text-[#8C7E72] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
+          <button id="close-add-product-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           </button>
         </div>
@@ -561,7 +693,7 @@ export function renderAddProductModal() {
               name="name" 
               required 
               placeholder="e.g. Kesar Pista Roll, Malai Chum Chum" 
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
             />
           </div>
 
@@ -570,7 +702,7 @@ export function renderAddProductModal() {
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Category *</label>
               <select 
                 name="category" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
                 <option value="Sweets">Sweets</option>
                 <option value="Snacks">Snacks / Namkeen</option>
@@ -582,7 +714,7 @@ export function renderAddProductModal() {
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Measurement Unit *</label>
               <select 
                 name="unit" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
                 <option value="kg">kg (Kilogram)</option>
                 <option value="pcs">pcs (Pieces)</option>
@@ -601,7 +733,7 @@ export function renderAddProductModal() {
                 required 
                 min="1" 
                 placeholder="e.g. 480" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
 
@@ -613,7 +745,7 @@ export function renderAddProductModal() {
                 required 
                 min="1" 
                 placeholder="e.g. 290" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
           </div>
@@ -627,7 +759,7 @@ export function renderAddProductModal() {
                 required 
                 min="0" 
                 placeholder="e.g. 25" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
 
@@ -639,7 +771,7 @@ export function renderAddProductModal() {
                 required 
                 min="1" 
                 value="15" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
           </div>
@@ -650,7 +782,7 @@ export function renderAddProductModal() {
               type="text" 
               name="description" 
               placeholder="e.g. Pure Desi Ghee, Kashmiri saffron and premium dry fruits." 
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
             />
           </div>
 
@@ -658,13 +790,13 @@ export function renderAddProductModal() {
             <button 
               type="button" 
               id="cancel-add-product-btn" 
-              class="px-5 py-2.5 border border-[#E0D7CC] text-[#6C635B] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
+              class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              class="px-6 py-2.5 bg-[#3D271D] hover:bg-[#2A1F1D] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-102 active:scale-98"
+              class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Save Sweet Item
             </button>
@@ -676,15 +808,15 @@ export function renderAddProductModal() {
 }
 
 // 2. Edit Sweet Product Modal
-export function renderEditProductModal(sweet) {
+export function renderEditProductModal(sweet: any) {
   if (!sweet) return '';
   return `
     <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn select-none" id="edit-product-modal">
-      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F2ECE4] shadow-2xl animate-scaleUp">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp">
         
         <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-2xl bg-[#E6F4EA] text-[#1E7E34] flex items-center justify-center font-bold text-lg">
+            <div class="w-10 h-10 rounded-2xl bg-[#FFF7ED] text-[#C86D3B] flex items-center justify-center font-bold text-lg border border-[#FED7AA]">
               ✏️
             </div>
             <div>
@@ -692,7 +824,7 @@ export function renderEditProductModal(sweet) {
               <p class="text-xs text-[#7C7267]">Update pricing, reorder thresholds, and catalog details</p>
             </div>
           </div>
-          <button id="close-edit-product-btn" class="text-[#8C7E72] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
+          <button id="close-edit-product-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           </button>
         </div>
@@ -705,7 +837,7 @@ export function renderEditProductModal(sweet) {
               name="name" 
               value="${sweet.name}" 
               required 
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
             />
           </div>
 
@@ -714,7 +846,7 @@ export function renderEditProductModal(sweet) {
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Category *</label>
               <select 
                 name="category" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
                 <option value="Sweets" ${sweet.category === 'Sweets' ? 'selected' : ''}>Sweets</option>
                 <option value="Snacks" ${sweet.category === 'Snacks' ? 'selected' : ''}>Snacks / Namkeen</option>
@@ -726,7 +858,7 @@ export function renderEditProductModal(sweet) {
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Unit *</label>
               <select 
                 name="unit" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
                 <option value="kg" ${sweet.unit === 'kg' ? 'selected' : ''}>kg (Kilogram)</option>
                 <option value="pcs" ${sweet.unit === 'pcs' ? 'selected' : ''}>pcs (Pieces)</option>
@@ -745,7 +877,7 @@ export function renderEditProductModal(sweet) {
                 value="${sweet.pricePerKg}" 
                 required 
                 min="1" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
 
@@ -757,7 +889,7 @@ export function renderEditProductModal(sweet) {
                 value="${sweet.costPrice || Math.round(sweet.pricePerKg * 0.62)}" 
                 required 
                 min="1" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
           </div>
@@ -771,7 +903,7 @@ export function renderEditProductModal(sweet) {
                 value="${sweet.stock}" 
                 required 
                 min="0" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
 
@@ -783,7 +915,7 @@ export function renderEditProductModal(sweet) {
                 value="${sweet.minStock || 15}" 
                 required 
                 min="1" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
           </div>
@@ -794,7 +926,7 @@ export function renderEditProductModal(sweet) {
               type="text" 
               name="description" 
               value="${sweet.description || ''}" 
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
             />
           </div>
 
@@ -802,7 +934,7 @@ export function renderEditProductModal(sweet) {
             <button 
               type="button" 
               data-delete-sweet="${sweet.id}" 
-              class="px-4 py-2 text-[#E05A47] hover:bg-[#FCEBE6] rounded-xl font-bold transition-all text-xs"
+              class="px-4 py-2 text-[#DC2626] hover:bg-[#FEF2F2] rounded-xl font-bold transition-all text-xs"
             >
               Delete Sweet
             </button>
@@ -811,13 +943,13 @@ export function renderEditProductModal(sweet) {
               <button 
                 type="button" 
                 id="cancel-edit-product-btn" 
-                class="px-5 py-2.5 border border-[#E0D7CC] text-[#6C635B] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
+                class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
               >
                 Cancel
               </button>
               <button 
                 type="submit" 
-                class="px-6 py-2.5 bg-[#3D271D] hover:bg-[#2A1F1D] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-102 active:scale-98"
+                class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 Update Sweet
               </button>
@@ -830,14 +962,14 @@ export function renderEditProductModal(sweet) {
 }
 
 // 3. Fresh Kitchen Batch Restock Modal
-export function renderRestockBatchModal(state) {
+export function renderRestockBatchModal(state: any) {
   const { sweets = [] } = state;
   const todayStr = "25 Sep 2026";
   const defaultBatchNo = `BATCH-${Date.now().toString().slice(-6)}`;
 
   return `
     <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn select-none" id="restock-batch-modal">
-      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F2ECE4] shadow-2xl animate-scaleUp">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp">
         
         <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
           <div class="flex items-center space-x-3">
@@ -849,7 +981,7 @@ export function renderRestockBatchModal(state) {
               <p class="text-xs text-[#7C7267]">Receive freshly made confectionery batch from central halwai kitchen</p>
             </div>
           </div>
-          <button id="close-restock-batch-btn" class="text-[#8C7E72] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
+          <button id="close-restock-batch-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           </button>
         </div>
@@ -860,9 +992,9 @@ export function renderRestockBatchModal(state) {
             <select 
               name="sweetId" 
               required
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
             >
-              ${sweets.map(s => `
+              ${sweets.map((s: any) => `
                 <option value="${s.id}">${s.name} (Current Stock: ${s.stock} ${s.unit})</option>
               `).join('')}
             </select>
@@ -876,7 +1008,7 @@ export function renderRestockBatchModal(state) {
                 name="batchNumber" 
                 value="${defaultBatchNo}" 
                 required 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-mono font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-mono font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
 
@@ -888,7 +1020,7 @@ export function renderRestockBatchModal(state) {
                 required 
                 min="1" 
                 placeholder="e.g. 15" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-black text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-black text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
           </div>
@@ -901,7 +1033,7 @@ export function renderRestockBatchModal(state) {
                 name="productionDate" 
                 value="${todayStr}" 
                 required 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
 
@@ -911,7 +1043,7 @@ export function renderRestockBatchModal(state) {
                 type="text" 
                 name="chefName" 
                 value="Head Halwai Ramesh (SG Highway Kitchen)" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
               />
             </div>
           </div>
@@ -922,7 +1054,7 @@ export function renderRestockBatchModal(state) {
               type="text" 
               name="notes" 
               placeholder="e.g. Pure Bilona Desi Ghee aroma verified, fresh batch taste tested" 
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
             />
           </div>
 
@@ -930,13 +1062,13 @@ export function renderRestockBatchModal(state) {
             <button 
               type="button" 
               id="cancel-restock-batch-btn" 
-              class="px-5 py-2.5 border border-[#E0D7CC] text-[#6C635B] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
+              class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              class="px-6 py-2.5 bg-[#1E7E34] hover:bg-[#166527] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-102 active:scale-98"
+              class="px-6 py-2.5 bg-[#1E7E34] hover:bg-[#166527] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Confirm Fresh Batch Inward
             </button>
@@ -948,16 +1080,16 @@ export function renderRestockBatchModal(state) {
 }
 
 // 4. Stock Adjustment / Audit Recount Modal
-export function renderStockAdjustModal(state) {
+export function renderStockAdjustModal(state: any) {
   const { sweets = [] } = state;
 
   return `
     <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn select-none" id="stock-adjust-modal">
-      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F2ECE4] shadow-2xl animate-scaleUp">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp">
         
         <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-2xl bg-[#FCEFE3] text-[#7C4A28] flex items-center justify-center font-bold text-lg">
+            <div class="w-10 h-10 rounded-2xl bg-[#FFF7ED] text-[#C86D3B] flex items-center justify-center font-bold text-lg border border-[#FED7AA]">
               ⚖️
             </div>
             <div>
@@ -965,7 +1097,7 @@ export function renderStockAdjustModal(state) {
               <p class="text-xs text-[#7C7267]">Record spoilage, customer sampling, or physical counter variance</p>
             </div>
           </div>
-          <button id="close-stock-adjust-btn" class="text-[#8C7E72] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
+          <button id="close-stock-adjust-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           </button>
         </div>
@@ -976,9 +1108,9 @@ export function renderStockAdjustModal(state) {
             <select 
               name="sweetId" 
               required
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
             >
-              ${sweets.map(s => `
+              ${sweets.map((s: any) => `
                 <option value="${s.id}">${s.name} (Current Stock: ${s.stock} ${s.unit})</option>
               `).join('')}
             </select>
@@ -989,7 +1121,7 @@ export function renderStockAdjustModal(state) {
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Reason for Adjustment *</label>
               <select 
                 name="reason" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
                 <option value="Physical Audit Recount">Physical Audit Recount (=)</option>
                 <option value="Customer Tasting & Sampling">Customer Tasting & Sampling (-)</option>
@@ -1002,7 +1134,7 @@ export function renderStockAdjustModal(state) {
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Adjustment Mode *</label>
               <select 
                 name="mode" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
                 <option value="set">Set Exact Total Stock</option>
                 <option value="subtract">Deduct Quantity (-)</option>
@@ -1019,7 +1151,7 @@ export function renderStockAdjustModal(state) {
               required 
               min="0" 
               placeholder="e.g. 20" 
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs font-black text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-black text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
             />
           </div>
 
@@ -1029,7 +1161,7 @@ export function renderStockAdjustModal(state) {
               type="text" 
               name="notes" 
               placeholder="e.g. Evening closing physical count verified by Admin" 
-              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE9DF] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
+              class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all" 
             />
           </div>
 
@@ -1037,13 +1169,13 @@ export function renderStockAdjustModal(state) {
             <button 
               type="button" 
               id="cancel-stock-adjust-btn" 
-              class="px-5 py-2.5 border border-[#E0D7CC] text-[#6C635B] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
+              class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              class="px-6 py-2.5 bg-[#3D271D] hover:bg-[#2A1F1D] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-102 active:scale-98"
+              class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Apply Adjustment
             </button>
