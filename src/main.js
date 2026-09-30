@@ -162,7 +162,7 @@ export function renderApp() {
 
   // Fully Responsive Layout: Auto-adjusts cleanly between Phone and PC Web without upper bar
   appContainer.innerHTML = `
-    <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF8F5] text-[#2A1F1D]">
+    <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D]">
       <!-- Desktop Sidebar Navigation (Visible on md and up) -->
       <div class="hidden md:flex flex-shrink-0">
         ${renderSidebar(state.activeTab)}
@@ -170,11 +170,11 @@ export function renderApp() {
 
       <!-- Main Content Area -->
       <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <!-- Top Navigation Header (Clean 1:1 match with reference image) -->
+        <!-- Top Navigation Header (Exact 1:1 match with Stitch screen.png) -->
         ${renderTopBar(state)}
 
         <!-- Active Tab Body -->
-        <main class="flex-1 p-6 sm:p-8 lg:p-10 pb-24 md:pb-12 max-w-6xl mx-auto w-full">
+        <main class="flex-1 p-5 sm:p-7 lg:p-8 space-y-6 pb-24 md:pb-8">
           ${renderTabContent()}
         </main>
       </div>
@@ -327,6 +327,27 @@ function attachEventListeners() {
         saveState();
         renderApp();
       }
+    });
+  });
+
+  // Fast Selling Sweets Table: + Add to Quick Cart
+  document.querySelectorAll('.quick-add-to-cart-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = btn.getAttribute('data-id');
+      const name = btn.getAttribute('data-name') || 'Sweet';
+      const price = Number(btn.getAttribute('data-price')) || 200;
+      
+      if (!state.posCart) state.posCart = [];
+      const existing = state.posCart.find(item => item.id === id);
+      if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+      } else {
+        state.posCart.push({ id, name, price, qty: 1, unit: 'kg' });
+      }
+      saveState();
+      showToast(`Added ${name} to sale cart!`);
     });
   });
 
