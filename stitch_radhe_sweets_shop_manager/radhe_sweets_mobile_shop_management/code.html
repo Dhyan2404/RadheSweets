@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Radhe Sweets - Shop Management</title>
+<!-- Tailwind CSS v3 with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Playfair+Display:ital,wght@1,500;1,600&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              cream: '#FAF7F2',
+              card: '#FFFFFF',
+              dark: '#2A1F1A',
+              muted: '#7A6E65',
+              terracotta: '#683B20',
+              terracottaDark: '#4D2A15',
+              terracottaLight: '#F5ECE6',
+              gold: '#D97706',
+              amberSoft: '#FFF8F1',
+              greenSoft: '#F2FAF5',
+              purpleSoft: '#F7F5FC',
+              mintSoft: '#F0F9F5',
+              roseSoft: '#FFF5F4',
+              blueSoft: '#F0F7FC',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          boxShadow: {
+            'card-subtle': '0 2px 10px rgba(77, 42, 21, 0.04)',
+            'nav-bar': '0 -4px 20px rgba(42, 31, 26, 0.05)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    /* Hide scrollbars for slick mobile native feel */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style data-purpose="sparklines">
+    .sparkline-glow {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.04));
+    }
+  </style>
+</head>
+<body class="bg-[#FAF7F2] text-brand-dark font-sans antialiased min-h-screen flex justify-center selection:bg-brand-terracottaLight selection:text-brand-terracotta">
+<!-- Mobile Device Shell Simulation -->
+<div class="w-full max-w-[430px] min-h-screen bg-[#FAF7F2] pb-28 relative flex flex-col shadow-2xl border-x border-[#EFE8DF]">
+<!-- BEGIN: iOSStatusBar -->
+<div class="w-full pt-3 px-7 pb-2 flex justify-between items-center text-xs font-semibold text-brand-dark tracking-tight select-none">
+<span>9:41</span>
+<!-- Dynamic Island / Speaker Pill & Indicators -->
+<div class="flex items-center gap-1.5">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.23C3.52 16.48 3 14.32 3 12c0-4.97 4.03-9 9-9s9 4.03 9 9c0 2.32-.52 4.48-1.35 6.23l-.62-.62C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"></path>
+<circle cx="12" cy="12" r="2.5"></circle>
+</svg>
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98C20.93 5.9 16.69 4 12 4z"></path>
+</svg>
+<!-- Battery Icon -->
+<div class="w-5 h-2.5 border border-brand-dark rounded-sm p-0.5 flex items-center">
+<div class="h-full w-full bg-brand-dark rounded-[1px]"></div>
+</div>
+</div>
+</div>
+<!-- END: iOSStatusBar -->
+<!-- BEGIN: HeaderSection -->
+<header class="px-5 pt-3 pb-2 flex items-center justify-between" data-purpose="app-header">
+<!-- Menu Button -->
+<button aria-label="Open Navigation Menu" class="p-2 -ml-2 text-brand-dark active:scale-95 transition-transform">
+<svg class="w-6 h-6 stroke-[2.2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Brand Logo & Name -->
+<div class="flex items-center gap-2">
+<!-- Stylized Lotus / Kalash Glyphic Icon -->
+<div class="w-8 h-8 rounded-full bg-[#EFE3D8] text-brand-terracotta flex items-center justify-center">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M12 3.25c-.4 1.25-1.5 3.5-3.5 5 2 0 3.5 1.5 3.5 3.75 0-2.25 1.5-3.75 3.5-3.75-2-1.5-3.1-3.75-3.5-5zm-5 6.25c-.3 1-.9 2.4-2.2 3.4 1.5 0 2.6.9 2.7 2.4.2-1.5 1.1-2.5 2.5-2.6-1.5-.7-2.4-2.1-3-3.2zm10 0c-.6 1.1-1.5 2.5-3 3.2 1.4.1 2.3 1.1 2.5 2.6.1-1.5 1.2-2.4 2.7-2.4-1.3-1-1.9-2.4-2.2-3.4zM4 18c2.5 0 5-.8 8-3.2 3 2.4 5.5 3.2 8 3.2-.5 2-3.5 3-8 3s-7.5-1-8-3z"></path>
+</svg>
+</div>
+<div class="flex flex-col text-left">
+<span class="font-bold text-[19px] leading-tight text-brand-dark tracking-tight">Radhe Sweets</span>
+<span class="text-[9px] font-bold text-brand-muted tracking-[0.2em] -mt-0.5">SWEETS &amp; MORE</span>
+</div>
+</div>
+<!-- Right Header Actions (Notification Bell & Admin Avatar) -->
+<div class="flex items-center gap-2.5">
+<!-- Notification Bell with Alert Dot -->
+<button aria-label="Notifications" class="relative p-2 text-brand-dark active:scale-95 transition-transform">
+<svg class="w-6 h-6 stroke-[2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-[#FAF7F2]"></span>
+</button>
+<!-- Admin Profile Avatar -->
+<button class="w-8 h-8 rounded-full bg-brand-terracotta text-white font-semibold text-xs flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+          AS
+        </button>
+</div>
+</header>
+<!-- END: HeaderSection -->
+<main class="px-5 space-y-4 pt-1" data-purpose="dashboard-content">
+<!-- BEGIN: SearchBar -->
+<section class="relative" data-purpose="search-box">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+<svg class="w-4 h-4 stroke-[2.2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<input class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-[#E9E2D8] rounded-xl placeholder:text-stone-400 text-brand-dark shadow-sm focus:outline-none focus:border-brand-terracotta focus:ring-1 focus:ring-brand-terracotta" placeholder="Search anything..." type="search"/>
+</section>
+<!-- END: SearchBar -->
+<!-- BEGIN: GreetingBanner -->
+<section class="flex items-start justify-between gap-2 pt-1" data-purpose="greeting-summary">
+<div>
+<h1 class="text-[20px] font-extrabold text-brand-dark tracking-tight flex items-center gap-1.5">
+            Good Morning, Admin <span>👋</span>
+</h1>
+<p class="text-xs text-brand-muted mt-0.5 font-medium leading-relaxed">
+            Here's what's happening with your sweet shop today.
+          </p>
+</div>
+<!-- Date Pill Component -->
+<div class="shrink-0 bg-white border border-[#EBE4DA] rounded-xl px-2.5 py-1.5 flex items-center gap-2 shadow-sm text-right">
+<div class="text-stone-600">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</div>
+<div class="flex flex-col text-left">
+<span class="text-[11px] font-bold text-brand-dark leading-none">25 Sep 2026</span>
+<span class="text-[10px] text-brand-muted leading-tight mt-0.5">Today</span>
+</div>
+</div>
+</section>
+<!-- END: GreetingBanner -->
+<!-- BEGIN: PromotionalBanner -->
+<section class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#F6EDE2] via-[#F3E7D8] to-[#E9DAC8] p-4 border border-[#E7D6C3] shadow-sm flex items-center justify-between" data-purpose="sweets-quote-card">
+<div class="relative z-10 max-w-[210px]">
+<span class="font-serif italic font-semibold text-brand-terracotta text-lg leading-tight block">Sweet moments...</span>
+<span class="font-serif italic font-medium text-brand-dark text-base leading-tight mt-0.5 block">Better together</span>
+<span class="inline-block mt-2 px-2.5 py-0.5 text-[10px] font-semibold text-white bg-brand-terracotta rounded-full tracking-wide">
+            FESTIVE SPECIALS
+          </span>
+</div>
+<!-- Decorative Sweet Platter Graphic Element -->
+<div class="relative w-28 h-20 flex items-center justify-center">
+<div class="absolute -right-3 -bottom-2 w-24 h-24 rounded-full bg-white/40 blur-sm pointer-events-none"></div>
+<!-- Sweet vector illustration stack: Besan Ladoo, Gulab Jamun, Peda in small bowl -->
+<div class="relative w-24 h-20 flex items-center justify-center">
+<!-- Bowl -->
+<div class="absolute bottom-1 w-20 h-9 bg-white/90 border border-[#DAC4AD] rounded-b-full shadow-inner flex items-center justify-center">
+<div class="w-16 h-1 bg-[#D2B598]/30 rounded-full"></div>
+</div>
+<!-- Sweet spheres -->
+<div class="absolute bottom-4 left-3 w-7 h-7 rounded-full bg-gradient-to-tr from-[#632912] to-[#A44E28] shadow-sm"></div>
+<div class="absolute bottom-5 left-8 w-7 h-7 rounded-full bg-gradient-to-tr from-[#D9822B] to-[#FBBF24] shadow-sm flex items-center justify-center">
+<div class="w-1 h-1 bg-white/60 rounded-full"></div>
+</div>
+<div class="absolute bottom-3 right-3 w-7 h-7 rounded-full bg-gradient-to-tr from-[#55230F] to-[#873E1E] shadow-sm"></div>
+<div class="absolute bottom-8 left-6 w-6 h-6 rounded-full bg-gradient-to-tr from-[#FFF3D6] to-[#EAD19B] border border-amber-200 shadow-xs"></div>
+</div>
+</div>
+</section>
+<!-- END: PromotionalBanner -->
+<!-- BEGIN: KpiMetricsGrid -->
+<section class="grid grid-cols-2 gap-3" data-purpose="kpi-metrics-grid">
+<!-- KPI 1: Customers -->
+<article class="bg-brand-card rounded-2xl p-3.5 border border-[#F0E8DF] shadow-card-subtle flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-[#FFFDF9]">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<button class="text-stone-300 hover:text-stone-500">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle>
+</svg>
+</button>
+</div>
+<div class="mt-2.5">
+<span class="text-[11px] font-semibold text-brand-muted tracking-tight">Customers</span>
+<div class="text-[22px] font-bold text-brand-dark tracking-tight leading-none mt-0.5">184</div>
+<div class="flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-1">
+<span>↗</span> <span>+12% today</span>
+</div>
+</div>
+<!-- Sparkline Chart -->
+<div class="h-8 w-full mt-1.5 -mb-1">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0 25 C20 22, 35 24, 50 17 C65 10, 80 14, 100 5 L100 30 L0 30 Z" fill="rgba(249, 115, 22, 0.08)"></path>
+<path d="M0 25 C20 22, 35 24, 50 17 C65 10, 80 14, 100 5" fill="none" stroke="#F97316" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+</article>
+<!-- KPI 2: Sales -->
+<article class="bg-brand-card rounded-2xl p-3.5 border border-[#F0E8DF] shadow-card-subtle flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-[#F9FCFA]">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+              ₹
+            </div>
+<button class="text-stone-300 hover:text-stone-500">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle>
+</svg>
+</button>
+</div>
+<div class="mt-2.5">
+<span class="text-[11px] font-semibold text-brand-muted tracking-tight">Sales</span>
+<div class="text-[22px] font-bold text-brand-dark tracking-tight leading-none mt-0.5">₹42,850</div>
+<div class="flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-1">
+<span>↗</span> <span>+8.4%</span>
+</div>
+</div>
+<!-- Sparkline Chart -->
+<div class="h-8 w-full mt-1.5 -mb-1">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0 27 C25 24, 40 18, 60 19 C75 20, 85 11, 100 6 L100 30 L0 30 Z" fill="rgba(16, 185, 129, 0.08)"></path>
+<path d="M0 27 C25 24, 40 18, 60 19 C75 20, 85 11, 100 6" fill="none" stroke="#10B981" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+</article>
+<!-- KPI 3: Orders -->
+<article class="bg-brand-card rounded-2xl p-3.5 border border-[#F0E8DF] shadow-card-subtle flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-[#FBFBFF]">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<button class="text-stone-300 hover:text-stone-500">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle>
+</svg>
+</button>
+</div>
+<div class="mt-2.5">
+<span class="text-[11px] font-semibold text-brand-muted tracking-tight">Orders</span>
+<div class="text-[22px] font-bold text-brand-dark tracking-tight leading-none mt-0.5">126</div>
+<div class="flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-1">
+<span>↗</span> <span>+9.2%</span>
+</div>
+</div>
+<!-- Sparkline Chart -->
+<div class="h-8 w-full mt-1.5 -mb-1">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0 26 C20 25, 35 19, 55 21 C70 23, 80 14, 100 7 L100 30 L0 30 Z" fill="rgba(99, 102, 241, 0.08)"></path>
+<path d="M0 26 C20 25, 35 19, 55 21 C70 23, 80 14, 100 7" fill="none" stroke="#6366F1" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+</article>
+<!-- KPI 4: Profit -->
+<article class="bg-brand-card rounded-2xl p-3.5 border border-[#F0E8DF] shadow-card-subtle flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-[#F9FCFA]">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<button class="text-stone-300 hover:text-stone-500">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle>
+</svg>
+</button>
+</div>
+<div class="mt-2.5">
+<span class="text-[11px] font-semibold text-brand-muted tracking-tight">Profit</span>
+<div class="text-[22px] font-bold text-brand-dark tracking-tight leading-none mt-0.5">₹14,620</div>
+<div class="flex items-center gap-1 text-[10px] font-semibold text-stone-500 mt-1">
+<span>34.1% margin</span>
+</div>
+</div>
+<!-- Sparkline Chart -->
+<div class="h-8 w-full mt-1.5 -mb-1">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0 24 C20 25, 40 22, 60 17 C75 14, 85 18, 100 8 L100 30 L0 30 Z" fill="rgba(20, 184, 166, 0.08)"></path>
+<path d="M0 24 C20 25, 40 22, 60 17 C75 14, 85 18, 100 8" fill="none" stroke="#14B8A6" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+</article>
+<!-- KPI 5: Cost -->
+<article class="bg-brand-card rounded-2xl p-3.5 border border-[#F0E8DF] shadow-card-subtle flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-[#FFFDFD]">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<button class="text-stone-300 hover:text-stone-500">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle>
+</svg>
+</button>
+</div>
+<div class="mt-2.5">
+<span class="text-[11px] font-semibold text-brand-muted tracking-tight">Cost</span>
+<div class="text-[22px] font-bold text-brand-dark tracking-tight leading-none mt-0.5">₹28,230</div>
+<div class="flex items-center gap-1 text-[10px] font-semibold text-stone-500 mt-1">
+<span>65.9%</span>
+</div>
+</div>
+<!-- Sparkline Chart -->
+<div class="h-8 w-full mt-1.5 -mb-1">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0 26 C20 28, 40 21, 60 25 C80 18, 90 20, 100 13 L100 30 L0 30 Z" fill="rgba(244, 63, 94, 0.08)"></path>
+<path d="M0 26 C20 28, 40 21, 60 25 C80 18, 90 20, 100 13" fill="none" stroke="#F43F5E" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+</article>
+<!-- KPI 6: Returning -->
+<article class="bg-brand-card rounded-2xl p-3.5 border border-[#F0E8DF] shadow-card-subtle flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-[#F8FCFF]">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<button class="text-stone-300 hover:text-stone-500">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle>
+</svg>
+</button>
+</div>
+<div class="mt-2.5">
+<span class="text-[11px] font-semibold text-brand-muted tracking-tight">Returning</span>
+<div class="text-[22px] font-bold text-brand-dark tracking-tight leading-none mt-0.5">76 <span class="text-xs font-normal text-stone-500">customers</span></div>
+<div class="flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-1">
+<span>↗</span> <span>41.3%</span>
+</div>
+</div>
+<!-- Sparkline Chart -->
+<div class="h-8 w-full mt-1.5 -mb-1">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0 27 C20 26, 35 22, 55 24 C75 16, 85 20, 100 9 L100 30 L0 30 Z" fill="rgba(14, 165, 233, 0.08)"></path>
+<path d="M0 27 C20 26, 35 22, 55 24 C75 16, 85 20, 100 9" fill="none" stroke="#0EA5E9" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+</div>
+</article>
+</section>
+<!-- END: KpiMetricsGrid -->
+<!-- BEGIN: NewSaleQuickAction -->
+<section class="bg-white rounded-2xl p-4 border border-[#EFE7DE] shadow-card-subtle flex items-center justify-between gap-3" data-purpose="quick-pos-action">
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-xl bg-brand-terracottaLight text-brand-terracotta flex items-center justify-center shrink-0">
+<svg class="w-6 h-6 stroke-[2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div>
+<h2 class="text-sm font-bold text-brand-dark leading-snug">New Sale</h2>
+<p class="text-xs text-brand-muted leading-tight">Create a new order for a customer</p>
+</div>
+</div>
+<button class="bg-brand-terracotta hover:bg-brand-terracottaDark active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs font-semibold tracking-wide flex items-center gap-1.5 shadow-sm transition-all whitespace-nowrap">
+<span>Start New Sale</span>
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</section>
+<!-- END: NewSaleQuickAction -->
+<!-- BEGIN: FastSellingSweets -->
+<section class="space-y-3 pt-1 pb-4" data-purpose="popular-products">
+<div class="flex items-center justify-between">
+<h2 class="text-sm font-bold text-brand-dark tracking-tight">Fast Selling Sweets</h2>
+<button class="text-xs font-semibold text-brand-terracotta hover:underline">View All</button>
+</div>
+<div class="space-y-2.5">
+<!-- Item 1: Kaju Katli -->
+<div class="bg-white rounded-xl p-3 border border-[#EFE7DE] shadow-xs flex items-center justify-between">
+<div class="flex items-center gap-3">
+<!-- Food Thumbnail Mock -->
+<div class="w-11 h-11 rounded-lg bg-[#FAF4ED] border border-[#ECDDCF] flex items-center justify-center text-xl shrink-0">
+                💎
+              </div>
+<div>
+<h3 class="text-xs font-bold text-brand-dark">Kaju Katli</h3>
+<span class="text-xs font-bold text-brand-terracotta">₹450<span class="text-[10px] font-normal text-stone-500">/kg</span></span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                In Stock
+              </span>
+<button class="w-7 h-7 rounded-lg bg-[#FAF7F2] text-brand-dark border border-[#E9E1D6] flex items-center justify-center hover:bg-stone-100 active:scale-90">
+                +
+              </button>
+</div>
+</div>
+<!-- Item 2: Gulab Jamun -->
+<div class="bg-white rounded-xl p-3 border border-[#EFE7DE] shadow-xs flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-lg bg-[#FAF4ED] border border-[#ECDDCF] flex items-center justify-center text-xl shrink-0">
+                🟤
+              </div>
+<div>
+<h3 class="text-xs font-bold text-brand-dark">Gulab Jamun</h3>
+<span class="text-xs font-bold text-brand-terracotta">₹180<span class="text-[10px] font-normal text-stone-500">/kg</span></span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                In Stock
+              </span>
+<button class="w-7 h-7 rounded-lg bg-[#FAF7F2] text-brand-dark border border-[#E9E1D6] flex items-center justify-center hover:bg-stone-100 active:scale-90">
+                +
+              </button>
+</div>
+</div>
+<!-- Item 3: Motichoor Ladoo -->
+<div class="bg-white rounded-xl p-3 border border-[#EFE7DE] shadow-xs flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-lg bg-[#FAF4ED] border border-[#ECDDCF] flex items-center justify-center text-xl shrink-0">
+                🟡
+              </div>
+<div>
+<h3 class="text-xs font-bold text-brand-dark">Motichoor Ladoo</h3>
+<span class="text-xs font-bold text-brand-terracotta">₹160<span class="text-[10px] font-normal text-stone-500">/kg</span></span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                Low Stock
+              </span>
+<button class="w-7 h-7 rounded-lg bg-[#FAF7F2] text-brand-dark border border-[#E9E1D6] flex items-center justify-center hover:bg-stone-100 active:scale-90">
+                +
+              </button>
+</div>
+</div>
+</div>
+</section>
+<!-- END: FastSellingSweets -->
+</main>
+<!-- BEGIN: BottomNavigation -->
+<nav class="fixed bottom-0 max-w-[430px] w-full bg-white/95 backdrop-blur-md border-t border-[#EAE3DA] px-4 py-2 flex justify-between items-center z-50 shadow-nav-bar" data-purpose="mobile-bottom-tabs">
+<!-- Tab 1: Dashboard (Active) -->
+<a aria-current="page" class="flex flex-col items-center justify-center py-1 px-3 rounded-2xl bg-[#F6EEE5] text-brand-terracotta transition-all" href="#">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z"></path>
+<path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z"></path>
+</svg>
+<span class="text-[10px] font-bold tracking-tight mt-0.5">Dashboard</span>
+</a>
+<!-- Tab 2: Sell / POS -->
+<a class="flex flex-col items-center justify-center py-1 px-3 text-stone-500 hover:text-brand-terracotta transition-colors" href="#">
+<svg class="w-5 h-5 stroke-[2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold tracking-tight mt-0.5">Sell</span>
+</a>
+<!-- Tab 3: Orders -->
+<a class="flex flex-col items-center justify-center py-1 px-3 text-stone-500 hover:text-brand-terracotta transition-colors" href="#">
+<svg class="w-5 h-5 stroke-[2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-semibold tracking-tight mt-0.5">Orders</span>
+</a>
+<!-- Tab 4: Products -->
+<a class="flex flex-col items-center justify-center py-1 px-3 text-stone-500 hover:text-brand-terracotta transition-colors" href="#">
+<svg class="w-5 h-5 stroke-[2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="3" y="3"></rect>
+<rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="14" y="3"></rect>
+<rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="14" y="14"></rect>
+<rect height="7" rx="1.5" stroke-linecap="round" stroke-linejoin="round" width="7" x="3" y="14"></rect>
+</svg>
+<span class="text-[10px] font-semibold tracking-tight mt-0.5">Products</span>
+</a>
+<!-- Tab 5: More -->
+<a class="flex flex-col items-center justify-center py-1 px-3 text-stone-500 hover:text-brand-terracotta transition-colors" href="#">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+<circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle>
+</svg>
+<span class="text-[10px] font-semibold tracking-tight mt-0.5">More</span>
+</a>
+</nav>
+<!-- END: BottomNavigation -->
+</div>
+</body></html>
