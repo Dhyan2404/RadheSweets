@@ -31,6 +31,7 @@ import { renderSettingsView } from './components/SettingsView.ts';
 import { renderSplashView } from './components/SplashView.ts';
 import { renderCustomerDialerModal } from './components/CustomerDialerModal.ts';
 import { renderSeoModal } from './components/SeoModal.ts';
+import { renderSearchModal, renderSearchResultsBody } from './components/SearchModal.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 
@@ -131,6 +132,9 @@ const state = {
   showCustomerDialerModal: false,
   showMobileDrawer: false,
   showSeoModal: false,
+  showSearchModal: false,
+  searchModalQuery: '',
+  searchModalCategory: 'all',
   dialerInput: '',
   activeOrder: null,
   lastPlacedOrder: null,
@@ -330,6 +334,7 @@ function renderModals() {
     ${state.showCustomerDialerModal ? renderCustomerDialerModal(state) : ''}
     ${state.showMobileDrawer ? renderMobileDrawer(state) : ''}
     ${state.showSeoModal ? renderSeoModal(state) : ''}
+    ${state.showSearchModal ? renderSearchModal(state) : ''}
   `;
 }
 
@@ -370,6 +375,222 @@ function attachEventListeners() {
       renderApp();
     }
   });
+
+  // Global Spotlight Omnibar Search Modal (1000x Better PC & 10000x Better Mobile)
+  const openSearchModal = (initialQuery = '') => {
+    state.showSearchModal = true;
+    state.showMobileDrawer = false;
+    if (initialQuery) state.searchModalQuery = initialQuery;
+    renderApp();
+    setTimeout(() => {
+      const input = document.getElementById('spotlight-search-input') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 40);
+  };
+
+  const closeSearchModal = () => {
+    state.showSearchModal = false;
+    renderApp();
+  };
+
+  document.getElementById('desktop-search-trigger')?.addEventListener('click', () => openSearchModal());
+  document.getElementById('mobile-search-btn')?.addEventListener('click', () => openSearchModal());
+  document.getElementById('drawer-search-trigger-btn')?.addEventListener('click', () => openSearchModal());
+  document.getElementById('close-search-modal-btn')?.addEventListener('click', closeSearchModal);
+
+  document.getElementById('global-search-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'global-search-modal-backdrop') {
+      closeSearchModal();
+    }
+  });
+
+  if (state.showSearchModal) {
+    const bindSearchResultsActions = () => {
+      // Sweets result click: Add to POS
+      document.querySelectorAll('#search-modal-results-container [data-search-action="add-sweet-pos"]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const sweetId = el.getAttribute('data-sweet-id');
+          const sweetName = el.getAttribute('data-sweet-name') || 'Sweet';
+          const price = Number(el.getAttribute('data-sweet-price')) || 450;
+          
+          if (!state.posCart) state.posCart = [];
+          const existing = state.posCart.find((item: any) => item.id === sweetId || item.name === sweetName);
+          if (existing) {
+            existing.qty = (existing.qty || 1) + 1;
+            existing.total = Math.round(existing.qty * (existing.rate || existing.price || price));
+          } else {
+            const foundSweet = (state.sweets || []).find((s: any) => s.id === sweetId) || { id: sweetId, name: sweetName, pricePerKg: price, category: 'Traditional' };
+            state.posCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
+          }
+
+          if (!state.quickCart) state.quickCart = [];
+          const existingQuick = state.quickCart.find((item: any) => item.id === sweetId || item.name === sweetName);
+          if (existingQuick) {
+            existingQuick.qty = (existingQuick.qty || 1) + 1;
+            existingQuick.total = Math.round(existingQuick.qty * (existingQuick.rate || existingQuick.price || price));
+          } else {
+            const foundSweet = (state.sweets || []).find((s: any) => s.id === sweetId) || { id: sweetId, name: sweetName, pricePerKg: price, category: 'Traditional' };
+            state.quickCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
+          }
+          saveState();
+          showToast(`Added ${sweetName} (1 kg) to POS Counter Cart!`, 'success');
+        });
+      });
+
+      // Customer result click: View Customer Profile & Khata
+      document.querySelectorAll('#search-modal-results-container [data-search-action="view-customer"]').forEach(el => {
+        el.addEventListener('click', () => {
+          const custId = el.getAttribute('data-customer-id');
+          const found = (state.customers || []).find((c: any) => c.id === custId);
+          if (found) {
+            state.selectedCustomer = found;
+            state.profileCustomer = found;
+            state.showSearchModal = false;
+            state.showCustomerProfileModal = true;
+            renderApp();
+          }
+        });
+      });
+
+      // Order result click: View Order Details
+      document.querySelectorAll('#search-modal-results-container [data-search-action="view-order"]').forEach(el => {
+        el.addEventListener('click', () => {
+          const ordId = el.getAttribute('data-order-id');
+          const found = (state.orders || []).find((o: any) => o.id === ordId);
+          if (found) {
+            state.activeOrder = found;
+            state.showSearchModal = false;
+            state.showOrderDetailsModal = true;
+            renderApp();
+          }
+        });
+      });
+
+      // Quick Actions / Navigation
+      document.querySelectorAll('#search-modal-results-container [data-search-action]').forEach(el => {
+        const action = el.getAttribute('data-search-action');
+        if (action === 'add-sweet-pos' || action === 'view-customer' || action === 'view-order') return;
+        el.addEventListener('click', () => {
+          state.showSearchModal = false;
+          if (action === 'nav') {
+            const tab = el.getAttribute('data-search-tab');
+            if (tab) state.activeTab = tab;
+          } else if (action === 'add-product') {
+            state.showAddProductModal = true;
+          } else if (action === 'add-customer') {
+            state.showAddCustomerModal = true;
+          } else if (action === 'add-expense') {
+            state.showAddExpenseModal = true;
+          } else if (action === 'open-seo') {
+            state.showSeoModal = true;
+          } else if (action === 'toggle-theme') {
+            state.currentTheme = state.currentTheme === 'warm' ? 'ice' : 'warm';
+          } else if (action === 'toggle-dark') {
+            state.isDarkMode = !state.isDarkMode;
+          } else if (action === 'open-dialer') {
+            state.showCustomerDialerModal = true;
+          }
+          saveState();
+          renderApp();
+        });
+      });
+
+      // View All link tabs inside search results
+      document.querySelectorAll('#search-modal-results-container [data-tab]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const tab = btn.getAttribute('data-tab');
+          if (tab) {
+            state.activeTab = tab;
+            state.showSearchModal = false;
+            saveState();
+            renderApp();
+          }
+        });
+      });
+
+      // Quick Search Term Pills
+      document.querySelectorAll('#search-modal-results-container [data-quick-search-term]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const term = btn.getAttribute('data-quick-search-term') || '';
+          state.searchModalQuery = term;
+          const input = document.getElementById('spotlight-search-input') as HTMLInputElement;
+          if (input) {
+            input.value = term;
+            input.focus();
+          }
+          const clearBtn = document.getElementById('clear-spotlight-search-btn');
+          if (clearBtn) clearBtn.classList.remove('hidden');
+          const resultsCont = document.getElementById('search-modal-results-container');
+          if (resultsCont) {
+            resultsCont.innerHTML = renderSearchResultsBody(state);
+            bindSearchResultsActions();
+          }
+        });
+      });
+    };
+
+    // Initial binding of results in modal
+    bindSearchResultsActions();
+
+    // Real-time In-Place Typing Filter (Zero re-rendering of input -> ZERO focus loss!)
+    const searchInput = document.getElementById('spotlight-search-input') as HTMLInputElement;
+    searchInput?.addEventListener('input', (e: any) => {
+      state.searchModalQuery = e.target.value;
+      const clearBtn = document.getElementById('clear-spotlight-search-btn');
+      if (clearBtn) {
+        if (state.searchModalQuery) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+      }
+      const resultsCont = document.getElementById('search-modal-results-container');
+      if (resultsCont) {
+        resultsCont.innerHTML = renderSearchResultsBody(state);
+        bindSearchResultsActions();
+      }
+    });
+
+    // Clear input button
+    document.getElementById('clear-spotlight-search-btn')?.addEventListener('click', () => {
+      state.searchModalQuery = '';
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      const clearBtn = document.getElementById('clear-spotlight-search-btn');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      const resultsCont = document.getElementById('search-modal-results-container');
+      if (resultsCont) {
+        resultsCont.innerHTML = renderSearchResultsBody(state);
+        bindSearchResultsActions();
+      }
+    });
+
+    // Category Tabs Filter
+    document.querySelectorAll('[data-search-filter]').forEach(tabBtn => {
+      tabBtn.addEventListener('click', () => {
+        const cat = tabBtn.getAttribute('data-search-filter') || 'all';
+        state.searchModalCategory = cat;
+        // Update tab styles
+        document.querySelectorAll('[data-search-filter]').forEach(b => {
+          b.className = 'px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer bg-white border border-stone-200/80 text-stone-600 hover:bg-stone-100';
+        });
+        tabBtn.className = 'px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer bg-[#C86D3B] text-white shadow-2xs';
+
+        const resultsCont = document.getElementById('search-modal-results-container');
+        if (resultsCont) {
+          resultsCont.innerHTML = renderSearchResultsBody(state);
+          bindSearchResultsActions();
+        }
+      });
+    });
+  }
 
   // Active Branch Switcher (Only Changeable in Settings)
   document.querySelectorAll('[data-setting-select-branch]').forEach(el => {
@@ -1985,6 +2206,54 @@ window.addEventListener('keydown', (e) => {
     renderApp();
   } else if (e.key === 'Escape') {
     state.showCustomerDialerModal = false;
+    renderApp();
+  }
+});
+
+// Global Keyboard Shortcut: Ctrl+K / Cmd+K / / to open Omnibar Spotlight Search
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+  // Check if inside input or textarea
+  const activeTag = (document.activeElement?.tagName || '').toUpperCase();
+  const isInputActive = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+
+  // Ctrl+K or Cmd+K
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    state.showSearchModal = !state.showSearchModal;
+    if (state.showSearchModal) state.showMobileDrawer = false;
+    renderApp();
+    if (state.showSearchModal) {
+      setTimeout(() => {
+        const input = document.getElementById('spotlight-search-input') as HTMLInputElement;
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 40);
+    }
+    return;
+  }
+
+  // Pressing '/' opens search if not currently typing in an input
+  if (e.key === '/' && !isInputActive && !state.showSearchModal) {
+    e.preventDefault();
+    state.showSearchModal = true;
+    state.showMobileDrawer = false;
+    renderApp();
+    setTimeout(() => {
+      const input = document.getElementById('spotlight-search-input') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 40);
+    return;
+  }
+
+  // Escape closes search modal
+  if (e.key === 'Escape' && state.showSearchModal) {
+    e.preventDefault();
+    state.showSearchModal = false;
     renderApp();
   }
 });

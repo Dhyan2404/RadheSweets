@@ -29,24 +29,39 @@ export function renderTopBar(state) {
         </div>
       </div>
 
-      <!-- Desktop Search Bar (1:1 with Stitch screen.png) -->
-      <div class="hidden md:flex w-full max-w-md relative items-center">
-        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <!-- Desktop Search Bar (1000x Better Spotlight Trigger on PC) -->
+      <div 
+        id="desktop-search-trigger"
+        role="button"
+        tabindex="0"
+        class="hidden md:flex w-full max-w-md items-center justify-between px-3.5 py-2 bg-stone-50/90 hover:bg-white border border-[#F0ECE4] hover:border-[#C86D3B]/40 rounded-xl cursor-pointer transition-all shadow-2xs group"
+        title="Open Spotlight Search (Ctrl + K)"
+      >
+        <div class="flex items-center space-x-2.5 text-stone-400 group-hover:text-stone-600 transition-colors">
+          <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"></path>
           </svg>
-        </span>
-        <input 
-          id="global-search-input"
-          type="text" 
-          value="${searchQuery || ''}"
-          placeholder="Search anything..." 
-          class="w-full pl-10 pr-4 py-2 bg-stone-50/80 border border-[#F0ECE4] rounded-xl text-xs sm:text-sm text-[#2A1F1D] placeholder-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-[#C86D3B] transition-all"
-        />
+          <span class="text-xs sm:text-sm text-stone-400 group-hover:text-stone-600">Search anything... (sweets, customers, orders)</span>
+        </div>
+        <kbd class="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold text-stone-500 bg-white border border-stone-200 rounded-md shadow-2xs group-hover:border-stone-300">
+          <span class="text-[9px]">Ctrl</span> K
+        </kbd>
       </div>
 
-      <!-- Right Header Controls: Date, Bell, Profile (1:1 with Stitch screen.png) -->
-      <div class="flex items-center space-x-3 sm:space-x-4 pl-4">
+      <!-- Right Header Controls: Mobile Search, Date, Bell, Profile (1:1 with Stitch screen.png) -->
+      <div class="flex items-center space-x-2 sm:space-x-4 pl-4">
+        <!-- Mobile Search Button (10000x Better Mobile Experience) -->
+        <button 
+          id="mobile-search-btn"
+          class="md:hidden p-2 rounded-xl text-stone-600 hover:text-[#C86D3B] hover:bg-orange-50 active:scale-95 transition-all cursor-pointer"
+          aria-label="Open Search"
+          title="Search Sweets, Customers, Orders"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+
         <!-- Current Date Indicator -->
         <div class="hidden sm:flex items-center space-x-2 bg-stone-50 border border-[#F0ECE4] px-3 py-1.5 rounded-xl text-xs text-stone-600">
           <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

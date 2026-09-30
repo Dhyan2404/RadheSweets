@@ -170,6 +170,19 @@ export function renderMobileDrawer(state) {
             </button>
           </div>
 
+          <!-- Mobile Drawer Search Button -->
+          <button 
+            id="drawer-search-trigger-btn"
+            type="button"
+            class="w-full mb-3 px-3.5 py-2.5 bg-orange-50/80 hover:bg-orange-100 border border-orange-200/80 rounded-xl text-left text-xs font-bold text-[#C86D3B] flex items-center justify-between cursor-pointer transition-all active:scale-98 shadow-2xs"
+          >
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <span>Search Anything...</span>
+            </span>
+            <span class="text-[10px] bg-white border border-orange-200/80 text-[#C86D3B] px-1.5 py-0.5 rounded shadow-2xs font-bold">Spotlight</span>
+          </button>
+
           <!-- Navigation Links -->
           <nav class="space-y-1">
             ${navItems.map(item => {
