@@ -162,7 +162,7 @@ export function renderApp() {
 
   // Fully Responsive Layout: Auto-adjusts cleanly between Phone and PC Web without upper bar
   appContainer.innerHTML = `
-    <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D]">
+    <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF8F5] text-[#2A1F1D]">
       <!-- Desktop Sidebar Navigation (Visible on md and up) -->
       <div class="hidden md:flex flex-shrink-0">
         ${renderSidebar(state.activeTab)}
@@ -174,7 +174,7 @@ export function renderApp() {
         ${renderTopBar(state)}
 
         <!-- Active Tab Body -->
-        <main class="flex-1 p-4 sm:p-6 lg:p-7 space-y-6 pb-24 md:pb-8">
+        <main class="flex-1 p-6 sm:p-8 lg:p-10 pb-24 md:pb-12 max-w-6xl mx-auto w-full">
           ${renderTabContent()}
         </main>
       </div>

@@ -47,7 +47,8 @@ export function renderTopBar(state) {
           type="text" 
           value="${searchQuery || ''}"
           placeholder="Search anything..." 
-          class="w-full pl-11 pr-4 py-2.5 bg-[#F4EEE5] border border-transparent rounded-full text-xs text-[#2A1F1D] placeholder-[#A3968A] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
+          style="padding-left: 2.75rem !important;"
+          class="w-full pr-4 py-2.5 bg-[#F4EEE5] border border-transparent rounded-full text-xs text-[#2A1F1D] placeholder-[#A3968A] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
         />
       </div>
 
