@@ -12,10 +12,12 @@
   --color-brand-border: #F0ECE4;
   --color-brand-primary: #C86D3B;
   --color-brand-primary-hover: #B25D2E;
+  --color-brand-primaryHover: #B25D2E;
   --color-brand-dark: #2A1F1D;
   --color-brand-muted: #7C7267;
   --color-brand-accent: #E07A5F;
   --color-brand-gold: #DDA15E;
+  --spacing-18: 4.5rem;
 
   --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-serif: "Playfair Display", Georgia, serif;

@@ -9,6 +9,15 @@
 export function renderDashboardView(state) {
   const { kpis, quickCart = [] } = state;
 
+  const defaultItems = [
+    { id: 'sw-1', name: 'Kaju Katli', qty: 0.5, rate: 450, total: 225, unit: 'kg' },
+    { id: 'sw-3', name: 'Gulab Jamun', qty: 1, rate: 180, total: 180, unit: 'kg' },
+    { id: 'sw-4', name: 'Motichoor Ladoo', qty: 1, rate: 160, total: 160, unit: 'kg' }
+  ];
+  const items = (quickCart && quickCart.length > 0) ? quickCart : defaultItems;
+  const subtotal = items.reduce((sum, item) => sum + (item.total || Math.round(item.qty * (item.rate || item.price || 0))), 0);
+  const totalPayable = subtotal;
+
   return `
     <div class="space-y-6 animate-fadeIn select-none" data-purpose="stitch-dashboard">
       
@@ -22,11 +31,11 @@ export function renderDashboardView(state) {
         <!-- Time Filter Dropdown (1:1 with Stitch screen.png) -->
         <div class="flex items-center space-x-2">
           <div class="relative">
-            <select class="appearance-none bg-white border border-[#F0ECE4] text-xs sm:text-sm font-medium text-stone-700 py-2 pl-3.5 pr-8 rounded-xl shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors">
-              <option>This Month</option>
-              <option>Today</option>
-              <option>This Week</option>
-              <option>Quarterly</option>
+            <select id="dashboard-time-filter" class="appearance-none bg-white border border-[#F0ECE4] text-xs sm:text-sm font-medium text-stone-700 py-2 pl-3.5 pr-8 rounded-xl shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors">
+              <option value="month" ${state.timeFilter === 'month' ? 'selected' : ''}>This Month</option>
+              <option value="today" ${state.timeFilter === 'today' ? 'selected' : ''}>Today</option>
+              <option value="week" ${state.timeFilter === 'week' ? 'selected' : ''}>This Week</option>
+              <option value="quarter" ${state.timeFilter === 'quarter' ? 'selected' : ''}>Quarterly</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-stone-400">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +56,7 @@ export function renderDashboardView(state) {
           <div class="flex items-center justify-between">
             <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
             <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center">
@@ -602,37 +611,27 @@ export function renderDashboardView(state) {
 
               <!-- Quick Order Selected Sweets Line Items -->
               <div class="space-y-2.5 mb-4 text-xs">
-                <!-- Line Item 1 -->
-                <div class="flex items-center justify-between py-1.5 border-b border-stone-100">
-                  <div>
-                    <p class="font-semibold text-stone-800">Kaju Katli</p>
-                    <p class="text-[11px] text-stone-400">500 g × ₹450</p>
+                ${items.map((item, idx) => `
+                  <div class="flex items-center justify-between py-1.5 ${idx < items.length - 1 ? 'border-b border-stone-100' : ''} group">
+                    <div>
+                      <p class="font-semibold text-stone-800">${item.name}</p>
+                      <p class="text-[11px] text-stone-400">${item.qty < 1 ? Math.round(item.qty * 1000) + ' g' : item.qty + ' kg'} × ₹${item.rate || item.price || 0}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span class="font-bold text-[#2A1F1D]">₹${item.total || Math.round(item.qty * (item.rate || item.price || 0))}</span>
+                      <button class="remove-quick-item-btn opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-500 p-0.5 transition-opacity cursor-pointer" data-index="${idx}" title="Remove item">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                      </button>
+                    </div>
                   </div>
-                  <span class="font-bold text-[#2A1F1D]">₹225</span>
-                </div>
-                <!-- Line Item 2 -->
-                <div class="flex items-center justify-between py-1.5 border-b border-stone-100">
-                  <div>
-                    <p class="font-semibold text-stone-800">Gulab Jamun</p>
-                    <p class="text-[11px] text-stone-400">1 kg × ₹180</p>
-                  </div>
-                  <span class="font-bold text-[#2A1F1D]">₹180</span>
-                </div>
-                <!-- Line Item 3 -->
-                <div class="flex items-center justify-between py-1.5">
-                  <div>
-                    <p class="font-semibold text-stone-800">Motichoor Ladoo</p>
-                    <p class="text-[11px] text-stone-400">1 kg × ₹160</p>
-                  </div>
-                  <span class="font-bold text-[#2A1F1D]">₹160</span>
-                </div>
+                `).join('')}
               </div>
 
               <!-- Price Breakdown Box -->
               <div class="bg-stone-50 rounded-xl p-3 space-y-1.5 text-xs mb-4">
                 <div class="flex justify-between text-stone-500">
                   <span>Subtotal</span>
-                  <span>₹565</span>
+                  <span>₹${subtotal}</span>
                 </div>
                 <div class="flex justify-between text-stone-500">
                   <span>Discount</span>
@@ -644,7 +643,7 @@ export function renderDashboardView(state) {
                 </div>
                 <div class="border-t border-stone-200/80 pt-1.5 flex justify-between font-bold text-sm text-[#2A1F1D]">
                   <span>Total Payable</span>
-                  <span class="text-[#C86D3B] text-base">₹565</span>
+                  <span class="text-[#C86D3B] text-base font-bold">₹${totalPayable}</span>
                 </div>
               </div>
             </div>

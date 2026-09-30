@@ -339,16 +339,76 @@ function attachEventListeners() {
       const name = btn.getAttribute('data-name') || 'Sweet';
       const price = Number(btn.getAttribute('data-price')) || 200;
       
-      if (!state.posCart) state.posCart = [];
-      const existing = state.posCart.find(item => item.id === id);
+      const defaultItems = [
+        { id: 'sw-1', name: 'Kaju Katli', qty: 0.5, rate: 450, total: 225, unit: 'kg' },
+        { id: 'sw-3', name: 'Gulab Jamun', qty: 1, rate: 180, total: 180, unit: 'kg' },
+        { id: 'sw-4', name: 'Motichoor Ladoo', qty: 1, rate: 160, total: 160, unit: 'kg' }
+      ];
+      if (!state.quickCart || state.quickCart.length === 0) {
+        state.quickCart = [...defaultItems];
+      }
+      const existing = state.quickCart.find(item => item.id === id || item.name === name);
       if (existing) {
         existing.qty = (existing.qty || 1) + 1;
+        existing.total = Math.round(existing.qty * (existing.rate || existing.price || price));
       } else {
-        state.posCart.push({ id, name, price, qty: 1, unit: 'kg' });
+        state.quickCart.push({ id, name, qty: 1, rate: price, total: price, unit: 'kg' });
       }
+
+      // Also sync with posCart
+      if (!state.posCart) state.posCart = [];
+      const existingPos = state.posCart.find(item => item.id === id || item.name === name);
+      if (existingPos) {
+        existingPos.qty = (existingPos.qty || 1) + 1;
+        existingPos.total = Math.round(existingPos.qty * (existingPos.rate || existingPos.price || price));
+      } else {
+        state.posCart.push({ id, name, qty: 1, rate: price, total: price, unit: 'kg' });
+      }
+
       saveState();
-      showToast(`Added ${name} to sale cart!`);
+      renderApp();
+      showToast(`Added ${name} to Quick Order!`);
     });
+  });
+
+  // Remove item from Quick Cart
+  document.querySelectorAll('.remove-quick-item-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = Number(btn.getAttribute('data-index'));
+      const defaultItems = [
+        { id: 'sw-1', name: 'Kaju Katli', qty: 0.5, rate: 450, total: 225, unit: 'kg' },
+        { id: 'sw-3', name: 'Gulab Jamun', qty: 1, rate: 180, total: 180, unit: 'kg' },
+        { id: 'sw-4', name: 'Motichoor Ladoo', qty: 1, rate: 160, total: 160, unit: 'kg' }
+      ];
+      if (!state.quickCart || state.quickCart.length === 0) {
+        state.quickCart = [...defaultItems];
+      }
+      if (state.quickCart.length > idx) {
+        const removed = state.quickCart.splice(idx, 1);
+        saveState();
+        renderApp();
+        showToast(`Removed ${removed[0]?.name || 'item'}`, 'info');
+      }
+    });
+  });
+
+  // Proceed to Checkout button on Dashboard Quick Billing widget
+  document.getElementById('proceed-to-checkout-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.activeTab = 'pos';
+    saveState();
+    renderApp();
+    showToast('Redirected to POS Counter', 'info');
+  });
+
+  // Dashboard Time Filter Dropdown
+  document.getElementById('dashboard-time-filter')?.addEventListener('change', (e) => {
+    const val = (e.target as HTMLSelectElement).value;
+    state.timeFilter = val;
+    saveState();
+    showToast(`Time period updated: ${val}`, 'info');
   });
 
   // Brand Logo Click -> Go to Dashboard
