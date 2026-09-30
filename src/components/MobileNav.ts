@@ -111,11 +111,15 @@ export function renderMobileDrawer(state) {
           </nav>
         </div>
 
-        <!-- Devotional Card at Bottom of Drawer -->
-        <div class="pt-4 border-t border-stone-200">
-          <div class="bg-gradient-to-b from-amber-50/70 to-orange-50/70 rounded-2xl p-3 border border-amber-200/60 flex flex-col items-center text-center">
-            <p class="text-xs font-bold text-amber-900 tracking-tight">Jai Radhe Krishna</p>
-            <p class="text-[10px] text-amber-700 italic mt-0.5">Sweet Moments With Radhe Krishna</p>
+        <!-- Brand Artwork at Bottom of Drawer (1:1 with Stitch screen.png) -->
+        <div class="pt-4 border-t border-stone-200 mt-auto">
+          <div class="relative overflow-hidden rounded-2xl p-1 flex flex-col items-center">
+            <img 
+              src="/image.png" 
+              alt="Sweet moments... Better together" 
+              class="w-full max-w-[200px] h-auto object-contain select-none pointer-events-none drop-shadow-sm" 
+              loading="lazy"
+            />
           </div>
         </div>
       </div>

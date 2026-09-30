@@ -2,35 +2,35 @@
 import './styles.css';
 import './firebase.js';
 import { initialData } from './data.js';
-import { renderSidebar } from './components/Sidebar.js';
-import { renderTopBar } from './components/TopBar.js';
-import { renderMobileBottomNav, renderMobileDrawer } from './components/MobileNav.js';
-import { renderDashboardView } from './components/DashboardView.js';
-import { renderPosView } from './components/PosView.js';
-import { renderCheckoutModal } from './components/CheckoutModal.js';
-import { renderOrderSuccessModal } from './components/OrderSuccessModal.js';
-import { renderThermalReceiptModal } from './components/ThermalReceiptModal.js';
-import { renderOrdersView } from './components/OrdersView.js';
-import { renderOrderDetailsModal } from './components/OrderDetailsModal.js';
+import { renderSidebar } from './components/Sidebar.ts';
+import { renderTopBar } from './components/TopBar.ts';
+import { renderMobileBottomNav, renderMobileDrawer } from './components/MobileNav.ts';
+import { renderDashboardView } from './components/DashboardView.ts';
+import { renderPosView } from './components/PosView.ts';
+import { renderCheckoutModal } from './components/CheckoutModal.ts';
+import { renderOrderSuccessModal } from './components/OrderSuccessModal.ts';
+import { renderThermalReceiptModal } from './components/ThermalReceiptModal.ts';
+import { renderOrdersView } from './components/OrdersView.ts';
+import { renderOrderDetailsModal } from './components/OrderDetailsModal.ts';
 import { 
   renderCustomersView, 
   renderAddCustomerModal, 
   renderSettleKhataModal, 
   renderCustomerProfileModal 
-} from './components/CustomersView.js';
+} from './components/CustomersView.ts';
 import { 
   renderProductsView, 
   renderAddProductModal, 
   renderEditProductModal, 
   renderRestockBatchModal, 
   renderStockAdjustModal 
-} from './components/ProductsView.js';
-import { renderExpensesView, renderAddExpenseModal } from './components/ExpensesView.js';
-import { renderAnalyticsView } from './components/AnalyticsView.js';
-import { renderSettingsView } from './components/SettingsView.js';
-import { renderSplashView } from './components/SplashView.js';
-import { renderCustomerDialerModal } from './components/CustomerDialerModal.js';
-import { renderSeoModal } from './components/SeoModal.js';
+} from './components/ProductsView.ts';
+import { renderExpensesView, renderAddExpenseModal } from './components/ExpensesView.ts';
+import { renderAnalyticsView } from './components/AnalyticsView.ts';
+import { renderSettingsView } from './components/SettingsView.ts';
+import { renderSplashView } from './components/SplashView.ts';
+import { renderCustomerDialerModal } from './components/CustomerDialerModal.ts';
+import { renderSeoModal } from './components/SeoModal.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 
@@ -241,7 +241,7 @@ export function renderApp() {
       ${renderSidebar(state.activeTab)}
 
       <!-- Main Content Area -->
-      <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <!-- Top Navigation Header (Exact 1:1 match with Stitch screen.png) -->
         ${renderTopBar(state)}
 
@@ -497,6 +497,79 @@ function attachEventListeners() {
     renderApp();
     showToast('Redirected to POS Counter', 'info');
   });
+
+  // Dashboard Scroll-Driven Tiles Animation & Current Section Reveal (1:1 with Stitch screen.png)
+  if (state.activeTab === 'dashboard') {
+    const kpiContainer = document.getElementById('kpi-tiles-container');
+    const stickyBar = document.getElementById('sticky-kpi-bar');
+    const currentViewLabel = document.getElementById('current-view-label');
+    const scrollContainer = document.getElementById('main-content-scroll-container');
+
+    const handleDashboardScroll = () => {
+      const scrollY = (scrollContainer ? scrollContainer.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
+      
+      // When scrolled down, tiles slide/scale up and sticky KPI bar smoothly slides into view
+      if (scrollY > 75) {
+        kpiContainer?.classList.add('tiles-scrolled-up');
+        stickyBar?.classList.add('is-sticky-active');
+      } else {
+        kpiContainer?.classList.remove('tiles-scrolled-up');
+        stickyBar?.classList.remove('is-sticky-active');
+      }
+    };
+
+    window.addEventListener('scroll', handleDashboardScroll, { passive: true });
+    scrollContainer?.addEventListener('scroll', handleDashboardScroll, { passive: true });
+
+    // Scroll to Top Button on Sticky Ribbon
+    document.getElementById('scroll-to-top-btn')?.addEventListener('click', () => {
+      if (scrollContainer && scrollContainer.scrollTop > 0) {
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Sticky Ribbon POS Shortcut
+    document.getElementById('sticky-pos-shortcut')?.addEventListener('click', () => {
+      state.activeTab = 'pos';
+      saveState();
+      renderApp();
+    });
+
+    // IntersectionObserver for Staggered Section Reveal & Current View Focus
+    const sectionLabels: Record<string, string> = {
+      'section-sales-overview': '✦ Sales Trajectory & Revenue',
+      'section-fast-selling': '✦ Fresh Batch Stock Ledger',
+      'section-order-status': '✦ Live Order Fulfillment',
+      'section-quick-billing': '✦ Express POS Billing'
+    };
+
+    const revealItems = document.querySelectorAll('.scroll-reveal-item');
+    if ('IntersectionObserver' in window && revealItems.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            const targetId = entry.target.id;
+            if (sectionLabels[targetId]) {
+              revealItems.forEach(el => el.classList.remove('is-current-focused'));
+              entry.target.classList.add('is-current-focused');
+              if (currentViewLabel) {
+                currentViewLabel.textContent = sectionLabels[targetId];
+              }
+            }
+          }
+        });
+      }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -40px 0px'
+      });
+
+      revealItems.forEach(item => observer.observe(item));
+    } else {
+      revealItems.forEach(item => item.classList.add('is-visible'));
+    }
+  }
 
   // Dashboard Time Filter Dropdown
   document.getElementById('dashboard-time-filter')?.addEventListener('change', (e) => {

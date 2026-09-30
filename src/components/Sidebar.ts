@@ -93,19 +93,15 @@ export function renderSidebar(currentTab) {
         </nav>
       </div>
 
-      <!-- Devotional Footer Card (1:1 with Stitch screen.png) -->
-      <div class="mt-8 pt-4 border-t border-[#F0ECE4]" data-purpose="devotional-card">
-        <div class="bg-gradient-to-b from-orange-50/70 to-amber-50/70 rounded-2xl p-3.5 border border-amber-100 flex flex-col items-center text-center">
-          <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mb-1.5 shadow-xs">
-            <!-- Spiritual Peacock Feather & Flute Emblem -->
-            <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.8 0 1.5-.2 2.2-.5"></path>
-              <path d="M14 6c3 1 5 4 4 8-1 3-3 4-6 4"></path>
-              <circle cx="12" cy="11" r="2"></circle>
-            </svg>
-          </div>
-          <p class="text-xs font-bold text-amber-900 tracking-tight">Jai Radhe Krishna</p>
-          <p class="text-[10px] text-amber-700 italic mt-0.5">Sweet Moments With Radhe Krishna</p>
+      <!-- Brand Artwork (Exact 1:1 match with Stitch screen.png) -->
+      <div class="mt-auto pt-4 border-t border-[#F0ECE4]/60" data-purpose="sidebar-bottom-art">
+        <div class="relative overflow-hidden rounded-2xl group cursor-pointer transition-all duration-300 hover:scale-[1.03]">
+          <img 
+            src="/image.png" 
+            alt="Sweet moments... Better together" 
+            class="w-full h-auto object-contain select-none pointer-events-none drop-shadow-sm transition-transform duration-500 group-hover:scale-105" 
+            loading="lazy"
+          />
         </div>
       </div>
     </aside>

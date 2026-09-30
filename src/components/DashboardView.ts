@@ -46,192 +46,306 @@ export function renderDashboardView(state) {
         </div>
       </section>
 
+      <!-- Sticky Floating Quick-KPI Ribbon (Smoothly slides in when scrolling past tiles) -->
+      <div 
+        id="sticky-kpi-bar" 
+        class="sticky top-2 z-30 mb-2 backdrop-blur-md bg-white/95 border border-[#F0ECE4] shadow-[0_8px_30px_rgba(74,58,47,0.08)] rounded-2xl px-4 py-2.5 flex items-center justify-between transition-all duration-300 transform -translate-y-8 opacity-0 pointer-events-none"
+        data-purpose="sticky-kpi-dock"
+      >
+        <div class="flex items-center space-x-3 overflow-hidden">
+          <div class="flex items-center space-x-2 text-xs font-bold text-[#C86D3B] bg-orange-50/90 px-3 py-1 rounded-full border border-orange-200/60 shadow-2xs shrink-0">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="current-view-label">Dashboard Overview</span>
+          </div>
+          <div class="hidden sm:flex items-center space-x-4 text-xs font-semibold text-[#2A1F1D] truncate">
+            <span class="flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Customers:</span> <b class="text-stone-900 font-bold">184</b></span>
+            <span class="text-stone-300">•</span>
+            <span class="flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Sales:</span> <b class="text-emerald-700 font-bold">₹42,850</b></span>
+            <span class="text-stone-300">•</span>
+            <span class="flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Orders:</span> <b class="text-purple-700 font-bold">126</b></span>
+            <span class="text-stone-300 hidden md:inline">•</span>
+            <span class="hidden md:flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Profit:</span> <b class="text-teal-700 font-bold">₹14,620</b> <span class="text-[10px] text-teal-600 ml-1 font-semibold">(34.1%)</span></span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 shrink-0">
+          <button 
+            id="sticky-pos-shortcut" 
+            data-tab="pos" 
+            class="px-3 py-1.5 rounded-xl bg-[#C86D3B] hover:bg-[#B25D2E] active:scale-95 text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+          >
+            <span>+ Sell POS</span>
+          </button>
+          <button 
+            id="scroll-to-top-btn" 
+            class="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-semibold transition-all flex items-center space-x-1 cursor-pointer"
+            title="Scroll to top of tiles"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+            <span class="hidden sm:inline">Top</span>
+          </button>
+        </div>
+      </div>
+
       <!-- ======================================================== -->
-      <!-- 6 KPI Stat Cards in exact row (1:1 with Stitch screen.png) -->
+      <!-- 6 KPI Stat Cards Grid (Exact 1:1 with Stitch screen.png)  -->
+      <!-- 3 Columns x 2 Rows Pastel Tinted Metric Cards with Waves  -->
       <!-- ======================================================== -->
-      <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5 sm:gap-4" data-purpose="kpi-metrics-grid">
+      <section id="kpi-tiles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-purpose="kpi-metrics-grid">
         
-        <!-- KPI 1: Customers -->
-        <article class="bg-white p-4 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-[0_4px_20px_-2px_rgba(92,64,43,0.08)] transition-all flex flex-col justify-between">
+        <!-- CARD 1: Customers -->
+        <article class="bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-3xl p-6 sm:p-7 shadow-[0_4px_16px_rgba(74,58,47,0.04)] hover:shadow-[0_12px_28px_rgba(74,58,47,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
+          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
-            <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+            <span class="w-12 h-12 rounded-full bg-[#FCEEE3] text-[#C86D3B] flex items-center justify-center shadow-xs">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
               </svg>
             </span>
-            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center">
-              <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              +12%
-            </span>
+            <button class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
           </div>
-          <div class="mt-3">
-            <p class="text-xs text-stone-500 font-medium">Customers</p>
-            <p class="text-xl font-bold text-[#2A1F1D] mt-0.5">184</p>
+
+          <!-- Middle: Label & Stat -->
+          <div class="mt-4 z-10">
+            <p class="text-sm font-semibold text-[#5A4E4D]">Customers</p>
+            <p class="text-3xl sm:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-1">184</p>
           </div>
-          <div class="mt-2 text-amber-400">
-            <svg class="w-full h-8" fill="none" viewBox="0 0 100 28">
-              <path d="M0 24 Q 20 22, 35 15 T 70 12 T 100 4" fill="none" stroke="#F59E0B" stroke-linecap="round" stroke-width="2"></path>
-              <path d="M0 24 Q 20 22, 35 15 T 70 12 T 100 4 L 100 28 L 0 28 Z" fill="url(#amber-grad)" opacity="0.18"></path>
-              <defs>
-                <linearGradient id="amber-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#F59E0B"></stop>
-                  <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
+
+          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
+          <div class="mt-4 flex items-end justify-between relative">
+            <div class="flex items-center text-emerald-600 font-bold text-xs sm:text-sm z-10">
+              <svg class="w-4 h-4 mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <span>+12% today</span>
+            </div>
+
+            <!-- Soft Bezier Sparkline (1:1 with screen.png) -->
+            <div class="w-36 h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
+                <path d="M 5 35 Q 35 32, 60 22 T 95 18 T 135 6" stroke="#E07A5F" stroke-width="2.5" stroke-linecap="round"></path>
+                <path d="M 5 35 Q 35 32, 60 22 T 95 18 T 135 6 L 135 45 L 5 45 Z" fill="url(#peachSparkFill)" opacity="0.25"></path>
+                <defs>
+                  <linearGradient id="peachSparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#E07A5F" stop-opacity="0.6"></stop>
+                    <stop offset="100%" stop-color="#E07A5F" stop-opacity="0.0"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
           </div>
         </article>
 
-        <!-- KPI 2: Sales -->
-        <article class="bg-white p-4 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-[0_4px_20px_-2px_rgba(92,64,43,0.08)] transition-all flex flex-col justify-between">
+        <!-- CARD 2: Sales -->
+        <article class="bg-gradient-to-br from-[#F4FAF6] via-[#EAF5EE] to-[#E2F2E7] border border-[#E0EFE6] rounded-3xl p-6 sm:p-7 shadow-[0_4px_16px_rgba(74,58,47,0.04)] hover:shadow-[0_12px_28px_rgba(74,58,47,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
+          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
-            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+            <span class="w-12 h-12 rounded-full bg-[#EAF7EE] text-[#16A34A] flex items-center justify-center shadow-xs">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C9.5 2 7.8 3.5 7.4 5.5L4 7.2v1.5l1.6.8C5.2 11.2 5 13 5 15c0 4.4 3.1 7 7 7s7-2.6 7-7c0-2-.2-3.8-.6-5.5l1.6-.8V7.2l-3.4-1.7C16.2 3.5 14.5 2 12 2zm0 6c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm0 8c1.7 0 3 .9 3 2H9c0-1.1 1.3-2 3-2z"></path>
               </svg>
             </span>
-            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center">
-              <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              +8.4%
-            </span>
+            <button class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
           </div>
-          <div class="mt-3">
-            <p class="text-xs text-stone-500 font-medium">Sales</p>
-            <p class="text-xl font-bold text-[#2A1F1D] mt-0.5">₹42,850</p>
+
+          <!-- Middle: Label & Stat -->
+          <div class="mt-4 z-10">
+            <p class="text-sm font-semibold text-[#5A4E4D]">Sales</p>
+            <p class="text-3xl sm:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-1">₹42,850</p>
           </div>
-          <div class="mt-2">
-            <svg class="w-full h-8" fill="none" viewBox="0 0 100 28">
-              <path d="M0 20 Q 25 18, 50 10 T 80 8 T 100 3" fill="none" stroke="#10B981" stroke-linecap="round" stroke-width="2"></path>
-              <path d="M0 20 Q 25 18, 50 10 T 80 8 T 100 3 L 100 28 L 0 28 Z" fill="url(#mint-grad)" opacity="0.18"></path>
-              <defs>
-                <linearGradient id="mint-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#10B981"></stop>
-                  <stop offset="100%" stop-color="#10B981" stop-opacity="0"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
+
+          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
+          <div class="mt-4 flex items-end justify-between relative">
+            <div class="flex items-center text-emerald-600 font-bold text-xs sm:text-sm z-10">
+              <svg class="w-4 h-4 mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <span>+8.4%</span>
+            </div>
+
+            <!-- Soft Bezier Sparkline -->
+            <div class="w-36 h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
+                <path d="M 5 32 Q 35 28, 65 18 T 100 14 T 135 5" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"></path>
+                <path d="M 5 32 Q 35 28, 65 18 T 100 14 T 135 5 L 135 45 L 5 45 Z" fill="url(#mintSparkFill)" opacity="0.25"></path>
+                <defs>
+                  <linearGradient id="mintSparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#10B981" stop-opacity="0.6"></stop>
+                    <stop offset="100%" stop-color="#10B981" stop-opacity="0.0"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
           </div>
         </article>
 
-        <!-- KPI 3: Orders -->
-        <article class="bg-white p-4 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-[0_4px_20px_-2px_rgba(92,64,43,0.08)] transition-all flex flex-col justify-between">
+        <!-- CARD 3: Orders -->
+        <article class="bg-gradient-to-br from-[#F8F5FD] via-[#EFEBF9] to-[#E8E0F7] border border-[#E9E2F5] rounded-3xl p-6 sm:p-7 shadow-[0_4px_16px_rgba(74,58,47,0.04)] hover:shadow-[0_12px_28px_rgba(74,58,47,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="orders">
+          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
-            <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <span class="w-12 h-12 rounded-full bg-[#F3EEFC] text-[#7C3AED] flex items-center justify-center shadow-xs">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
-            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center">
-              <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              +9.2%
-            </span>
+            <button class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
           </div>
-          <div class="mt-3">
-            <p class="text-xs text-stone-500 font-medium">Orders</p>
-            <p class="text-xl font-bold text-[#2A1F1D] mt-0.5">126</p>
+
+          <!-- Middle: Label & Stat -->
+          <div class="mt-4 z-10">
+            <p class="text-sm font-semibold text-[#5A4E4D]">Orders</p>
+            <p class="text-3xl sm:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-1">126</p>
           </div>
-          <div class="mt-2">
-            <svg class="w-full h-8" fill="none" viewBox="0 0 100 28">
-              <path d="M0 22 Q 30 16, 55 18 T 85 8 T 100 2" fill="none" stroke="#8B5CF6" stroke-linecap="round" stroke-width="2"></path>
-              <path d="M0 22 Q 30 16, 55 18 T 85 8 T 100 2 L 100 28 L 0 28 Z" fill="url(#lav-grad)" opacity="0.18"></path>
-              <defs>
-                <linearGradient id="lav-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#8B5CF6"></stop>
-                  <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
+
+          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
+          <div class="mt-4 flex items-end justify-between relative">
+            <div class="flex items-center text-emerald-600 font-bold text-xs sm:text-sm z-10">
+              <svg class="w-4 h-4 mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <span>+9.2%</span>
+            </div>
+
+            <!-- Soft Bezier Sparkline -->
+            <div class="w-36 h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
+                <path d="M 5 34 Q 35 24, 70 26 T 105 14 T 135 4" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round"></path>
+                <path d="M 5 34 Q 35 24, 70 26 T 105 14 T 135 4 L 135 45 L 5 45 Z" fill="url(#lavSparkFill)" opacity="0.25"></path>
+                <defs>
+                  <linearGradient id="lavSparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.6"></stop>
+                    <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.0"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
           </div>
         </article>
 
-        <!-- KPI 4: Profit -->
-        <article class="bg-white p-4 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-[0_4px_20px_-2px_rgba(92,64,43,0.08)] transition-all flex flex-col justify-between">
+        <!-- CARD 4: Profit -->
+        <article class="bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-3xl p-6 sm:p-7 shadow-[0_4px_16px_rgba(74,58,47,0.04)] hover:shadow-[0_12px_28px_rgba(74,58,47,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="analytics">
+          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
-            <span class="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <span class="w-12 h-12 rounded-full bg-[#E8F6EF] text-[#0D9488] flex items-center justify-center shadow-xs">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"></path>
               </svg>
             </span>
-            <span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">
-              34.1% margin
-            </span>
+            <button class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
           </div>
-          <div class="mt-3">
-            <p class="text-xs text-stone-500 font-medium">Profit</p>
-            <p class="text-xl font-bold text-[#2A1F1D] mt-0.5">₹14,620</p>
+
+          <!-- Middle: Label & Stat -->
+          <div class="mt-4 z-10">
+            <p class="text-sm font-semibold text-[#5A4E4D]">Profit</p>
+            <p class="text-3xl sm:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-1">₹14,620</p>
           </div>
-          <div class="mt-2">
-            <svg class="w-full h-8" fill="none" viewBox="0 0 100 28">
-              <path d="M0 21 Q 30 20, 60 14 T 90 9 T 100 4" fill="none" stroke="#0D9488" stroke-linecap="round" stroke-width="2"></path>
-              <path d="M0 21 Q 30 20, 60 14 T 90 9 T 100 4 L 100 28 L 0 28 Z" fill="url(#teal-grad)" opacity="0.18"></path>
-              <defs>
-                <linearGradient id="teal-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#0D9488"></stop>
-                  <stop offset="100%" stop-color="#0D9488" stop-opacity="0"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
+
+          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
+          <div class="mt-4 flex items-end justify-between relative">
+            <div class="text-[#0D9488] font-bold text-xs sm:text-sm z-10">
+              <span>34.1% margin</span>
+            </div>
+
+            <!-- Soft Bezier Sparkline -->
+            <div class="w-36 h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
+                <path d="M 5 31 Q 40 30, 75 22 T 115 14 T 135 7" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round"></path>
+                <path d="M 5 31 Q 40 30, 75 22 T 115 14 T 135 7 L 135 45 L 5 45 Z" fill="url(#tealSparkFill)" opacity="0.25"></path>
+                <defs>
+                  <linearGradient id="tealSparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0D9488" stop-opacity="0.6"></stop>
+                    <stop offset="100%" stop-color="#0D9488" stop-opacity="0.0"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
           </div>
         </article>
 
-        <!-- KPI 5: Cost -->
-        <article class="bg-white p-4 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-[0_4px_20px_-2px_rgba(92,64,43,0.08)] transition-all flex flex-col justify-between">
+        <!-- CARD 5: Cost -->
+        <article class="bg-gradient-to-br from-[#FDF5F4] via-[#FCECEB] to-[#FADEDB] border border-[#F7DDDC] rounded-3xl p-6 sm:p-7 shadow-[0_4px_16px_rgba(74,58,47,0.04)] hover:shadow-[0_12px_28px_rgba(74,58,47,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="expenses">
+          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
-            <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+            <span class="w-12 h-12 rounded-full bg-[#FEECEB] text-[#E11D48] flex items-center justify-center shadow-xs">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"></path>
               </svg>
             </span>
-            <span class="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
-              65.9%
-            </span>
+            <button class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
           </div>
-          <div class="mt-3">
-            <p class="text-xs text-stone-500 font-medium">Cost</p>
-            <p class="text-xl font-bold text-[#2A1F1D] mt-0.5">₹28,230</p>
+
+          <!-- Middle: Label & Stat -->
+          <div class="mt-4 z-10">
+            <p class="text-sm font-semibold text-[#5A4E4D]">Cost</p>
+            <p class="text-3xl sm:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-1">₹28,230</p>
           </div>
-          <div class="mt-2">
-            <svg class="w-full h-8" fill="none" viewBox="0 0 100 28">
-              <path d="M0 12 Q 25 15, 50 18 T 75 14 T 100 20" fill="none" stroke="#F43F5E" stroke-linecap="round" stroke-width="2"></path>
-              <path d="M0 12 Q 25 15, 50 18 T 75 14 T 100 20 L 100 28 L 0 28 Z" fill="url(#rose-grad)" opacity="0.18"></path>
-              <defs>
-                <linearGradient id="rose-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#F43F5E"></stop>
-                  <stop offset="100%" stop-color="#F43F5E" stop-opacity="0"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
+
+          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
+          <div class="mt-4 flex items-end justify-between relative">
+            <div class="text-rose-500 font-bold text-xs sm:text-sm z-10">
+              <span>65.9%</span>
+            </div>
+
+            <!-- Soft Bezier Sparkline -->
+            <div class="w-36 h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
+                <path d="M 5 18 Q 35 22, 68 28 T 105 22 T 135 32" stroke="#F43F5E" stroke-width="2.5" stroke-linecap="round"></path>
+                <path d="M 5 18 Q 35 22, 68 28 T 105 22 T 135 32 L 135 45 L 5 45 Z" fill="url(#roseSparkFill)" opacity="0.25"></path>
+                <defs>
+                  <linearGradient id="roseSparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#F43F5E" stop-opacity="0.6"></stop>
+                    <stop offset="100%" stop-color="#F43F5E" stop-opacity="0.0"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
           </div>
         </article>
 
-        <!-- KPI 6: Returning -->
-        <article class="bg-white p-4 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-[0_4px_20px_-2px_rgba(92,64,43,0.08)] transition-all flex flex-col justify-between">
+        <!-- CARD 6: Returning -->
+        <article class="bg-gradient-to-br from-[#F2F7FD] via-[#ECF3FC] to-[#E0EDFA] border border-[#DBE7F6] rounded-3xl p-6 sm:p-7 shadow-[0_4px_16px_rgba(74,58,47,0.04)] hover:shadow-[0_12px_28px_rgba(74,58,47,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
+          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="flex items-center justify-between">
-            <span class="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <span class="w-12 h-12 rounded-full bg-[#EAF4FD] text-[#0284C7] flex items-center justify-center shadow-xs">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
-            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center">
-              <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              +41.3%
-            </span>
+            <button class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            </button>
           </div>
-          <div class="mt-3">
-            <p class="text-xs text-stone-500 font-medium">Returning</p>
-            <p class="text-xl font-bold text-[#2A1F1D] mt-0.5">76 <span class="text-xs font-normal text-stone-400">cust</span></p>
+
+          <!-- Middle: Label & Stat -->
+          <div class="mt-4 z-10">
+            <p class="text-sm font-semibold text-[#5A4E4D]">Returning</p>
+            <p class="text-3xl sm:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-1">76 <span class="text-lg font-medium text-stone-600">customers</span></p>
           </div>
-          <div class="mt-2">
-            <svg class="w-full h-8" fill="none" viewBox="0 0 100 28">
-              <path d="M0 24 Q 30 22, 60 16 T 85 10 T 100 2" fill="none" stroke="#0284C7" stroke-linecap="round" stroke-width="2"></path>
-              <path d="M0 24 Q 30 22, 60 16 T 85 10 T 100 2 L 100 28 L 0 28 Z" fill="url(#sky-grad)" opacity="0.18"></path>
-              <defs>
-                <linearGradient id="sky-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#0284C7"></stop>
-                  <stop offset="100%" stop-color="#0284C7" stop-opacity="0"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
+
+          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
+          <div class="mt-4 flex items-end justify-between relative">
+            <div class="flex items-center text-sky-600 font-bold text-xs sm:text-sm z-10">
+              <svg class="w-4 h-4 mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <span>41.3%</span>
+            </div>
+
+            <!-- Soft Bezier Sparkline -->
+            <div class="w-36 h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
+                <path d="M 5 33 Q 40 32, 75 22 T 115 14 T 135 5" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round"></path>
+                <path d="M 5 33 Q 40 32, 75 22 T 115 14 T 135 5 L 135 45 L 5 45 Z" fill="url(#skySparkFill)" opacity="0.25"></path>
+                <defs>
+                  <linearGradient id="skySparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0284C7" stop-opacity="0.6"></stop>
+                    <stop offset="100%" stop-color="#0284C7" stop-opacity="0.0"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
           </div>
         </article>
 
@@ -239,6 +353,7 @@ export function renderDashboardView(state) {
 
       <!-- ======================================================== -->
       <!-- MAIN 12-COLUMN DASHBOARD GRID (1:1 with Stitch screen.png) -->
+      <!-- With Scroll-Reveal Staggered Animations for All Sections  -->
       <!-- ======================================================== -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6" data-purpose="main-dashboard-grid">
         
@@ -248,7 +363,7 @@ export function renderDashboardView(state) {
         <div class="lg:col-span-8 space-y-6">
           
           <!-- SECTION 1: Sales Overview Area Chart -->
-          <section class="bg-white p-5 sm:p-6 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="sales-chart-card">
+          <section id="section-sales-overview" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="sales-chart-card">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F0ECE4]/70 gap-2">
               <div>
                 <h3 class="text-base font-bold text-[#2A1F1D]">Sales Overview</h3>
@@ -313,7 +428,7 @@ export function renderDashboardView(state) {
           </section>
 
           <!-- SECTION 2: Fast Selling Sweets & Stock Table (1:1 with Stitch screen.png) -->
-          <section class="bg-white rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="fast-selling-sweets-table">
+          <section id="section-fast-selling" class="scroll-reveal-item bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="fast-selling-sweets-table">
             <div class="p-5 border-b border-[#F0ECE4] flex items-center justify-between">
               <div>
                 <h3 class="text-base font-bold text-[#2A1F1D]">Fast Selling Sweets &amp; Stock</h3>
@@ -516,7 +631,7 @@ export function renderDashboardView(state) {
         <div class="lg:col-span-4 space-y-6">
           
           <!-- SECTION 3: Order Status Donut Chart (1:1 with Stitch screen.png) -->
-          <section class="bg-white p-5 sm:p-6 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="order-status-card">
+          <section id="section-order-status" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="order-status-card">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-base font-bold text-[#2A1F1D]">Order Status</h3>
               <span class="text-xs text-stone-400">Today</span>
@@ -580,7 +695,7 @@ export function renderDashboardView(state) {
           </section>
 
           <!-- SECTION 4: Quick Billing (POS) Widget (1:1 with Stitch screen.png) -->
-          <section class="bg-white p-5 rounded-2xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] flex flex-col justify-between" data-purpose="quick-pos-widget">
+          <section id="section-quick-billing" class="scroll-reveal-item bg-white p-5 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] flex flex-col justify-between" data-purpose="quick-pos-widget">
             <div>
               <div class="flex items-center justify-between border-b border-[#F0ECE4] pb-3 mb-4">
                 <div>

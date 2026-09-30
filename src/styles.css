@@ -393,3 +393,47 @@ body {
   50% { transform: translateY(-30px) scale(1.35); opacity: 0.95; }
   100% { transform: translateY(-55px) scale(0.8); opacity: 0.35; }
 }
+
+/* ==========================================================================
+   Dashboard Tiles Scroll-Up & Current Section Reveal Animations (screen.png)
+   ========================================================================== */
+#kpi-tiles-container {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.35s ease,
+              filter 0.35s ease;
+  transform-origin: top center;
+}
+#kpi-tiles-container.tiles-scrolled-up {
+  transform: translateY(-8px) scale(0.985);
+  opacity: 0.88;
+}
+
+#sticky-kpi-bar {
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.26s ease, 
+              box-shadow 0.26s ease;
+  will-change: transform, opacity;
+}
+#sticky-kpi-bar.is-sticky-active {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.scroll-reveal-item {
+  opacity: 0.92;
+  transform: translateY(22px);
+  transition: transform 0.52s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease, 
+              box-shadow 0.35s ease;
+  will-change: transform, opacity;
+}
+.scroll-reveal-item.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-reveal-item.is-current-focused {
+  border-color: rgba(200, 109, 59, 0.45) !important;
+  box-shadow: 0 16px 36px -4px rgba(200, 109, 59, 0.11), 0 4px 14px rgba(74, 58, 47, 0.05) !important;
+}
