@@ -658,14 +658,12 @@ export function renderDashboardView(state) {
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                   <!-- Background ring -->
                   <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F5EFE9" stroke-width="3.8"></circle>
-                  <!-- Delivered (68/126 ~ 54%) #10B981 -->
-                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#10B981" stroke-width="3.8" stroke-dasharray="49 100" stroke-dashoffset="0" class="donut-segment"></circle>
-                  <!-- Processing (26/126 ~ 20.6%) #0284C7 -->
-                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#0284C7" stroke-width="3.8" stroke-dasharray="19 100" stroke-dashoffset="-49" class="donut-segment"></circle>
-                  <!-- Pending (24/126 ~ 19%) #F59E0B -->
-                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F59E0B" stroke-width="3.8" stroke-dasharray="17 100" stroke-dashoffset="-68" class="donut-segment"></circle>
-                  <!-- Canceled (8/126 ~ 6.3%) #EF4444 -->
-                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#EF4444" stroke-width="3.8" stroke-dasharray="6 100" stroke-dashoffset="-85" class="donut-segment"></circle>
+                  <!-- Completed Counter Sales (94/126 ~ 74.6%) #10B981 -->
+                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#10B981" stroke-width="3.8" stroke-dasharray="75 100" stroke-dashoffset="0" class="donut-segment"></circle>
+                  <!-- Advance Bookings (22/126 ~ 17.5%) #0284C7 -->
+                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#0284C7" stroke-width="3.8" stroke-dasharray="17 100" stroke-dashoffset="-75" class="donut-segment"></circle>
+                  <!-- Kitchen Packing (10/126 ~ 7.9%) #F59E0B -->
+                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F59E0B" stroke-width="3.8" stroke-dasharray="8 100" stroke-dashoffset="-92" class="donut-segment"></circle>
                 </svg>
 
                 <!-- Center Total Metric -->
@@ -680,30 +678,23 @@ export function renderDashboardView(state) {
                 <div class="flex items-center justify-between">
                   <span class="flex items-center text-stone-600">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span>
-                    Delivered
+                    Completed (Counter)
                   </span>
-                  <span class="font-bold text-[#2A1F1D]">68</span>
+                  <span class="font-bold text-[#2A1F1D]">94</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="flex items-center text-stone-600">
                     <span class="w-2.5 h-2.5 rounded-full bg-sky-500 mr-2"></span>
-                    Processing
+                    Advance Bookings
                   </span>
-                  <span class="font-bold text-[#2A1F1D]">26</span>
+                  <span class="font-bold text-[#2A1F1D]">22</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="flex items-center text-stone-600">
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span>
-                    Pending
+                    Kitchen Packing
                   </span>
-                  <span class="font-bold text-[#2A1F1D]">24</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="flex items-center text-stone-600">
-                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-2"></span>
-                    Canceled
-                  </span>
-                  <span class="font-bold text-[#2A1F1D]">8</span>
+                  <span class="font-bold text-[#2A1F1D]">10</span>
                 </div>
               </div>
             </div>
@@ -721,21 +712,21 @@ export function renderDashboardView(state) {
               </div>
 
               <!-- Selected Customer Pill -->
-              <div class="bg-amber-50/60 rounded-xl p-3 border border-amber-100 mb-4 flex items-center justify-between">
+              <div class="bg-[var(--bg-subtle)] rounded-xl p-3 border border-[var(--border-color)] mb-4 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                  <div class="w-9 h-9 rounded-full bg-amber-200/80 text-amber-900 font-bold text-xs flex items-center justify-center shadow-2xs">
-                    JS
+                  <div class="w-9 h-9 rounded-full ${state.selectedCustomer ? 'bg-amber-200/80 text-amber-900' : 'bg-stone-200 text-stone-700'} font-bold text-xs flex items-center justify-center shadow-2xs">
+                    ${state.selectedCustomer ? state.selectedCustomer.name.split(' ').map((n: string)=>n[0]).join('').slice(0, 2) : 'WC'}
                   </div>
                   <div>
                     <div class="flex items-center space-x-1.5">
-                      <span class="font-semibold text-xs text-[#2A1F1D]">Jignesh Shah</span>
-                      <span class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.2 rounded">VIP</span>
+                      <span class="font-semibold text-xs text-[#2A1F1D]">${state.selectedCustomer ? state.selectedCustomer.name : 'Walk-in Customer'}</span>
+                      <span class="text-[9px] ${state.selectedCustomer ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-800'} font-bold px-1.5 py-0.2 rounded">${state.selectedCustomer ? (state.selectedCustomer.tier || 'VIP') : 'OTC Sale'}</span>
                     </div>
-                    <p class="text-[11px] text-stone-500">+91 98765 67890</p>
+                    <p class="text-[11px] text-stone-500">${state.selectedCustomer ? state.selectedCustomer.phone : 'No phone attached'}</p>
                   </div>
                 </div>
-                <button class="text-stone-400 hover:text-stone-600 p-1 transition-colors" title="Change Customer">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                <button type="button" id="dashboard-switch-customer-btn" class="text-xs font-bold text-[var(--brand-primary)] hover:underline p-1 transition-colors" title="Change Customer">
+                  ${state.selectedCustomer ? 'Change' : '+ Attach'}
                 </button>
               </div>
 

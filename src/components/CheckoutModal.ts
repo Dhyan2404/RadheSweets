@@ -28,21 +28,21 @@ export function renderCheckoutModal(state) {
         <!-- Customer Profile & Loyalty Card -->
         <div class="bg-[var(--bg-subtle)] p-3.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-full bg-[var(--brand-primary)] text-white font-bold text-xs flex items-center justify-center shadow-xs">
-              ${selectedCustomer ? selectedCustomer.name.split(' ').map(n=>n[0]).join('') : 'JS'}
+            <div class="w-10 h-10 rounded-full ${selectedCustomer ? 'bg-[var(--brand-primary)]' : 'bg-stone-600'} text-white font-bold text-xs flex items-center justify-center shadow-xs">
+              ${selectedCustomer ? selectedCustomer.name.split(' ').map((n: string)=>n[0]).join('').slice(0, 2) : 'WC'}
             </div>
             <div>
               <div class="flex items-center space-x-2">
-                <span class="font-bold text-xs sm:text-sm text-[var(--text-main)]">${selectedCustomer?.name || 'Walk-in Customer'}</span>
-                <span class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.2 rounded">${selectedCustomer?.tier || 'VIP'}</span>
+                <span class="font-bold text-xs sm:text-sm text-[var(--text-main)]">${selectedCustomer?.name || 'Walk-in Counter Customer'}</span>
+                <span class="text-[9px] ${selectedCustomer ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-800'} font-bold px-1.5 py-0.2 rounded">${selectedCustomer?.tier || 'Cash OTC'}</span>
                 ${selectedCustomer?.loyaltyPoints ? `
                   <span class="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded border border-amber-300">
                     ⭐ ${selectedCustomer.loyaltyPoints} Pts
                   </span>
                 ` : ''}
               </div>
-              <p class="text-[11px] text-[var(--text-muted)]">${selectedCustomer?.phone || '+91 98765 67890'}</p>
-              ${selectedCustomer?.khataBalance !== undefined ? `
+              <p class="text-[11px] text-[var(--text-muted)]">${selectedCustomer?.phone || 'OTC Instant Counter Delivery'}</p>
+              ${selectedCustomer && selectedCustomer?.khataBalance !== undefined ? `
                 <p class="text-[10px] text-stone-500">
                   Khata Limit: ₹${selectedCustomer.creditLimit || 5000} | Current Due: <strong class="text-rose-600">₹${selectedCustomer.khataBalance}</strong>
                 </p>

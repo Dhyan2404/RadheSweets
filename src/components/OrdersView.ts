@@ -1,23 +1,28 @@
 // Orders Management View Component
+// Real-world Sweet Shop Counter & Festival Pre-Order Management
 
-export function renderOrdersView(state) {
-  const { orders, ordersFilterTab, ordersSearchQuery } = state;
+export function renderOrdersView(state: any) {
+  const { orders = [], ordersFilterTab = 'all', ordersSearchQuery = '' } = state;
+
+  const completedCount = orders.filter((o: any) => o.status === 'Completed').length;
+  const advanceCount = orders.filter((o: any) => o.status === 'Advance Booking').length;
+  const kitchenCount = orders.filter((o: any) => o.status === 'Kitchen Packing').length;
 
   const tabs = [
-    { id: 'all', label: 'All (126)', filter: () => true },
-    { id: 'pending', label: 'Pending (8)', filter: o => o.status === 'Pending' },
-    { id: 'processing', label: 'Processing (12)', filter: o => o.status === 'Processing' },
-    { id: 'completed', label: 'Completed (110)', filter: o => o.status === 'Completed' },
-    { id: 'canceled', label: 'Cancelled (8)', filter: o => o.status === 'Canceled' }
+    { id: 'all', label: `All Orders (${orders.length})`, filter: () => true },
+    { id: 'completed', label: `Completed (Counter Sale) (${completedCount})`, filter: (o: any) => o.status === 'Completed' },
+    { id: 'advance', label: `Advance Bookings (${advanceCount})`, filter: (o: any) => o.status === 'Advance Booking' },
+    { id: 'kitchen', label: `Kitchen Packing (${kitchenCount})`, filter: (o: any) => o.status === 'Kitchen Packing' }
   ];
 
   // Filter orders
   const activeTabConfig = tabs.find(t => t.id === ordersFilterTab) || tabs[0];
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order: any) => {
     const matchesTab = activeTabConfig.filter(order);
     const matchesSearch = !ordersSearchQuery || 
       order.id.toLowerCase().includes(ordersSearchQuery.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(ordersSearchQuery.toLowerCase());
+      (order.customerName && order.customerName.toLowerCase().includes(ordersSearchQuery.toLowerCase())) ||
+      (order.customerPhone && order.customerPhone.includes(ordersSearchQuery));
     return matchesTab && matchesSearch;
   });
 
@@ -26,12 +31,12 @@ export function renderOrdersView(state) {
       <!-- Orders Header -->
       <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 class="text-2xl font-bold text-[var(--text-main)] tracking-tight">Orders</h2>
-          <p class="text-xs text-[var(--text-muted)] mt-0.5">Manage and track all shop counter & delivery orders</p>
+          <h2 class="text-2xl font-bold text-[var(--text-main)] tracking-tight">Shop Orders</h2>
+          <p class="text-xs text-[var(--text-muted)] mt-0.5">Real-time counter handover sales, festival advance bookings & kitchen packing</p>
         </div>
 
-        <button id="orders-new-sale-btn" class="px-4 py-2 bg-[var(--brand-primary)] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[var(--brand-primary-hover)] transition-all flex items-center gap-1.5 self-start sm:self-auto">
-          <span>+</span> New Order
+        <button id="orders-new-sale-btn" class="px-4 py-2 bg-[var(--brand-primary)] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[var(--brand-primary-hover)] transition-all flex items-center gap-1.5 self-start sm:self-auto active:scale-95">
+          <span>+</span> New Counter Sale
         </button>
       </section>
 
@@ -63,7 +68,7 @@ export function renderOrdersView(state) {
               id="orders-search-input"
               type="text" 
               value="${ordersSearchQuery || ''}"
-              placeholder="Search by order ID or customer..." 
+              placeholder="Search by order ID, customer or phone..." 
               class="w-full pl-9 pr-3 py-2 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] placeholder-[var(--text-light)] focus:outline-none focus:border-[var(--brand-primary)]"
             />
           </div>
@@ -71,11 +76,8 @@ export function renderOrdersView(state) {
           <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
             <div class="bg-[var(--bg-surface)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-muted)] flex items-center gap-1.5">
               <span>📅</span>
-              <span>20 Sep – 25 Sep 2026</span>
+              <span>Today (25 Sep 2026)</span>
             </div>
-            <button class="p-2 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)]" title="Filter options">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-            </button>
           </div>
         </div>
       </section>
@@ -96,7 +98,7 @@ export function renderOrdersView(state) {
               </tr>
             </thead>
             <tbody class="divide-y divide-[var(--border-color)]/70">
-              ${filteredOrders.length > 0 ? filteredOrders.map(order => `
+              ${filteredOrders.length > 0 ? filteredOrders.map((order: any) => `
                 <tr class="hover:bg-[var(--bg-highlight)]/40 transition-colors">
                   <td class="py-3.5 px-5 font-bold text-[var(--brand-primary)]">
                     #${order.id}
@@ -105,8 +107,8 @@ export function renderOrdersView(state) {
                     ${order.date}
                   </td>
                   <td class="py-3.5 px-4">
-                    <div class="font-bold text-[var(--text-main)]">${order.customerName}</div>
-                    <div class="text-[10px] text-[var(--text-light)]">${order.customerPhone}</div>
+                    <div class="font-bold text-[var(--text-main)]">${order.customerName || 'Walk-in Customer'}</div>
+                    <div class="text-[10px] text-[var(--text-light)]">${order.customerPhone || 'OTC Counter Sale'}</div>
                   </td>
                   <td class="py-3.5 px-4 text-center font-semibold text-[var(--text-muted)]">
                     ${order.itemsCount || (order.items ? order.items.length : 1)}
@@ -118,13 +120,11 @@ export function renderOrdersView(state) {
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       order.status === 'Completed' 
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                        : order.status === 'Processing'
-                        ? 'bg-sky-50 text-sky-700 border border-sky-200'
-                        : order.status === 'Pending'
+                        : order.status === 'Advance Booking'
                         ? 'bg-amber-50 text-amber-700 border border-amber-300'
-                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                     }">
-                      ${order.status}
+                      ${order.status === 'Completed' ? '✓ Counter Sale' : order.status}
                     </span>
                   </td>
                   <td class="py-3.5 px-5 text-right space-x-2">
@@ -146,7 +146,7 @@ export function renderOrdersView(state) {
               `).join('') : `
                 <tr>
                   <td colspan="7" class="py-10 text-center text-[var(--text-light)]">
-                    <p class="font-medium text-xs">No orders found.</p>
+                    <p class="font-medium text-xs">No orders match the selected filter.</p>
                   </td>
                 </tr>
               `}

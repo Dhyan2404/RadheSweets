@@ -111,10 +111,9 @@ export const initialData = {
   },
 
   orderStatusCounts: {
-    delivered: 68,
-    processing: 26,
-    pending: 24,
-    canceled: 8,
+    completed: 94,
+    advance: 22,
+    kitchen: 10,
     total: 126
   },
 
@@ -499,8 +498,8 @@ export const initialData = {
       discount: 0,
       tax: 0,
       paymentMethod: "Cash",
-      status: "Pending",
-      notes: "Awaiting pickup after 8 PM.",
+      status: "Advance Booking",
+      notes: "Advance festival booking for 8 PM pickup.",
       items: [
         { name: "Rasgulla", quantity: 1, unit: "kg", rate: 320, total: 320 }
       ]
@@ -538,8 +537,8 @@ export const initialData = {
       discount: 0,
       tax: 0,
       paymentMethod: "UPI",
-      status: "Canceled",
-      notes: "Customer canceled prior to packing.",
+      status: "Kitchen Packing",
+      notes: "Custom packaging for gift box.",
       items: [
         { name: "Motichoor Ladoo", quantity: 1, unit: "kg", rate: 160, total: 160 },
         { name: "Gulab Jamun", quantity: 0.5, unit: "kg", rate: 180, total: 90 },

@@ -44,9 +44,9 @@ export function renderPosView(state) {
 
         <!-- 3-Step Breadcrumb Flow -->
         <div class="flex items-center space-x-2 text-xs font-semibold">
-          <span class="flex items-center gap-1.5 px-3 py-1 rounded-full ${selectedCustomer ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)]'}">
+          <span class="flex items-center gap-1.5 px-3 py-1 rounded-full ${selectedCustomer ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-stone-100 text-stone-700 border border-stone-200'}">
             <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">1</span>
-            Customer
+            ${selectedCustomer ? selectedCustomer.name.split(' ')[0] : 'Walk-in (OTC)'}
           </span>
           <span class="text-[var(--text-light)]">→</span>
           <span class="flex items-center gap-1.5 px-3 py-1 rounded-full ${posCart.length > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)]'}">
@@ -65,16 +65,16 @@ export function renderPosView(state) {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <!-- Sweets Selection Area (8 Columns) -->
         <div class="lg:col-span-8 space-y-5">
-          <!-- Step 1: Customer Selection Bar with Khata / Loyalty Status (Required) -->
-          <div class="bg-[var(--bg-surface)] p-4 rounded-2xl border ${selectedCustomer ? 'border-[var(--border-color)]' : 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-400/20'} shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
+          <!-- Step 1: Customer Selection Bar with Khata / Loyalty Status -->
+          <div class="bg-[var(--bg-surface)] p-3.5 sm:p-4 rounded-2xl border border-[var(--border-color)] shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
             <div class="flex items-center space-x-3 w-full sm:w-auto">
-              <span class="w-9 h-9 rounded-full ${selectedCustomer ? 'bg-emerald-600' : 'bg-amber-500 animate-pulse'} text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-xs">
-                ${selectedCustomer ? '✓' : '📞'}
+              <span class="w-9 h-9 rounded-2xl ${selectedCustomer ? 'bg-emerald-600' : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)]'} text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-xs">
+                ${selectedCustomer ? '✓' : '👤'}
               </span>
               <div>
                 <div class="flex items-center gap-2">
                   <p class="text-xs font-bold text-[var(--text-main)]">
-                    ${selectedCustomer ? 'Customer Attached (Required ✓)' : 'Customer Mobile Number Required *'}
+                    ${selectedCustomer ? 'Attached Customer' : 'Walk-in Counter Customer (Cash / OTC)'}
                   </p>
                   ${selectedCustomer?.loyaltyPoints ? `
                     <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.2 rounded-full">
@@ -94,18 +94,29 @@ export function renderPosView(state) {
                     ` : ''}
                   </div>
                 ` : `
-                  <p class="text-[11px] text-amber-800 font-medium">Ask for customer mobile number to check existing loyalty or register</p>
+                  <p class="text-[11px] text-[var(--text-muted)] font-medium">Standard OTC sales. Optional: dial customer number or search name for loyalty & bill</p>
                 `}
               </div>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+              ${selectedCustomer ? `
+                <button 
+                  type="button"
+                  id="pos-clear-customer-btn" 
+                  class="px-2.5 py-1.5 text-stone-400 hover:text-rose-500 text-xs font-semibold rounded-lg hover:bg-rose-50 transition-colors"
+                  title="Remove customer and return to Walk-in"
+                >
+                  ✕ Detach
+                </button>
+              ` : ''}
               <button 
+                type="button"
                 id="pos-select-customer-btn" 
-                class="px-4 py-2 ${selectedCustomer ? 'bg-[var(--bg-subtle)] text-[var(--text-main)] hover:bg-[var(--brand-primary)] hover:text-white' : 'bg-[var(--brand-primary)] text-white shadow-xs font-extrabold animate-bounce'} border border-[var(--border-color)] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                class="px-3.5 py-2 bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white border border-[var(--border-color)] text-[var(--text-main)] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
               >
                 <span>📞</span>
-                <span>${selectedCustomer ? 'Switch Customer (Dialer)' : 'Dial Customer Number'}</span>
+                <span>${selectedCustomer ? 'Switch Customer' : 'Dial Number / Attach Customer'}</span>
               </button>
             </div>
           </div>

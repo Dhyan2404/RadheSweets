@@ -1,6 +1,7 @@
 // Order Details Modal Component
+// Real-world Sweet Shop Counter & Festival Order Lifecycle
 
-export function renderOrderDetailsModal(order) {
+export function renderOrderDetailsModal(order: any) {
   if (!order) return '';
 
   return `
@@ -20,11 +21,10 @@ export function renderOrderDetailsModal(order) {
 
           <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
             order.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-            order.status === 'Processing' ? 'bg-sky-50 text-sky-700 border border-sky-200' :
-            order.status === 'Pending' ? 'bg-amber-50 text-amber-700 border border-amber-300' :
-            'bg-rose-50 text-rose-700 border border-rose-200'
+            order.status === 'Advance Booking' ? 'bg-amber-50 text-amber-700 border border-amber-300' :
+            'bg-indigo-50 text-indigo-700 border border-indigo-200'
           }">
-            ${order.status}
+            ${order.status === 'Completed' ? '✓ Counter Sale' : order.status}
           </span>
         </div>
 
@@ -32,37 +32,43 @@ export function renderOrderDetailsModal(order) {
         <div class="bg-[var(--bg-subtle)] p-3.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-full bg-[var(--brand-primary)] text-white font-bold text-xs flex items-center justify-center shadow-xs">
-              ${order.customerName ? order.customerName.split(' ').map(n=>n[0]).join('') : 'JS'}
+              ${order.customerName ? order.customerName.split(' ').map((n: string)=>n[0]).join('').slice(0, 2) : 'WC'}
             </div>
             <div>
-              <p class="font-bold text-xs sm:text-sm text-[var(--text-main)]">${order.customerName}</p>
-              <p class="text-[11px] text-[var(--text-muted)]">${order.customerPhone}</p>
+              <p class="font-bold text-xs sm:text-sm text-[var(--text-main)]">${order.customerName || 'Walk-in Counter Customer'}</p>
+              <p class="text-[11px] text-[var(--text-muted)]">${order.customerPhone || 'OTC Cash / UPI'}</p>
               <p class="text-[10px] text-[var(--text-light)]">${order.customerAddress || 'Ahmedabad, Gujarat'}</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <a 
-              href="tel:${order.customerPhone}" 
-              class="px-2.5 py-1.5 bg-[var(--bg-surface)] hover:bg-[var(--border-color)] border border-[var(--border-color)] text-[var(--text-main)] text-xs font-semibold rounded-lg flex items-center gap-1"
-            >
-              📞 Call
-            </a>
-            <a 
-              href="https://wa.me/${(order.customerPhone || '').replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(order.customerName)},%20your%20Radhe%20Sweets%20order%20%23${order.id}%20is%20${order.status}." 
-              target="_blank"
-              class="px-2.5 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold rounded-lg flex items-center gap-1"
-            >
-              💬 WhatsApp
-            </a>
-          </div>
+          ${order.customerPhone && order.customerPhone.includes('+91') ? `
+            <div class="flex items-center gap-1.5">
+              <a 
+                href="tel:${order.customerPhone}" 
+                class="px-2.5 py-1.5 bg-[var(--bg-surface)] hover:bg-[var(--border-color)] border border-[var(--border-color)] text-[var(--text-main)] text-xs font-semibold rounded-lg flex items-center gap-1"
+              >
+                📞 Call
+              </a>
+              <a 
+                href="https://wa.me/${(order.customerPhone || '').replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(order.customerName || 'Customer')},%20your%20Radhe%20Sweets%20order%20%23${order.id}%20is%20${order.status}." 
+                target="_blank"
+                class="px-2.5 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold rounded-lg flex items-center gap-1"
+              >
+                💬 WhatsApp
+              </a>
+            </div>
+          ` : `
+            <span class="text-[10px] font-bold text-[var(--text-light)] bg-[var(--bg-surface)] px-2 py-1 rounded-lg border border-[var(--border-color)]">
+              OTC Walk-in
+            </span>
+          `}
         </div>
 
         <!-- Itemized Order Details -->
         <div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Order Items</h4>
           <div class="space-y-2 max-h-44 overflow-y-auto pr-1">
-            ${(order.items || []).map(item => `
+            ${(order.items || []).map((item: any) => `
               <div class="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] text-xs">
                 <div>
                   <p class="font-bold text-[var(--text-main)]">${item.name}</p>
@@ -85,7 +91,7 @@ export function renderOrderDetailsModal(order) {
             <span class="text-emerald-600 font-bold">- ₹${order.discount || 0}</span>
           </div>
           <div class="flex justify-between text-[var(--text-muted)]">
-            <span>Tax (GST 0%)</span>
+            <span>Tax (GST 0% - Fresh Sweets Exemption)</span>
             <span class="text-[var(--text-main)]">₹0</span>
           </div>
           <div class="border-t border-[var(--border-color)] pt-1.5 flex justify-between font-extrabold text-sm text-[var(--text-main)]">
@@ -103,10 +109,9 @@ export function renderOrderDetailsModal(order) {
               data-order-id="${order.id}"
               class="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl py-1.5 px-3 text-xs font-bold text-[var(--text-main)]"
             >
-              <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>Completed</option>
-              <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
-              <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
-              <option value="Canceled" ${order.status === 'Canceled' ? 'selected' : ''}>Canceled</option>
+              <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>Completed (Counter Sale)</option>
+              <option value="Advance Booking" ${order.status === 'Advance Booking' ? 'selected' : ''}>Advance Booking</option>
+              <option value="Kitchen Packing" ${order.status === 'Kitchen Packing' ? 'selected' : ''}>Kitchen Packing</option>
             </select>
           </div>
 

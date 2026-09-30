@@ -1,6 +1,12 @@
 // Radhe Sweets - Master Controller & Application Runtime
 import './styles.css';
-import './firebase.js';
+import { 
+  saveBranchSweetsToCloud, 
+  saveBranchOrderToCloud, 
+  saveBranchKpisToCloud, 
+  saveCustomerToCloud, 
+  loadBranchDataFromCloud 
+} from './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.ts';
 import { renderTopBar } from './components/TopBar.ts';
@@ -29,7 +35,12 @@ import { renderExpensesView, renderAddExpenseModal } from './components/Expenses
 import { renderAnalyticsView } from './components/AnalyticsView.ts';
 import { renderSettingsView } from './components/SettingsView.ts';
 import { renderSplashView } from './components/SplashView.ts';
-import { renderCustomerDialerModal } from './components/CustomerDialerModal.ts';
+import { 
+  renderCustomerDialerModal, 
+  formatDialerPhone, 
+  renderDialerMatchesHtml, 
+  filterDialerCustomers 
+} from './components/CustomerDialerModal.ts';
 import { renderSeoModal } from './components/SeoModal.ts';
 import { renderSearchModal, renderSearchResultsBody } from './components/SearchModal.ts';
 
@@ -97,8 +108,8 @@ const state = {
   productsFilterCategory: 'All',
   timeFilter: 'month',
 
-  // POS State
-  selectedCustomer: stored?.selectedCustomer || initialData.customers[0],
+  // POS State (Walk-in counter by default - no pre-selected patron)
+  selectedCustomer: (stored?.selectedCustomer && stored.selectedCustomer.name !== 'Jignesh Shah') ? stored.selectedCustomer : null,
   posCart: stored?.posCart || [
     { ...initialData.sweets[0], qty: 0.5, rate: initialData.sweets[0].pricePerKg, total: 225 },
     { ...initialData.sweets[2], qty: 1, rate: initialData.sweets[2].pricePerKg, total: 180 },
@@ -766,15 +777,42 @@ function attachEventListeners() {
     });
   }
 
-  // Active Branch Switcher (Only Changeable in Settings)
+  // Enterprise Multi-Branch Switchers with Cloud Firestore Sync
+  const handleBranchSwitch = async (targetBranchId: string) => {
+    if (!targetBranchId || targetBranchId === state.currentBranchId) return;
+
+    // 1. Save current branch data to Firestore before switching
+    saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
+    saveBranchKpisToCloud(state.currentBranchId, state.kpis);
+
+    // 2. Switch branch id
+    state.currentBranchId = targetBranchId;
+
+    // 3. Load target branch's distinct sweets, stock & revenue from Cloud Firestore
+    const branchData = await loadBranchDataFromCloud(targetBranchId);
+    if (branchData) {
+      state.sweets = branchData.sweets;
+      if (branchData.kpis) {
+        state.kpis = { ...state.kpis, ...branchData.kpis };
+      }
+    }
+
+    state.auditLogs.unshift({
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      user: state.shopInfo.owner,
+      action: 'Branch Switched',
+      details: `Switched active branch to ${targetBranchId}. Loaded branch catalog and stock.`
+    });
+
+    saveState();
+    renderApp();
+  };
+
+  // Active Branch Switcher (In Settings)
   document.querySelectorAll('[data-setting-select-branch]').forEach(el => {
     el.addEventListener('click', () => {
       const branchId = el.getAttribute('data-setting-select-branch');
-      if (branchId && branchId !== state.currentBranchId) {
-        state.currentBranchId = branchId;
-        saveState();
-        renderApp();
-      }
+      if (branchId) handleBranchSwitch(branchId);
     });
   });
 
@@ -1201,25 +1239,27 @@ function attachEventListeners() {
       alert('Please add at least one sweet to the cart first!');
       return;
     }
-    if (!state.selectedCustomer) {
-      state.showCustomerDialerModal = true;
-      state.dialerInput = '';
-      alert('Customer mobile number is required for counter billing! Please enter customer phone number on the dialer.');
-      renderApp();
-      return;
-    }
     state.showCheckoutModal = true;
     renderApp();
   };
   document.getElementById('pos-proceed-checkout-btn')?.addEventListener('click', handleOpenCheckout);
   document.getElementById('dashboard-checkout-btn')?.addEventListener('click', () => {
     state.activeTab = 'pos';
-    if (!state.selectedCustomer) {
-      state.showCustomerDialerModal = true;
-      state.dialerInput = '';
-    } else {
-      state.showCheckoutModal = true;
-    }
+    state.showCheckoutModal = true;
+    renderApp();
+  });
+
+  // Detach customer & Switch customer buttons
+  document.getElementById('pos-clear-customer-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.selectedCustomer = null;
+    saveState();
+    renderApp();
+  });
+  document.getElementById('dashboard-switch-customer-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.showCustomerDialerModal = true;
+    state.dialerInput = '';
     renderApp();
   });
 
@@ -1250,9 +1290,9 @@ function attachEventListeners() {
     const newOrder = {
       id: `SA00${orderNum}`,
       date: `25 Sep 2026, ${timeStr}`,
-      customerId: state.selectedCustomer?.id || 'cust-1',
-      customerName: state.selectedCustomer?.name || 'Walk-in Customer',
-      customerPhone: state.selectedCustomer?.phone || '+91 98765 67890',
+      customerId: state.selectedCustomer?.id || `walkin-${Date.now()}`,
+      customerName: state.selectedCustomer?.name || 'Walk-in Counter Customer',
+      customerPhone: state.selectedCustomer?.phone || 'OTC Cash / UPI',
       customerAddress: state.selectedCustomer?.address || 'Ahmedabad, Gujarat',
       itemsCount: state.posCart.length,
       subtotal: cartSubtotal,
@@ -1276,7 +1316,7 @@ function attachEventListeners() {
     state.lastPlacedOrder = newOrder;
     state.activeOrder = newOrder;
     state.orderStatusCounts.total += 1;
-    state.orderStatusCounts.delivered += 1;
+    state.orderStatusCounts.completed = (state.orderStatusCounts.completed || 0) + 1;
     state.kpis.orders.value += 1;
     state.kpis.orders.formatted = String(state.kpis.orders.value);
     state.kpis.sales.value += totalPayable;
@@ -1290,6 +1330,18 @@ function attachEventListeners() {
         if (sweet.stock <= 10) sweet.stockStatus = 'Low Stock';
       }
     });
+
+    // Update active branch revenue & orders
+    const curBranch = state.branches.find(b => b.id === state.currentBranchId);
+    if (curBranch) {
+      curBranch.revenue = (curBranch.revenue || 0) + totalPayable;
+      curBranch.orders = (curBranch.orders || 0) + 1;
+    }
+
+    // Save to Cloud Firestore per branch
+    saveBranchOrderToCloud(state.currentBranchId, newOrder);
+    saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
+    saveBranchKpisToCloud(state.currentBranchId, state.kpis);
 
     // Reset cart
     state.posCart = [];
@@ -1792,6 +1844,7 @@ function attachEventListeners() {
     };
     state.sweets.unshift(newSweet);
     state.showAddProductModal = false;
+    saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
     saveState();
     renderApp();
     showToast(`Added ${newSweet.name} to sweet catalog!`, 'success');
@@ -1845,6 +1898,7 @@ function attachEventListeners() {
       sweet.stockStatus = sweet.stock <= sweet.minStock ? 'Low Stock' : 'In Stock';
       state.showEditProductModal = false;
       state.editingSweet = null;
+      saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
       saveState();
       renderApp();
       showToast(`Updated ${sweet.name} details!`, 'success');
@@ -1858,6 +1912,7 @@ function attachEventListeners() {
         state.sweets = state.sweets.filter(s => s.id !== id);
         state.showEditProductModal = false;
         state.editingSweet = null;
+        saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
         saveState();
         renderApp();
         showToast('Sweet removed from catalog', 'info');
@@ -1904,6 +1959,7 @@ function attachEventListeners() {
         details: `Restocked ${qty} ${sweet.unit} ${sweet.name} (Batch #${batchNo})`
       });
       state.showRestockBatchModal = false;
+      saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
       saveState();
       renderApp();
       showToast(`Fresh batch of ${qty} ${sweet.unit} ${sweet.name} logged into inventory!`, 'success');
@@ -1956,6 +2012,7 @@ function attachEventListeners() {
         details: `${reason}: ${sweet.name} (${oldStock} -> ${sweet.stock} ${sweet.unit}). ${notes || ''}`
       });
       state.showStockAdjustModal = false;
+      saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
       saveState();
       renderApp();
       showToast(`Stock adjusted for ${sweet.name}: Now ${sweet.stock} ${sweet.unit}`, 'info');
@@ -2059,23 +2116,14 @@ function attachEventListeners() {
   });
 
   // Enterprise Multi-Branch Switchers
-  document.getElementById('branch-select')?.addEventListener('change', (e) => {
-    state.currentBranchId = e.target.value;
-    state.auditLogs.unshift({
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      user: state.shopInfo.owner,
-      action: 'Branch Switched',
-      details: `Switched active branch to ${e.target.value}`
-    });
-    saveState();
-    renderApp();
+  document.getElementById('branch-select')?.addEventListener('change', (e: any) => {
+    handleBranchSwitch(e.target.value);
   });
 
   document.querySelectorAll('[data-switch-branch]').forEach(btn => {
     btn.addEventListener('click', () => {
-      state.currentBranchId = btn.getAttribute('data-switch-branch');
-      saveState();
-      renderApp();
+      const branchId = btn.getAttribute('data-switch-branch');
+      if (branchId) handleBranchSwitch(branchId);
     });
   });
 
@@ -2267,38 +2315,10 @@ function attachEventListeners() {
     });
   });
 
-  // Customer Phone Call Dialer Handlers
-  document.getElementById('close-dialer-btn')?.addEventListener('click', () => {
-    state.showCustomerDialerModal = false;
-    renderApp();
-  });
-
-  // Dial Pad Digit Buttons (0-9)
-  document.querySelectorAll('[data-dial-digit]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const digit = btn.getAttribute('data-dial-digit');
-      if (state.dialerInput.length < 10) {
-        state.dialerInput += digit;
-        renderApp();
-      }
-    });
-  });
-
-  // Dialer Backspace & Clear
-  const handleDialerBackspace = () => {
-    state.dialerInput = state.dialerInput.slice(0, -1);
-    renderApp();
-  };
-  document.getElementById('dialer-backspace-btn')?.addEventListener('click', handleDialerBackspace);
-  document.getElementById('dialer-backspace-key')?.addEventListener('click', handleDialerBackspace);
-  document.getElementById('dialer-clear-btn')?.addEventListener('click', () => {
-    state.dialerInput = '';
-    renderApp();
-  });
-
-  // Dialer Select Existing Customer
-  const handleSelectCustomerFromDialer = (custId) => {
-    const cust = state.customers.find(c => c.id === custId);
+  // Customer Phone Call Dialer Handlers (ZERO-FLICKER IN-PLACE UPDATE)
+  const handleSelectCustomerFromDialer = (custId: string | null) => {
+    if (!custId) return;
+    const cust = state.customers.find((c: any) => c.id === custId);
     if (cust) {
       state.selectedCustomer = cust;
       state.showCustomerDialerModal = false;
@@ -2313,71 +2333,188 @@ function attachEventListeners() {
     }
   };
 
-  document.getElementById('dialer-select-existing-btn')?.addEventListener('click', (e) => {
-    const custId = e.currentTarget.getAttribute('data-customer-id');
-    handleSelectCustomerFromDialer(custId);
-  });
-
-  document.querySelectorAll('[data-dialer-pick-customer]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const custId = btn.getAttribute('data-dialer-pick-customer');
-      handleSelectCustomerFromDialer(custId);
+  const bindDialerMatchPickers = () => {
+    document.querySelectorAll('[data-dialer-pick-customer]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const custId = btn.getAttribute('data-dialer-pick-customer');
+        handleSelectCustomerFromDialer(custId);
+      });
     });
-  });
 
-  // Dialer Register New Customer Form (When number does not exist)
-  document.getElementById('dialer-new-customer-form')?.addEventListener('submit', (e) => {
+    const quickAddForm = document.getElementById('dialer-quick-add-form');
+    if (quickAddForm) {
+      quickAddForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target as HTMLFormElement);
+        const name = (fd.get('name') as string || '').trim();
+        const phone = (fd.get('phone') as string || '').trim();
+        const tier = (fd.get('tier') as string || 'Regular');
+        if (!name) return;
+
+        const newCustomer = {
+          id: `cust-${Date.now()}`,
+          name: name,
+          phone: phone ? (phone.startsWith('+91') ? phone : `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`) : '+91 98000 00000',
+          email: '',
+          address: 'Ahmedabad, Gujarat',
+          type: tier,
+          tier: tier,
+          loyaltyPoints: 50,
+          khataBalance: 0,
+          creditLimit: 5000,
+          totalOrders: 1,
+          totalSpent: 0,
+          notes: 'Registered via Phone Dialer'
+        };
+
+        state.customers.unshift(newCustomer);
+        state.selectedCustomer = newCustomer;
+        state.showCustomerDialerModal = false;
+        state.kpis.customers.value += 1;
+        saveCustomerToCloud(newCustomer);
+        state.auditLogs.unshift({
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          user: state.shopInfo.owner,
+          action: 'Customer Registered',
+          details: `New customer ${name} (${newCustomer.phone}) registered via Phone Dialer.`
+        });
+        saveState();
+        renderApp();
+      });
+    }
+  };
+
+  const updateDialerDOM = () => {
+    const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
+    const displayEl = document.getElementById('dialer-phone-display');
+    const countEl = document.getElementById('dialer-digit-count');
+    const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+    const container = document.getElementById('dialer-matches-container');
+
+    if (displayEl) displayEl.textContent = formatDialerPhone(rawDigits);
+    if (countEl) countEl.textContent = `${rawDigits.length} / 10 digits`;
+    if (searchInput && searchInput.value !== state.dialerInput) {
+      searchInput.value = state.dialerInput;
+    }
+    if (container) {
+      container.innerHTML = renderDialerMatchesHtml(state.customers, state.dialerInput, rawDigits);
+      bindDialerMatchPickers();
+    }
+  };
+
+  // Close Dialer
+  document.getElementById('close-dialer-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
-    const fd = new FormData(e.target);
-    const phoneDigits = fd.get('phone');
-    const name = fd.get('name');
-    const tier = fd.get('tier') || 'Regular';
-    const address = fd.get('address') || 'Ahmedabad, Gujarat';
-
-    const newCustomer = {
-      id: `cust-${Date.now()}`,
-      name: name,
-      phone: `+91 ${phoneDigits.slice(0, 5)} ${phoneDigits.slice(5)}`,
-      email: '',
-      address: address,
-      type: tier,
-      tier: tier,
-      loyaltyPoints: 50,
-      khataBalance: 0,
-      creditLimit: 5000,
-      totalOrders: 0,
-      totalSpent: 0,
-      notes: 'Registered via Counter Phone Dialer'
-    };
-
-    state.customers.unshift(newCustomer);
-    state.selectedCustomer = newCustomer;
     state.showCustomerDialerModal = false;
-    state.kpis.customers.value += 1;
-    state.auditLogs.unshift({
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      user: state.shopInfo.owner,
-      action: 'Customer Registered',
-      details: `New customer ${name} (${newCustomer.phone}) registered via Phone Dialer.`
-    });
-    saveState();
-    alert(`✓ Customer ${name} registered successfully with 50 Welcome Loyalty Points! Selected for active order.`);
     renderApp();
   });
+
+  // Instant Walk-in Sale (No Phone Needed)
+  document.getElementById('dialer-instant-walkin-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.selectedCustomer = null;
+    state.showCustomerDialerModal = false;
+    saveState();
+    renderApp();
+  });
+
+  // Dial Pad Digit Buttons (0-9) - ZERO REFRESH!
+  document.querySelectorAll('[data-dial-digit]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const digit = btn.getAttribute('data-dial-digit');
+      if (digit && state.dialerInput.length < 10) {
+        state.dialerInput += digit;
+        updateDialerDOM();
+      }
+    });
+  });
+
+  // Dialer Backspace & Clear - ZERO REFRESH!
+  const handleDialerBackspace = (e?: Event) => {
+    if (e) e.preventDefault();
+    state.dialerInput = state.dialerInput.slice(0, -1);
+    updateDialerDOM();
+  };
+  document.getElementById('dialer-backspace-btn')?.addEventListener('click', handleDialerBackspace);
+  document.getElementById('dialer-backspace-key')?.addEventListener('click', handleDialerBackspace);
+  document.getElementById('dialer-clear-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.dialerInput = '';
+    updateDialerDOM();
+  });
+
+  // Search input typing (both name and phone) - ZERO REFRESH!
+  const dialerSearchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+  if (dialerSearchInput) {
+    dialerSearchInput.addEventListener('input', (e) => {
+      state.dialerInput = (e.target as HTMLInputElement).value;
+      updateDialerDOM();
+    });
+  }
+
+  // Toggle Add by Name button
+  document.getElementById('dialer-toggle-add-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const container = document.getElementById('dialer-matches-container');
+    if (container) {
+      container.innerHTML = renderDialerMatchesHtml([], 'add-new-custom', state.dialerInput);
+      bindDialerMatchPickers();
+      const nameInput = document.getElementById('dialer-new-name') as HTMLInputElement;
+      if (nameInput) nameInput.focus();
+    }
+  });
+
+  // Initial attach of matching listeners inside modal
+  bindDialerMatchPickers();
 }
 
-// Physical Keyboard Numpad listener for Dialer
+// Physical Keyboard Numpad listener for Dialer - ZERO REFRESH!
 window.addEventListener('keydown', (e) => {
   if (!state.showCustomerDialerModal) return;
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (/^[0-9]$/.test(e.key)) {
     if (state.dialerInput.length < 10) {
       state.dialerInput += e.key;
-      renderApp();
+      const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
+      const displayEl = document.getElementById('dialer-phone-display');
+      const countEl = document.getElementById('dialer-digit-count');
+      const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+      const container = document.getElementById('dialer-matches-container');
+      if (displayEl) displayEl.textContent = formatDialerPhone(rawDigits);
+      if (countEl) countEl.textContent = `${rawDigits.length} / 10 digits`;
+      if (searchInput && searchInput.value !== state.dialerInput) searchInput.value = state.dialerInput;
+      if (container) {
+        container.innerHTML = renderDialerMatchesHtml(state.customers, state.dialerInput, rawDigits);
+        document.querySelectorAll('[data-dialer-pick-customer]').forEach(btn => {
+          btn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            const custId = btn.getAttribute('data-dialer-pick-customer');
+            const cust = state.customers.find((c: any) => c.id === custId);
+            if (cust) {
+              state.selectedCustomer = cust;
+              state.showCustomerDialerModal = false;
+              saveState();
+              renderApp();
+            }
+          });
+        });
+      }
     }
   } else if (e.key === 'Backspace') {
     state.dialerInput = state.dialerInput.slice(0, -1);
-    renderApp();
+    const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
+    const displayEl = document.getElementById('dialer-phone-display');
+    const countEl = document.getElementById('dialer-digit-count');
+    const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+    const container = document.getElementById('dialer-matches-container');
+    if (displayEl) displayEl.textContent = formatDialerPhone(rawDigits);
+    if (countEl) countEl.textContent = `${rawDigits.length} / 10 digits`;
+    if (searchInput && searchInput.value !== state.dialerInput) searchInput.value = state.dialerInput;
+    if (container) {
+      container.innerHTML = renderDialerMatchesHtml(state.customers, state.dialerInput, rawDigits);
+    }
   } else if (e.key === 'Escape') {
     state.showCustomerDialerModal = false;
     renderApp();
@@ -2432,13 +2569,24 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
   }
 });
 
-// Initialize when DOM is ready with Google Deep Linking & Sitemap Hash Routing
+// Initialize when DOM is ready with Google Deep Linking & Cloud Sync
 window.addEventListener('DOMContentLoaded', () => {
   const initialHash = window.location.hash.replace('#/', '').replace('#', '');
   if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'settings'].includes(initialHash)) {
     state.activeTab = initialHash;
   }
   renderApp();
+
+  // Background Cloud Sync for active branch from Cloud Firestore
+  loadBranchDataFromCloud(state.currentBranchId).then((data: any) => {
+    if (data && data.sweets && data.sweets.length > 0) {
+      state.sweets = data.sweets;
+      if (data.kpis) {
+        state.kpis = { ...state.kpis, ...data.kpis };
+      }
+      renderApp();
+    }
+  }).catch(() => {});
 });
 
 // Google Sitemap Deep Linking - Listen for browser URL hash changes
