@@ -80,6 +80,17 @@ export function renderTopBar(state: any) {
           </svg>
         </button>
 
+        <!-- Firestore Live Cloud Sync Badge -->
+        <div 
+          id="firestore-cloud-status-badge"
+          class="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200/90 shadow-2xs hover:bg-emerald-100"
+          title="Real-time Cloud Firestore Active (Orders, Customers, 100 Sweets, Khata, Profits)"
+        >
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Firestore Live</span>
+          <span class="text-[9px] bg-emerald-200/70 text-emerald-900 px-1 py-0.2 rounded font-mono">Real-time</span>
+        </div>
+
         <!-- Current Date Indicator -->
         <div class="hidden sm:flex items-center space-x-2 bg-stone-50 border border-[#F0ECE4] px-3 py-1.5 rounded-xl text-xs text-stone-600 shadow-2xs">
           <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

@@ -243,11 +243,11 @@ export function renderCheckoutModal(state: any) {
         <div class="bg-[var(--bg-subtle)] p-3.5 rounded-xl space-y-1.5 text-xs">
           <div class="flex justify-between text-[var(--text-muted)]">
             <span>Subtotal</span>
-            <span class="font-bold text-[var(--text-main)]">₹${cartSubtotal}</span>
+            <span class="font-bold text-[var(--text-main)]" id="checkout-subtotal-val">₹${cartSubtotal}</span>
           </div>
           <div class="flex justify-between text-[var(--text-muted)]">
             <span>Discount (${discountPercent}%)</span>
-            <span class="font-bold text-emerald-600">- ₹${discountAmount}</span>
+            <span class="font-bold text-emerald-600" id="checkout-discount-val">- ₹${discountAmount}</span>
           </div>
           <div class="flex justify-between text-[var(--text-muted)]">
             <span>GST (0% Fresh Sweets)</span>
@@ -255,7 +255,7 @@ export function renderCheckoutModal(state: any) {
           </div>
           <div class="border-t border-[var(--border-color)] pt-1.5 flex justify-between font-extrabold text-sm sm:text-base text-[var(--text-main)]">
             <span>Total Payable</span>
-            <span class="text-[var(--brand-primary)]">₹${totalPayable}</span>
+            <span class="text-[var(--brand-primary)]" id="checkout-total-val">₹${totalPayable}</span>
           </div>
         </div>
 
@@ -263,9 +263,9 @@ export function renderCheckoutModal(state: any) {
         <button 
           type="button"
           id="confirm-place-order-btn"
-          class="w-full py-3.5 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] active:scale-98 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2"
+          class="w-full py-3.5 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] active:scale-98 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
         >
-          <span>Confirm & Print Bill • ₹${totalPayable}</span>
+          <span id="checkout-confirm-btn-text">Confirm &amp; Print Bill • ₹${totalPayable}</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         </button>
       </div>

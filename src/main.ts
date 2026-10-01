@@ -7,7 +7,16 @@ import {
   saveCustomerToCloud, 
   loadBranchDataFromCloud,
   uploadOrderToStorage,
-  syncAllToFirebaseCloud 
+  syncAllToFirebaseCloud,
+  subscribeToBranchOrders,
+  subscribeToCustomers,
+  subscribeToBranchSweets,
+  subscribeToBranchKpis,
+  subscribeToActiveCheckout,
+  saveActiveCheckoutToCloud,
+  clearActiveCheckoutInCloud,
+  firestoreLiveState,
+  onFirestoreStatusChange
 } from './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.ts';
@@ -217,6 +226,92 @@ function saveState() {
   } catch (e) {
     console.error('Failed to save state:', e);
   }
+}
+
+// Real-time Cloud Active Checkout Draft Synchronization
+function syncActiveCheckoutDraft() {
+  saveActiveCheckoutToCloud(state.currentBranchId, {
+    posCart: state.posCart,
+    selectedCustomer: state.selectedCustomer,
+    discountPercent: state.discountPercent,
+    paymentMethod: state.paymentMethod
+  });
+}
+
+// Enterprise Firestore Real-time Subscriptions (Orders, 100 Sweets, KPIs & Profits)
+let activeSubscriptions: Array<() => void> = [];
+
+function setupBranchFirestoreListeners(branchId: string) {
+  activeSubscriptions.forEach(unsub => {
+    try { unsub(); } catch(e) {}
+  });
+  activeSubscriptions = [];
+
+  // 1. Live Orders Listener
+  const unsubOrders = subscribeToBranchOrders(branchId, (cloudOrders: any[]) => {
+    if (cloudOrders && cloudOrders.length > 0) {
+      const orderMap = new Map();
+      cloudOrders.forEach(o => orderMap.set(o.id, o));
+      state.orders.forEach(o => {
+        if (!orderMap.has(o.id)) orderMap.set(o.id, o);
+      });
+      state.orders = Array.from(orderMap.values());
+      state.orderStatusCounts.total = state.orders.length;
+      state.orderStatusCounts.completed = state.orders.filter(o => o.status === 'Completed').length;
+      state.orderStatusCounts.advance = state.orders.filter(o => o.status === 'Advance Booking').length;
+      state.orderStatusCounts.kitchen = state.orders.filter(o => o.status === 'Kitchen Packing').length;
+      saveState();
+      if (['orders', 'dashboard'].includes(state.activeTab)) {
+        renderApp();
+      }
+    }
+  });
+  activeSubscriptions.push(unsubOrders);
+
+  // 2. Live Sweets Catalog (All 100 sweets & inventory)
+  const unsubSweets = subscribeToBranchSweets(branchId, (cloudSweets: any[]) => {
+    if (cloudSweets && cloudSweets.length >= 50) {
+      state.sweets = cloudSweets;
+      saveState();
+      if (['pos', 'products', 'dashboard'].includes(state.activeTab)) {
+        renderApp();
+      }
+    }
+  });
+  activeSubscriptions.push(unsubSweets);
+
+  // 3. Live Branch KPIs & Gross Profits
+  const unsubKpis = subscribeToBranchKpis(branchId, (cloudKpis: any) => {
+    if (cloudKpis && cloudKpis.sales) {
+      state.kpis = { ...state.kpis, ...cloudKpis };
+      saveState();
+      if (['dashboard', 'analytics'].includes(state.activeTab)) {
+        renderApp();
+      }
+    }
+  });
+  activeSubscriptions.push(unsubKpis);
+}
+
+let unsubCustomers: (() => void) | null = null;
+function setupGlobalFirestoreListeners() {
+  if (unsubCustomers) {
+    try { unsubCustomers(); } catch(e) {}
+  }
+  unsubCustomers = subscribeToCustomers((cloudCustomers: any[]) => {
+    if (cloudCustomers && cloudCustomers.length > 0) {
+      const custMap = new Map();
+      cloudCustomers.forEach(c => custMap.set(c.id, c));
+      state.customers.forEach(c => {
+        if (!custMap.has(c.id)) custMap.set(c.id, c);
+      });
+      state.customers = Array.from(custMap.values());
+      saveState();
+      if (['customers', 'pos'].includes(state.activeTab) || state.showCheckoutModal) {
+        renderApp();
+      }
+    }
+  });
 }
 
 // Dynamic SEO Metadata & URL Hash Synchronization for Google Crawling
@@ -899,7 +994,10 @@ function attachEventListeners() {
     // 2. Switch branch id
     state.currentBranchId = targetBranchId;
 
-    // 3. Load target branch's distinct sweets, stock & revenue from Cloud Firestore
+    // 3. Switch real-time Firestore listeners to target branch
+    setupBranchFirestoreListeners(targetBranchId);
+
+    // 4. Load target branch's distinct sweets, stock & revenue from Cloud Firestore
     const branchData = await loadBranchDataFromCloud(targetBranchId);
     if (branchData) {
       state.sweets = branchData.sweets;
@@ -1406,6 +1504,7 @@ function attachEventListeners() {
       if (item) {
         item.checkoutUnit = unit;
         saveState();
+        syncActiveCheckoutDraft();
         renderApp();
       }
     });
@@ -1424,12 +1523,13 @@ function attachEventListeners() {
         item.total = Math.round(item.qty * item.rate);
         state.quickCart = [...state.posCart];
         saveState();
+        syncActiveCheckoutDraft();
         renderApp();
       }
     });
   });
 
-  // Checkout Modal: Custom Typed Quantity
+  // Checkout Modal: Custom Typed Quantity (In-place live recalculation so input does NOT lose focus!)
   document.querySelectorAll('[data-checkout-qty-input]').forEach(input => {
     input.addEventListener('input', (e) => {
       const sweetId = input.getAttribute('data-checkout-qty-input');
@@ -1440,9 +1540,37 @@ function attachEventListeners() {
         item.qty = unit === 'g' ? Math.max(0.01, Math.round((val / 1000) * 1000) / 1000) : Math.max(0.01, val);
         item.total = Math.round(item.qty * item.rate);
         state.quickCart = [...state.posCart];
+
+        // Update item total in DOM directly
+        const card = (input as HTMLElement).closest('.p-3');
+        const itemTotalEl = card?.querySelector('.font-extrabold.text-sm');
+        if (itemTotalEl) {
+          itemTotalEl.textContent = `₹${item.total}`;
+        }
+
+        // Live update summary breakdown without clearing input or stealing cursor
+        const cartSubtotal = state.posCart.reduce((sum: number, it: any) => sum + (it.rate * it.qty), 0);
+        const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
+        const totalPayable = Math.max(0, cartSubtotal - discountAmount);
+
+        const subtotalEl = document.getElementById('checkout-subtotal-val');
+        if (subtotalEl) subtotalEl.textContent = `₹${cartSubtotal.toLocaleString()}`;
+        const discountEl = document.getElementById('checkout-discount-val');
+        if (discountEl) discountEl.textContent = `- ₹${discountAmount.toLocaleString()}`;
+        const totalEl = document.getElementById('checkout-total-val');
+        if (totalEl) totalEl.textContent = `₹${totalPayable.toLocaleString()}`;
+        const btnTextEl = document.getElementById('checkout-confirm-btn-text');
+        if (btnTextEl) btnTextEl.textContent = `Confirm & Print Bill • ₹${totalPayable.toLocaleString()}`;
+
         saveState();
-        renderApp();
+        syncActiveCheckoutDraft();
       }
+    });
+
+    input.addEventListener('change', () => {
+      saveState();
+      syncActiveCheckoutDraft();
+      renderApp();
     });
   });
 
@@ -1458,6 +1586,7 @@ function attachEventListeners() {
         state.showCheckoutModal = false;
       }
       saveState();
+      syncActiveCheckoutDraft();
       renderApp();
     });
   });
@@ -1466,6 +1595,7 @@ function attachEventListeners() {
   document.querySelectorAll('[data-select-payment]').forEach(btn => {
     btn.addEventListener('click', () => {
       state.paymentMethod = btn.getAttribute('data-select-payment');
+      syncActiveCheckoutDraft();
       renderApp();
     });
   });
@@ -1532,10 +1662,25 @@ function attachEventListeners() {
     }
 
     // Save to Cloud Firestore & Firebase Storage per branch
-    saveBranchOrderToCloud(state.currentBranchId, newOrder);
+    saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers);
     uploadOrderToStorage(newOrder);
     saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
     saveBranchKpisToCloud(state.currentBranchId, state.kpis);
+    clearActiveCheckoutInCloud(state.currentBranchId);
+
+    // Update customer stats & Khata ledger in Firestore
+    if (state.selectedCustomer) {
+      const cust = state.customers.find((c: any) => c.id === state.selectedCustomer.id);
+      if (cust) {
+        cust.totalOrders = (cust.totalOrders || 0) + 1;
+        cust.totalSpent = (cust.totalSpent || 0) + totalPayable;
+        if (state.paymentMethod === 'Khata') {
+          cust.khataBalance = (cust.khataBalance || 0) + totalPayable;
+        }
+        cust.loyaltyPoints = (cust.loyaltyPoints || 0) + Math.floor(totalPayable / 100);
+        saveCustomerToCloud(cust);
+      }
+    }
 
     // Reset cart
     state.posCart = [];
@@ -3126,9 +3271,37 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   renderApp();
 
-  // Background Cloud Sync for active branch from Cloud Firestore
+  // 1. Setup Global Real-time Firestore Listeners (Customers directory)
+  setupGlobalFirestoreListeners();
+
+  // 2. Setup Active Branch Real-time Firestore Listeners (Orders, 100 Sweets, KPIs & Profits)
+  setupBranchFirestoreListeners(state.currentBranchId);
+
+  // 3. Real-time Firestore status listener
+  onFirestoreStatusChange((status: any) => {
+    const badge = document.getElementById('firestore-cloud-status-badge');
+    if (badge) {
+      if (status.syncStatus === 'syncing') {
+        badge.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-spin"></span>
+          <span>Syncing...</span>
+          <span class="text-[9px] bg-amber-200/70 text-amber-900 px-1 py-0.2 rounded font-mono">Cloud</span>
+        `;
+        badge.className = "hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer bg-amber-50 text-amber-800 border-amber-200/90 shadow-2xs";
+      } else {
+        badge.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Firestore Live</span>
+          <span class="text-[9px] bg-emerald-200/70 text-emerald-900 px-1 py-0.2 rounded font-mono">Real-time</span>
+        `;
+        badge.className = "hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200/90 shadow-2xs hover:bg-emerald-100";
+      }
+    }
+  });
+
+  // 4. Background Cloud Sync for active branch from Cloud Firestore
   loadBranchDataFromCloud(state.currentBranchId).then((data: any) => {
-    if (data && data.sweets && data.sweets.length > 0) {
+    if (data && data.sweets && data.sweets.length >= 50) {
       state.sweets = data.sweets;
       if (data.kpis) {
         state.kpis = { ...state.kpis, ...data.kpis };
