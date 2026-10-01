@@ -6,17 +6,40 @@
 // 4. Fast Selling Sweets & Stock Table (KK, RG, GJ, ML, KP, MC with stock badges and quick + Add buttons)
 // 5. Quick Billing (POS) Card (Counter 1, Selected Customer Jignesh Shah, Line Items, Subtotal, Proceed to Checkout)
 
-export function renderDashboardView(state) {
-  const { kpis, quickCart = [] } = state;
+import { renderCounter } from './Counter.ts';
 
-  const defaultItems = [
-    { id: 'sw-1', name: 'Kaju Katli', qty: 0.5, rate: 450, total: 225, unit: 'kg' },
-    { id: 'sw-3', name: 'Gulab Jamun', qty: 1, rate: 180, total: 180, unit: 'kg' },
-    { id: 'sw-4', name: 'Motichoor Ladoo', qty: 1, rate: 160, total: 160, unit: 'kg' }
-  ];
-  const items = (quickCart && quickCart.length > 0) ? quickCart : defaultItems;
-  const subtotal = items.reduce((sum, item) => sum + (item.total || Math.round(item.qty * (item.rate || item.price || 0))), 0);
+export function renderDashboardView(state: any) {
+  const { kpis = {}, quickCart = [], orders = [], sweets = [], customers = [] } = state;
+
+  const customersVal = kpis.customers?.value ?? customers.length ?? 0;
+  const salesVal = kpis.sales?.value ?? orders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+  const ordersVal = kpis.orders?.value ?? orders.length ?? 0;
+  
+  // Dynamic profit: if kpis.profit is set, use it; otherwise compute based on branch margin or 0
+  const profitVal = kpis.profit?.value ?? (salesVal > 0 ? Math.round(salesVal * 0.341) : 0);
+  const profitMarginStr = salesVal > 0 ? `${((profitVal / salesVal) * 100).toFixed(1)}% margin` : '0.0% margin';
+  
+  // Dynamic cost: if kpis.cost is set, use it; otherwise cost = sales - profit
+  const costVal = kpis.cost?.value ?? (salesVal > 0 ? Math.max(0, salesVal - profitVal) : 0);
+  const costPercentStr = salesVal > 0 ? `${((costVal / salesVal) * 100).toFixed(1)}%` : '0.0%';
+
+  // Dynamic returning: 
+  const returningVal = kpis.returningCustomers?.value ?? (customersVal > 0 ? Math.round(customersVal * 0.41) : 0);
+  const returningPercentStr = customersVal > 0 ? `${Math.min(100, Math.round((returningVal / customersVal) * 100))}%` : '0.0%';
+
+  const items = quickCart || [];
+  const subtotal = items.reduce((sum: number, item: any) => sum + (item.total || Math.round(item.qty * (item.rate || item.price || 0))), 0);
   const totalPayable = subtotal;
+
+  // Donut chart status calculations
+  const totalOrders = orders.length;
+  const completedOrders = state.orderStatusCounts?.completed ?? orders.filter((o: any) => o.status === 'Completed').length;
+  const advanceOrders = state.orderStatusCounts?.advance ?? orders.filter((o: any) => o.status === 'Advance Booking').length;
+  const kitchenOrders = state.orderStatusCounts?.kitchen ?? orders.filter((o: any) => o.status === 'Kitchen Packing').length;
+
+  const completedPct = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
+  const advancePct = totalOrders > 0 ? Math.round((advanceOrders / totalOrders) * 100) : 0;
+  const kitchenPct = totalOrders > 0 ? Math.round((kitchenOrders / totalOrders) * 100) : 0;
 
   return `
     <div class="space-y-6 animate-fadeIn select-none" data-purpose="stitch-dashboard">
@@ -62,12 +85,9 @@ export function renderDashboardView(state) {
       </div>
 
       <!-- ======================================================== -->
-      <!-- 6 KPI Stat Cards Grid                                    -->
-      <!-- Default: 2x3 Grid (Desktop) / 3x2 (Mobile)                -->
-      <!-- Scrolled Down: Smoothly converts to 1x6 Grid Bar         -->
-      <!-- Scrolled Up: Smoothly eases back to 2x3 Grid             -->
+      <!-- 6 KPI Stat Cards Grid (Clean Responsive Grid)            -->
       <!-- ======================================================== -->
-      <section id="kpi-tiles-container" class="kpi-grid-2x3" data-purpose="kpi-metrics-grid">
+      <section id="kpi-tiles-container" class="grid grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-5" data-purpose="kpi-metrics-grid">
         
         <!-- CARD 1: Customers -->
         <article class="kpi-card animate-card-pop stagger-1 interactive-scale bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
@@ -86,14 +106,21 @@ export function renderDashboardView(state) {
           <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
             <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Customers</p>
-            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">${kpis.customers?.value || 184}</p>
+            <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
+              ${renderCounter({
+                value: customersVal,
+                fontWeight: 800,
+                gradientHeight: 6,
+                gradientFrom: 'rgba(255, 249, 245, 0.75)'
+              })}
+            </div>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>+12%</span>
+              <span>${customersVal > 0 ? '+12%' : '0%'}</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
@@ -129,14 +156,22 @@ export function renderDashboardView(state) {
           <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
             <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Sales</p>
-            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">${kpis.sales?.formatted || (kpis.revenue ? '₹' + kpis.revenue.value.toLocaleString() : '₹42,850')}</p>
+            <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
+              ${renderCounter({
+                value: salesVal,
+                prefix: '₹',
+                fontWeight: 800,
+                gradientHeight: 6,
+                gradientFrom: 'rgba(244, 250, 246, 0.75)'
+              })}
+            </div>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>+8.4%</span>
+              <span>${salesVal > 0 ? '+8.4%' : '0%'}</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
@@ -172,14 +207,21 @@ export function renderDashboardView(state) {
           <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
             <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Orders</p>
-            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">${kpis.orders?.formatted || String(kpis.orders?.value || 126)}</p>
+            <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
+              ${renderCounter({
+                value: ordersVal,
+                fontWeight: 800,
+                gradientHeight: 6,
+                gradientFrom: 'rgba(248, 245, 253, 0.75)'
+              })}
+            </div>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>+9.2%</span>
+              <span>${ordersVal > 0 ? '+9.2%' : '0%'}</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
@@ -215,13 +257,21 @@ export function renderDashboardView(state) {
           <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
             <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Profit</p>
-            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">₹14,620</p>
+            <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
+              ${renderCounter({
+                value: profitVal,
+                prefix: '₹',
+                fontWeight: 800,
+                gradientHeight: 6,
+                gradientFrom: 'rgba(241, 250, 245, 0.75)'
+              })}
+            </div>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge text-[#0D9488] font-bold text-[10px] sm:text-xs z-10">
-              <span>34.1% margin</span>
+              <span>${profitMarginStr}</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
@@ -257,13 +307,21 @@ export function renderDashboardView(state) {
           <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
             <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Cost</p>
-            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">₹28,230</p>
+            <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
+              ${renderCounter({
+                value: costVal,
+                prefix: '₹',
+                fontWeight: 800,
+                gradientHeight: 6,
+                gradientFrom: 'rgba(253, 245, 244, 0.75)'
+              })}
+            </div>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge text-rose-500 font-bold text-[10px] sm:text-xs z-10">
-              <span>65.9%</span>
+              <span>${costPercentStr}</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
@@ -299,14 +357,22 @@ export function renderDashboardView(state) {
           <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
             <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Returning</p>
-            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">76 <span class="text-xs sm:text-sm font-medium text-stone-500">cust</span></p>
+            <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
+              ${renderCounter({
+                value: returningVal,
+                suffix: ' cust',
+                fontWeight: 800,
+                gradientHeight: 6,
+                gradientFrom: 'rgba(242, 247, 253, 0.75)'
+              })}
+            </div>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge flex items-center text-sky-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>41.3%</span>
+              <span>${returningPercentStr}</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
@@ -430,169 +496,51 @@ export function renderDashboardView(state) {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-[#F0ECE4]/60">
-                  
-                  <!-- Item 1: Kaju Katli -->
-                  <tr class="table-row-hover transition-all cursor-pointer">
-                    <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-amber-50 shrink-0 shadow-2xs">
-                        <img src="/assets/sweets/sw-1.png" alt="Kaju Katli" class="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <span class="font-semibold text-[#2A1F1D]">Kaju Katli</span>
-                    </td>
-                    <td class="py-3 px-4 text-stone-500">Dry Fruit Sweet</td>
-                    <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹450 <span class="text-[11px] font-normal text-stone-400">/kg</span></td>
-                    <td class="py-3 px-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        In Stock
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <button 
-                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-1" 
-                        data-name="Kaju Katli" 
-                        data-price="450"
-                      >
-                        + Add
-                      </button>
-                    </td>
-                  </tr>
-
-                  <!-- Item 2: Rasgulla -->
-                  <tr class="table-row-hover transition-all cursor-pointer">
-                    <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-orange-200 bg-orange-50 shrink-0 shadow-2xs">
-                        <img src="/assets/sweets/sw-3.png" alt="Rasgulla" class="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <span class="font-semibold text-[#2A1F1D]">Rasgulla</span>
-                    </td>
-                    <td class="py-3 px-4 text-stone-500">Chhena / Bengali</td>
-                    <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹320 <span class="text-[11px] font-normal text-stone-400">/kg</span></td>
-                    <td class="py-3 px-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        In Stock
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <button 
-                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-3" 
-                        data-name="Rasgulla" 
-                        data-price="320"
-                      >
-                        + Add
-                      </button>
-                    </td>
-                  </tr>
-
-                  <!-- Item 3: Gulab Jamun -->
-                  <tr class="table-row-hover transition-all cursor-pointer">
-                    <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-900/20 bg-amber-50 shrink-0 shadow-2xs">
-                        <img src="/assets/sweets/sw-2.png" alt="Gulab Jamun" class="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <span class="font-semibold text-[#2A1F1D]">Gulab Jamun</span>
-                    </td>
-                    <td class="py-3 px-4 text-stone-500">Mawa Sweet</td>
-                    <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹180 <span class="text-[11px] font-normal text-stone-400">/kg</span></td>
-                    <td class="py-3 px-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        In Stock
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <button 
-                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-2" 
-                        data-name="Gulab Jamun" 
-                        data-price="180"
-                      >
-                        + Add
-                      </button>
-                    </td>
-                  </tr>
-
-                  <!-- Item 4: Motichoor Ladoo (Low Stock) -->
-                  <tr class="table-row-hover transition-all cursor-pointer">
-                    <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-yellow-200 bg-yellow-50 shrink-0 shadow-2xs">
-                        <img src="/assets/sweets/sw-6.png" alt="Motichoor Ladoo" class="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <span class="font-semibold text-[#2A1F1D]">Motichoor Ladoo</span>
-                    </td>
-                    <td class="py-3 px-4 text-stone-500">Desi Ghee</td>
-                    <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹160 <span class="text-[11px] font-normal text-stone-400">/kg</span></td>
-                    <td class="py-3 px-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-300">
-                        Low Stock
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <button 
-                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-6" 
-                        data-name="Motichoor Ladoo" 
-                        data-price="160"
-                      >
-                        + Add
-                      </button>
-                    </td>
-                  </tr>
-
-                  <!-- Item 5: Kesar Peda -->
-                  <tr class="table-row-hover transition-all cursor-pointer">
-                    <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-300 bg-amber-50 shrink-0 shadow-2xs">
-                        <img src="/assets/sweets/sw-9.png" alt="Kesar Peda" class="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <span class="font-semibold text-[#2A1F1D]">Kesar Peda</span>
-                    </td>
-                    <td class="py-3 px-4 text-stone-500">Special Milk Peda</td>
-                    <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹380 <span class="text-[11px] font-normal text-stone-400">/kg</span></td>
-                    <td class="py-3 px-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        In Stock
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <button 
-                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-9" 
-                        data-name="Kesar Peda" 
-                        data-price="380"
-                      >
-                        + Add
-                      </button>
-                    </td>
-                  </tr>
-
-                  <!-- Item 6: Milk Cake -->
-                  <tr class="table-row-hover transition-all cursor-pointer">
-                    <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-orange-200 bg-orange-50 shrink-0 shadow-2xs">
-                        <img src="/assets/sweets/sw-10.png" alt="Milk Cake" class="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <span class="font-semibold text-[#2A1F1D]">Milk Cake</span>
-                    </td>
-                    <td class="py-3 px-4 text-stone-500">Caramelized Mawa</td>
-                    <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹300 <span class="text-[11px] font-normal text-stone-400">/kg</span></td>
-                    <td class="py-3 px-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        In Stock
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <button 
-                        class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-10" 
-                        data-name="Milk Cake" 
-                        data-price="300"
-                      >
-                        + Add
-                      </button>
-                    </td>
-                  </tr>
-
+                  ${(sweets.length > 0 ? sweets.slice(0, 6) : []).map((sweet: any) => {
+                    const isLow = sweet.stock <= (sweet.minStock || 15) || sweet.stockStatus === 'Low Stock';
+                    const isOutOfStock = sweet.stock === 0;
+                    return `
+                      <tr class="table-row-hover transition-all cursor-pointer">
+                        <td class="py-3 px-5 flex items-center space-x-3">
+                          <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-amber-50 shrink-0 shadow-2xs">
+                            <img src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" alt="${sweet.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='/assets/sweets/sw-1.png'" />
+                          </div>
+                          <div class="min-w-0">
+                            <span class="font-semibold text-[#2A1F1D] block truncate">${sweet.name}</span>
+                            <span class="text-[10px] text-stone-400 font-mono">Stock: ${sweet.stock} ${sweet.unit || 'kg'}</span>
+                          </div>
+                        </td>
+                        <td class="py-3 px-4 text-stone-500">${sweet.category || 'Traditional'}</td>
+                        <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹${sweet.pricePerKg} <span class="text-[11px] font-normal text-stone-400">/${sweet.unit || 'kg'}</span></td>
+                        <td class="py-3 px-4">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                            isOutOfStock ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                            isLow ? 'bg-amber-50 text-amber-700 border border-amber-300' :
+                            'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }">
+                            ${isOutOfStock ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
+                          </span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                          <button 
+                            class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
+                            data-id="${sweet.id}" 
+                            data-name="${sweet.name}" 
+                            data-price="${sweet.pricePerKg}"
+                          >
+                            + Add
+                          </button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                  ${sweets.length === 0 ? `
+                    <tr>
+                      <td colspan="5" class="py-8 text-center text-stone-400">
+                        No confectionery items loaded in catalog for this branch.
+                      </td>
+                    </tr>
+                  ` : ''}
                 </tbody>
               </table>
             </div>
@@ -609,7 +557,7 @@ export function renderDashboardView(state) {
           <section id="section-order-status" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="order-status-card">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-base font-bold text-[#2A1F1D]">Order Status</h3>
-              <span class="text-xs text-stone-400">Today</span>
+              <span class="text-xs text-stone-400">Active Branch</span>
             </div>
 
             <div class="flex flex-col sm:flex-row items-center justify-between pt-2">
@@ -618,17 +566,26 @@ export function renderDashboardView(state) {
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                   <!-- Background ring -->
                   <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F5EFE9" stroke-width="3.8"></circle>
-                  <!-- Completed Counter Sales (94/126 ~ 74.6%) #10B981 -->
-                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#10B981" stroke-width="3.8" stroke-dasharray="75 100" stroke-dashoffset="0" class="donut-segment"></circle>
-                  <!-- Advance Bookings (22/126 ~ 17.5%) #0284C7 -->
-                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#0284C7" stroke-width="3.8" stroke-dasharray="17 100" stroke-dashoffset="-75" class="donut-segment"></circle>
-                  <!-- Kitchen Packing (10/126 ~ 7.9%) #F59E0B -->
-                  <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F59E0B" stroke-width="3.8" stroke-dasharray="8 100" stroke-dashoffset="-92" class="donut-segment"></circle>
+                  ${totalOrders > 0 ? `
+                    <!-- Completed Counter Sales -->
+                    <circle cx="18" cy="18" r="14.5" fill="none" stroke="#10B981" stroke-width="3.8" stroke-dasharray="${completedPct} 100" stroke-dashoffset="0" class="donut-segment"></circle>
+                    <!-- Advance Bookings -->
+                    <circle cx="18" cy="18" r="14.5" fill="none" stroke="#0284C7" stroke-width="3.8" stroke-dasharray="${advancePct} 100" stroke-dashoffset="-${completedPct}" class="donut-segment"></circle>
+                    <!-- Kitchen Packing -->
+                    <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F59E0B" stroke-width="3.8" stroke-dasharray="${kitchenPct} 100" stroke-dashoffset="-${completedPct + advancePct}" class="donut-segment"></circle>
+                  ` : ''}
                 </svg>
 
                 <!-- Center Total Metric -->
                 <div class="absolute text-center flex flex-col items-center justify-center pointer-events-none">
-                  <span class="text-xl font-bold text-[#2A1F1D] leading-tight">126</span>
+                  <div class="text-xl font-bold text-[#2A1F1D] leading-tight flex items-center justify-center">
+                    ${renderCounter({
+                      value: totalOrders,
+                      fontWeight: 700,
+                      gradientHeight: 4,
+                      gradientFrom: 'rgba(255, 255, 255, 0.85)'
+                    })}
+                  </div>
                   <span class="text-[10px] text-stone-400 uppercase tracking-wider font-semibold">Orders</span>
                 </div>
               </div>
@@ -640,21 +597,27 @@ export function renderDashboardView(state) {
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span>
                     Completed (Counter)
                   </span>
-                  <span class="font-bold text-[#2A1F1D]">94</span>
+                  <span class="font-bold text-[#2A1F1D]">
+                    ${renderCounter({ value: completedOrders, fontWeight: 700 })}
+                  </span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="flex items-center text-stone-600">
                     <span class="w-2.5 h-2.5 rounded-full bg-sky-500 mr-2"></span>
                     Advance Bookings
                   </span>
-                  <span class="font-bold text-[#2A1F1D]">22</span>
+                  <span class="font-bold text-[#2A1F1D]">
+                    ${renderCounter({ value: advanceOrders, fontWeight: 700 })}
+                  </span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="flex items-center text-stone-600">
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span>
                     Kitchen Packing
                   </span>
-                  <span class="font-bold text-[#2A1F1D]">10</span>
+                  <span class="font-bold text-[#2A1F1D]">
+                    ${renderCounter({ value: kitchenOrders, fontWeight: 700 })}
+                  </span>
                 </div>
               </div>
             </div>
@@ -666,7 +629,7 @@ export function renderDashboardView(state) {
               <div class="flex items-center justify-between border-b border-[#F0ECE4] pb-3 mb-4">
                 <div>
                   <h3 class="text-base font-bold text-[#2A1F1D]">Quick Billing (POS)</h3>
-                  <p class="text-xs text-stone-400">Order #SA-00130</p>
+                  <p class="text-xs text-stone-400">Order #SA-00${130 + orders.length}</p>
                 </div>
                 <span class="px-2.5 py-0.5 rounded-full bg-orange-100 text-[#C86D3B] text-[11px] font-semibold">Counter 1</span>
               </div>
@@ -691,22 +654,30 @@ export function renderDashboardView(state) {
               </div>
 
               <!-- Quick Order Selected Sweets Line Items -->
-              <div class="space-y-2.5 mb-4 text-xs">
-                ${items.map((item, idx) => `
-                  <div class="flex items-center justify-between py-1.5 ${idx < items.length - 1 ? 'border-b border-stone-100' : ''} group">
-                    <div>
-                      <p class="font-semibold text-stone-800">${item.name}</p>
-                      <p class="text-[11px] text-stone-400">${item.qty < 1 ? Math.round(item.qty * 1000) + ' g' : item.qty + ' kg'} × ₹${item.rate || item.price || 0}</p>
+              ${items.length > 0 ? `
+                <div class="space-y-2.5 mb-4 text-xs">
+                  ${items.map((item: any, idx: number) => `
+                    <div class="flex items-center justify-between py-1.5 ${idx < items.length - 1 ? 'border-b border-stone-100' : ''} group">
+                      <div>
+                        <p class="font-semibold text-stone-800">${item.name}</p>
+                        <p class="text-[11px] text-stone-400">${item.qty < 1 ? Math.round(item.qty * 1000) + ' g' : item.qty + ' kg'} × ₹${item.rate || item.price || 0}</p>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <span class="font-bold text-[#2A1F1D]">₹${item.total || Math.round(item.qty * (item.rate || item.price || 0))}</span>
+                        <button class="remove-quick-item-btn opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-500 p-0.5 transition-opacity cursor-pointer" data-index="${idx}" title="Remove item">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        </button>
+                      </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="font-bold text-[#2A1F1D]">₹${item.total || Math.round(item.qty * (item.rate || item.price || 0))}</span>
-                      <button class="remove-quick-item-btn opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-500 p-0.5 transition-opacity cursor-pointer" data-index="${idx}" title="Remove item">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-                      </button>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
+                  `).join('')}
+                </div>
+              ` : `
+                <div class="py-5 text-center text-stone-400 space-y-1 border border-dashed border-stone-200 rounded-xl mb-4 bg-stone-50/60">
+                  <span class="text-lg">🛒</span>
+                  <p class="text-xs font-semibold text-stone-600">Quick Cart is Empty</p>
+                  <p class="text-[10px] text-stone-400">Click '+ Add' on sweets to create a quick sale</p>
+                </div>
+              `}
 
               <!-- Price Breakdown Box -->
               <div class="bg-stone-50 rounded-xl p-3 space-y-1.5 text-xs mb-4">
@@ -722,9 +693,17 @@ export function renderDashboardView(state) {
                   <span>Tax (GST 0%)</span>
                   <span>₹0</span>
                 </div>
-                <div class="border-t border-stone-200/80 pt-1.5 flex justify-between font-bold text-sm text-[#2A1F1D]">
+                <div class="border-t border-stone-200/80 pt-1.5 flex justify-between font-bold text-sm text-[#2A1F1D] items-center">
                   <span>Total Payable</span>
-                  <span class="text-[#C86D3B] text-base font-bold">₹${totalPayable}</span>
+                  <span class="text-[#C86D3B] text-base font-bold">
+                    ${renderCounter({
+                      value: totalPayable,
+                      prefix: '₹',
+                      fontWeight: 800,
+                      textColor: '#C86D3B',
+                      gradientFrom: 'rgba(255, 255, 255, 0.7)'
+                    })}
+                  </span>
                 </div>
               </div>
             </div>
@@ -735,7 +714,7 @@ export function renderDashboardView(state) {
               data-tab="pos"
               class="w-full py-3 px-4 bg-[#C86D3B] hover:bg-[#B25D2E] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
-              <span>Proceed to Checkout</span>
+              <span>${items.length > 0 ? 'Proceed to Checkout' : 'Open Counter POS'}</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>

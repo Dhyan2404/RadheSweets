@@ -1,7 +1,7 @@
 // Cinematic Loading & Divine Welcome Page
 // 100% Faithful to stitch_radhe_sweets_shop_manager/image.png_5/screen.png
 
-export function renderSplashView(options = {}) {
+export function renderSplashView(options: { isModal?: boolean; progress?: number; message?: string } = {}) {
   const { isModal = false, progress = 100, message = 'Jai Radhe Krishna 🙏 Console Ready!' } = options;
 
   return `

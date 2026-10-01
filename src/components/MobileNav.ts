@@ -208,16 +208,10 @@ export function renderMobileDrawer(state) {
           </nav>
         </div>
 
-        <!-- Brand Artwork at Bottom of Drawer (1:1 with Stitch screen.png) -->
-        <div class="pt-4 border-t border-stone-200 mt-auto">
-          <div class="relative overflow-hidden rounded-2xl p-1 flex flex-col items-center">
-            <img 
-              src="/assets/sweet_moments.png" 
-              alt="Sweet moments... Better together" 
-              class="w-full max-w-[200px] h-auto object-contain select-none pointer-events-none drop-shadow-sm" 
-              loading="lazy"
-            />
-          </div>
+        <!-- Brand Footer at Bottom of Drawer (Clean, Zero Artifacts) -->
+        <div class="pt-4 border-t border-stone-200 mt-auto text-center">
+          <p class="text-[11px] font-bold text-[#C86D3B]/90 tracking-wide">🙏 Jai Radhe Krishna</p>
+          <p class="text-[10px] text-stone-400 mt-0.5">Ahmedabad Confectionery Flagship</p>
         </div>
       </div>
     </div>

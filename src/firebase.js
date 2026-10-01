@@ -39,6 +39,25 @@ try {
 }
 export { analytics };
 
+// Graceful error handler with offline resilience
+export function handleFirestoreError(label, err) {
+  if (!err) return;
+  const msg = err?.message || String(err);
+  if (
+    msg.includes('not found') || 
+    msg.includes('offline') || 
+    msg.includes('unavailable') || 
+    msg.includes('(default)') ||
+    err?.code === 'not-found' || 
+    err?.code === 'unavailable'
+  ) {
+    firestoreLiveState.connected = false;
+    firestoreLiveState.syncStatus = 'offline';
+    return;
+  }
+  console.warn(`[Firebase Firestore] ${label}:`, msg);
+}
+
 // Live Connection State Tracking
 export const firestoreLiveState = {
   connected: true,
@@ -74,11 +93,14 @@ export function getBranchDefaultCatalog(branchId) {
       name: "Satellite Luxury Boutique",
       branchId: "br-2",
       kpis: {
-        revenue: { value: 31400, target: 35000, progress: 89.7, change: "+9.8% vs last week" },
-        orders: { value: 88, target: 100, progress: 88.0, change: "+5.4% vs last week" },
-        sweetsSold: { value: 92, unit: "kg", target: 110, progress: 83.6, change: "+11.0% vs last week" },
-        customers: { value: 74, target: 85, progress: 87.0, change: "+8.2% vs last week" },
-        profit: { value: 11950, change: "38.1% margin", isUp: true, formatted: "₹11,950" }
+        revenue: { value: 0, target: 35000, progress: 0, change: "0.0% margin" },
+        orders: { value: 0, target: 100, progress: 0, change: "0 orders" },
+        sweetsSold: { value: 0, unit: "kg", target: 110, progress: 0, change: "0 kg" },
+        customers: { value: 0, target: 85, progress: 0, change: "0 patrons" },
+        profit: { value: 0, change: "0.0% margin", isUp: false, formatted: "₹0" },
+        sales: { value: 0, formatted: "₹0" },
+        cost: { value: 0, formatted: "₹0" },
+        returningCustomers: { value: 0 }
       },
       sweets: masterSweets.map((s, idx) => ({
         ...s,
@@ -94,11 +116,14 @@ export function getBranchDefaultCatalog(branchId) {
       name: "SG Highway Central Kitchen",
       branchId: "br-3",
       kpis: {
-        revenue: { value: 58200, target: 60000, progress: 97.0, change: "+18.3% vs last week" },
-        orders: { value: 174, target: 180, progress: 96.6, change: "+14.2% vs last week" },
-        sweetsSold: { value: 340, unit: "kg", target: 350, progress: 97.1, change: "+22.0% vs last week" },
-        customers: { value: 142, target: 150, progress: 94.6, change: "+11.5% vs last week" },
-        profit: { value: 20950, change: "36.0% margin", isUp: true, formatted: "₹20,950" }
+        revenue: { value: 0, target: 60000, progress: 0, change: "0.0% margin" },
+        orders: { value: 0, target: 180, progress: 0, change: "0 orders" },
+        sweetsSold: { value: 0, unit: "kg", target: 350, progress: 0, change: "0 kg" },
+        customers: { value: 0, target: 150, progress: 0, change: "0 patrons" },
+        profit: { value: 0, change: "0.0% margin", isUp: false, formatted: "₹0" },
+        sales: { value: 0, formatted: "₹0" },
+        cost: { value: 0, formatted: "₹0" },
+        returningCustomers: { value: 0 }
       },
       sweets: masterSweets.map((s, idx) => ({
         ...s,
@@ -118,7 +143,10 @@ export function getBranchDefaultCatalog(branchId) {
         orders: { value: 126, target: 140, progress: 90.0, change: "+8.1% vs last week" },
         sweetsSold: { value: 184, unit: "kg", target: 200, progress: 92.0, change: "+15.2% vs last week" },
         customers: { value: 98, target: 110, progress: 89.1, change: "+6.3% vs last week" },
-        profit: { value: 14620, change: "34.1% margin", isUp: true, formatted: "₹14,620" }
+        profit: { value: 14620, change: "34.1% margin", isUp: true, formatted: "₹14,620" },
+        sales: { value: 42850, formatted: "₹42,850" },
+        cost: { value: 28230, formatted: "₹28,230" },
+        returningCustomers: { value: 76 }
       },
       sweets: masterSweets.map(s => ({ ...s }))
     };
@@ -131,45 +159,27 @@ export function getBranchDefaultCatalog(branchId) {
  */
 export async function loadBranchDataFromCloud(branchId) {
   const seed = getBranchDefaultCatalog(branchId);
-  updateStatus('syncing');
-
   try {
     const branchDocRef = doc(db, "branches", branchId);
-    const snap = await getDoc(branchDocRef);
-    if (snap.exists() && snap.data().sweets && snap.data().sweets.length >= 50) {
+    const snap = await Promise.race([
+      getDoc(branchDocRef),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+    ]);
+    if (snap && snap.exists && snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
       const data = snap.data();
-      updateStatus('synced');
-      return {
-        sweets: data.sweets,
-        kpis: data.kpis || seed.kpis
-      };
-    } else {
-      // Seed complete 100 sweets into Firestore for this branch
-      console.log(`[Firebase Firestore] Seeding all 100 sweets for branch ${branchId}...`);
-      await setDoc(branchDocRef, {
-        sweets: seed.sweets,
-        kpis: seed.kpis,
-        name: seed.name,
-        branchId: branchId,
-        sweetsCount: seed.sweets.length,
-        lastUpdated: new Date().toISOString()
-      }, { merge: true });
-
-      updateStatus('synced');
-      return {
-        sweets: seed.sweets,
-        kpis: seed.kpis
-      };
+      let branchKpis = data.kpis || seed.kpis;
+      if (branchId !== 'br-1') {
+        const hasLiveOrders = Array.isArray(data.orders) && data.orders.length > 0;
+        if (!hasLiveOrders && (!branchKpis.sales || branchKpis.sales.value === 0 || !data.hasLiveOrders)) {
+          branchKpis = seed.kpis;
+        }
+      }
+      return { sweets: data.sweets, kpis: branchKpis };
     }
   } catch (error) {
-    console.warn(`[Firebase Firestore] Load branch ${branchId} error:`, error.message);
-    updateStatus('synced');
+    handleFirestoreError(`Load branch ${branchId}`, error);
   }
-
-  return {
-    sweets: seed.sweets,
-    kpis: seed.kpis
-  };
+  return { sweets: seed.sweets, kpis: seed.kpis };
 }
 
 /**
@@ -189,7 +199,7 @@ export async function saveBranchSweetsToCloud(branchId, sweets) {
     updateStatus('synced');
     return true;
   } catch (error) {
-    console.warn(`[Firebase Firestore] Branch ${branchId} sweets sync fallback:`, error.message);
+    handleFirestoreError(`Branch ${branchId} sweets sync`, error);
     localStorage.setItem(`radhe_branch_${branchId}_sweets`, JSON.stringify(sweets));
     updateStatus('synced');
     return false;
@@ -202,15 +212,22 @@ export async function saveBranchSweetsToCloud(branchId, sweets) {
 export function subscribeToBranchSweets(branchId, callback) {
   try {
     const branchDocRef = doc(db, "branches", branchId);
-    return onSnapshot(branchDocRef, (snap) => {
+    let unsub = null;
+    unsub = onSnapshot(branchDocRef, (snap) => {
       if (snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
         callback(snap.data().sweets);
       }
     }, (err) => {
-      console.warn(`[Firebase Firestore] Sweets listener warning:`, err.message);
+      handleFirestoreError('Sweets listener', err);
+      if (unsub) { try { unsub(); } catch(_) {} }
+      const seed = getBranchDefaultCatalog(branchId);
+      callback(seed.sweets);
     });
+    return unsub;
   } catch (e) {
-    console.warn(`[Firebase Firestore] Failed to subscribe to sweets:`, e);
+    handleFirestoreError('Failed to subscribe to sweets', e);
+    const seed = getBranchDefaultCatalog(branchId);
+    callback(seed.sweets);
     return () => {};
   }
 }
@@ -302,7 +319,8 @@ export function subscribeToBranchOrders(branchId, callback) {
   try {
     const ordersCol = collection(db, "branches", branchId, "orders");
     const q = query(ordersCol, limit(100));
-    return onSnapshot(q, (snapshot) => {
+    let unsub = null;
+    unsub = onSnapshot(q, (snapshot) => {
       const orders = [];
       snapshot.forEach(docSnap => {
         orders.push(docSnap.data());
@@ -310,18 +328,27 @@ export function subscribeToBranchOrders(branchId, callback) {
       orders.sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime());
       callback(orders);
     }, (err) => {
-      console.warn(`[Firebase Firestore] Orders listener warning:`, err.message);
+      handleFirestoreError('Orders listener', err);
+      if (unsub) { try { unsub(); } catch(_) {} }
+      try {
+        const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
+        callback(localSnap?.orders || (branchId === 'br-1' ? initialData.orders : []));
+      } catch(e) {
+        callback(branchId === 'br-1' ? initialData.orders : []);
+      }
     });
+    return unsub;
   } catch (e) {
-    console.warn(`[Firebase Firestore] Failed to subscribe to orders:`, e);
+    handleFirestoreError('Failed to subscribe to orders', e);
+    callback(branchId === 'br-1' ? initialData.orders : []);
     return () => {};
   }
 }
 
 /**
- * Save customer to Cloud Firestore
+ * Save customer to Cloud Firestore (both branch-subcollection & root collection)
  */
-export async function saveCustomerToCloud(customer) {
+export async function saveCustomerToCloud(customer, branchId = null) {
   updateStatus('syncing');
   try {
     const custDocRef = doc(db, "customers", customer.id);
@@ -329,6 +356,15 @@ export async function saveCustomerToCloud(customer) {
       ...customer,
       updatedAt: new Date().toISOString()
     }, { merge: true });
+
+    if (branchId) {
+      const branchCustRef = doc(db, "branches", branchId, "customers", customer.id);
+      await setDoc(branchCustRef, {
+        ...customer,
+        branchId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
     updateStatus('synced');
     return true;
   } catch (error) {
@@ -336,6 +372,10 @@ export async function saveCustomerToCloud(customer) {
     updateStatus('synced');
     return false;
   }
+}
+
+export async function saveBranchCustomerToCloud(branchId, customer) {
+  return saveCustomerToCloud(customer, branchId);
 }
 
 /**
@@ -368,23 +408,40 @@ export async function updateCustomerStatsInCloud(customerId, orderAmount, isKhat
 }
 
 /**
- * Real-time Listener for Customers Directory
+ * Real-time Listener for Branch Customers Directory
+ */
+export function subscribeToBranchCustomers(branchId, callback) {
+  try {
+    const branchCustCol = collection(db, "branches", branchId, "customers");
+    return onSnapshot(branchCustCol, (snapshot) => {
+      if (snapshot.empty) {
+        callback(branchId === "br-1" ? initialData.customers : []);
+        return;
+      }
+      const customers = [];
+      snapshot.forEach(docSnap => {
+        customers.push(docSnap.data());
+      });
+      callback(customers);
+    }, (err) => {
+      handleFirestoreError(`Branch ${branchId} customers listener`, err);
+      callback(branchId === "br-1" ? initialData.customers : []);
+    });
+  } catch (e) {
+    handleFirestoreError('Failed to subscribe to branch customers', e);
+    callback(branchId === "br-1" ? initialData.customers : []);
+    return () => {};
+  }
+}
+
+/**
+ * Real-time Listener for Customers Directory (Global)
  */
 export function subscribeToCustomers(callback) {
   try {
     const custCol = collection(db, "customers");
     return onSnapshot(custCol, async (snapshot) => {
       if (snapshot.empty) {
-        // Seed initial customers into Firestore on first connect
-        console.log("[Firebase Firestore] Seeding initial customers into Firestore...");
-        for (const c of initialData.customers) {
-          try {
-            await setDoc(doc(db, "customers", c.id), {
-              ...c,
-              updatedAt: new Date().toISOString()
-            });
-          } catch(e) {}
-        }
         callback(initialData.customers);
         return;
       }
@@ -394,10 +451,10 @@ export function subscribeToCustomers(callback) {
       });
       callback(customers);
     }, (err) => {
-      console.warn(`[Firebase Firestore] Customers listener warning:`, err.message);
+      handleFirestoreError('Customers listener', err);
     });
   } catch (e) {
-    console.warn(`[Firebase Firestore] Failed to subscribe to customers:`, e);
+    handleFirestoreError('Failed to subscribe to customers', e);
     return () => {};
   }
 }
@@ -443,16 +500,20 @@ export async function updateBranchProfitInCloud(branchId, newOrder, sweets = [])
     });
 
     const orderProfit = Math.max(0, orderTotal - orderCost);
-    const curSales = (existing.sales?.value || 42850) + orderTotal;
-    const curOrders = (existing.orders?.value || 126) + 1;
-    const curProfit = (existing.profit?.value || 14620) + orderProfit;
-    const margin = curSales > 0 ? ((curProfit / curSales) * 100).toFixed(1) + '%' : '34.5%';
+    const baseSales = existing.sales?.value ?? (branchId === 'br-1' ? 42850 : 0);
+    const baseOrders = existing.orders?.value ?? (branchId === 'br-1' ? 126 : 0);
+    const baseProfit = existing.profit?.value ?? (branchId === 'br-1' ? 14620 : 0);
+
+    const curSales = baseSales + orderTotal;
+    const curOrders = baseOrders + 1;
+    const curProfit = baseProfit + orderProfit;
+    const margin = curSales > 0 ? ((curProfit / curSales) * 100).toFixed(1) + '%' : '0.0%';
 
     const updatedKpis = {
       sales: { value: curSales, change: "+12.8% today", isUp: true, formatted: `₹${curSales.toLocaleString()}` },
       orders: { value: curOrders, change: "+8.5%", isUp: true, formatted: String(curOrders) },
       profit: { value: curProfit, change: `${margin} margin`, isUp: true, formatted: `₹${curProfit.toLocaleString()}` },
-      cost: { value: curSales - curProfit, change: "63.2%", isUp: false, formatted: `₹${(curSales - curProfit).toLocaleString()}` },
+      cost: { value: Math.max(0, curSales - curProfit), change: "63.2%", isUp: false, formatted: `₹${Math.max(0, curSales - curProfit).toLocaleString()}` },
       updatedAt: new Date().toISOString()
     };
 
@@ -475,10 +536,14 @@ export function subscribeToBranchKpis(branchId, callback) {
         callback(snap.data());
       }
     }, (err) => {
-      console.warn(`[Firebase Firestore] KPIs listener warning:`, err.message);
+      handleFirestoreError('KPIs listener', err);
+      const seed = getBranchDefaultCatalog(branchId);
+      callback(seed.kpis);
     });
   } catch (e) {
-    console.warn(`[Firebase Firestore] Failed to subscribe to KPIs:`, e);
+    handleFirestoreError('Failed to subscribe to KPIs', e);
+    const seed = getBranchDefaultCatalog(branchId);
+    callback(seed.kpis);
     return () => {};
   }
 }
@@ -502,7 +567,7 @@ export function saveActiveCheckoutToCloud(branchId, checkoutData) {
         updatedAt: new Date().toISOString()
       }, { merge: true });
     } catch (e) {
-      console.warn(`[Firebase Firestore] Active checkout sync error:`, e.message);
+      handleFirestoreError('Active checkout sync', e);
     }
   }, 350);
 }
@@ -519,7 +584,7 @@ export async function clearActiveCheckoutInCloud(branchId) {
       updatedAt: new Date().toISOString()
     });
   } catch (e) {
-    console.warn(`[Firebase Firestore] Clear checkout error:`, e.message);
+    handleFirestoreError('Clear checkout', e);
   }
 }
 
@@ -531,10 +596,10 @@ export function subscribeToActiveCheckout(branchId, callback) {
         callback(snap.data());
       }
     }, (err) => {
-      console.warn(`[Firebase Firestore] Active checkout listener warning:`, err.message);
+      handleFirestoreError('Active checkout listener', err);
     });
   } catch (e) {
-    console.warn(`[Firebase Firestore] Failed to subscribe to checkout:`, e);
+    handleFirestoreError('Failed to subscribe to checkout', e);
     return () => {};
   }
 }

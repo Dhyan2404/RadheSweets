@@ -18,8 +18,8 @@ export const initialData = {
 
   branches: [
     { id: "br-1", code: "BR-NAV-01", name: "Navrangpura Flagship", city: "Ahmedabad", revenue: 42850, orders: 126, margin: "34.1%" },
-    { id: "br-2", code: "BR-SAT-02", name: "Satellite Luxury Boutique", city: "Ahmedabad", revenue: 31400, orders: 88, margin: "36.5%" },
-    { id: "br-3", code: "BR-SGH-03", name: "SG Highway Central Kitchen", city: "Ahmedabad", revenue: 58200, orders: 174, margin: "31.8%" }
+    { id: "br-2", code: "BR-SAT-02", name: "Satellite Luxury Boutique", city: "Ahmedabad", revenue: 0, orders: 0, margin: "0.0%" },
+    { id: "br-3", code: "BR-SGH-03", name: "SG Highway Central Kitchen", city: "Ahmedabad", revenue: 0, orders: 0, margin: "0.0%" }
   ],
   parkedBills: [
     { id: "park-1", label: "Token #14 (Mr. Patel)", time: "10:15 AM", itemsCount: 2, total: 360, items: [
@@ -2761,18 +2761,20 @@ export const initialData = {
   ],
 
   expenses: {
-    total: 28230,
+    total: 43330,
     change: "+5.6% from last month",
     breakdown: [
-      { category: "Raw Materials", amount: 12450, percentage: 44.1, color: "#C86D3B" },
-      { category: "Utilities", amount: 5320, percentage: 18.8, color: "#DDA15E" },
-      { category: "Staff Salary", amount: 6000, percentage: 21.3, color: "#10B981" },
-      { category: "Marketing", amount: 2460, percentage: 8.7, color: "#0284C7" },
-      { category: "Other", amount: 2000, percentage: 7.1, color: "#8B5CF6" }
+      { category: "Raw Materials", amount: 27550, percentage: 63.6, color: "#C86D3B" },
+      { category: "Utilities", amount: 5320, percentage: 12.3, color: "#DDA15E" },
+      { category: "Staff Salary", amount: 6000, percentage: 13.8, color: "#10B981" },
+      { category: "Marketing", amount: 2460, percentage: 5.7, color: "#0284C7" },
+      { category: "Other", amount: 2000, percentage: 4.6, color: "#8B5CF6" }
     ],
     items: [
-      { id: "exp-1", date: "25 Sep", description: "Raw Materials Purchase (Pure Ghee & Mawa)", category: "Raw Materials", amount: 12450, status: "Paid" },
-      { id: "exp-2", date: "22 Sep", description: "Utilities (Electricity & Commercial Gas)", category: "Utilities", amount: 5320, status: "Paid" },
+      { id: "exp-1", date: "25 Sep", description: "Pure Desi Ghee & Fresh Mawa (50kg Inward)", category: "Raw Materials", amount: 12450, status: "Paid" },
+      { id: "exp-rm-2", date: "23 Sep", description: "Goan Cashews & California Almonds (Dry Fruits)", category: "Raw Materials", amount: 8900, status: "Paid" },
+      { id: "exp-rm-3", date: "21 Sep", description: "Refined Sugar & Kashmiri Kesar Saffron batch", category: "Raw Materials", amount: 6200, status: "Paid" },
+      { id: "exp-2", date: "22 Sep", description: "Utilities (Electricity & Commercial Kitchen Gas)", category: "Utilities", amount: 5320, status: "Paid" },
       { id: "exp-3", date: "20 Sep", description: "Staff Salary (Kitchen Halwai & Counter Staff)", category: "Staff Salary", amount: 6000, status: "Paid" },
       { id: "exp-4", date: "18 Sep", description: "Marketing & Festive Banners", category: "Marketing", amount: 2460, status: "Paid" },
       { id: "exp-5", date: "15 Sep", description: "Eco Sweet Packaging Boxes & Bags", category: "Other", amount: 2000, status: "Paid" }

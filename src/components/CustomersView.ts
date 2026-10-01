@@ -1,5 +1,6 @@
 // Customers, Khata Credit Ledger & Advance Bulk Orders Component
 // Radhe Sweets - Warm Terracotta Confectionery Design System
+import { renderCounter } from './Counter';
 
 export function renderCustomersView(state: any) {
   const { customers = [], customersFilterTab = 'all', customersSearchQuery = '', advanceOrders = [] } = state;
@@ -86,7 +87,15 @@ export function renderCustomersView(state: any) {
           </div>
           <div class="mt-3">
             <div class="flex items-baseline gap-2">
-              <p class="text-2xl sm:text-3xl font-extrabold text-[#DC2626] tracking-tight">₹${totalKhataOutstanding.toLocaleString()}</p>
+              <div class="text-2xl sm:text-3xl font-extrabold text-[#DC2626] tracking-tight">
+                ${renderCounter({
+                  value: totalKhataOutstanding,
+                  prefix: '₹',
+                  fontWeight: 800,
+                  textColor: '#DC2626',
+                  gradientFrom: 'rgba(255, 255, 255, 0.75)'
+                })}
+              </div>
             </div>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
               <span>${khataCustomers.length} Accounts with dues</span>
@@ -109,7 +118,14 @@ export function renderCustomersView(state: any) {
             </div>
           </div>
           <div class="mt-3">
-            <p class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">${customers.length} <span class="text-sm font-normal text-[#7C7267]">patrons</span></p>
+            <div class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">
+              ${renderCounter({
+                value: customers.length,
+                suffix: '<span class="text-sm font-normal text-[#7C7267]">patrons</span>',
+                fontWeight: 800,
+                gradientFrom: 'rgba(255, 255, 255, 0.75)'
+              })}
+            </div>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
               <span>Active in Ahmedabad</span>
               <span class="font-bold text-[#1E7E34]">+12% this month</span>
@@ -129,7 +145,14 @@ export function renderCustomersView(state: any) {
             </div>
           </div>
           <div class="mt-3">
-            <p class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">${vipCustomers.length} <span class="text-sm font-normal text-[#7C7267]">Gold Tier</span></p>
+            <div class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">
+              ${renderCounter({
+                value: vipCustomers.length,
+                suffix: '<span class="text-sm font-normal text-[#7C7267]">Gold Tier</span>',
+                fontWeight: 800,
+                gradientFrom: 'rgba(255, 255, 255, 0.75)'
+              })}
+            </div>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
               <span>${totalLoyaltyPoints.toLocaleString()} Total Pts</span>
               <span class="font-bold text-[#A16207]">Privilege Rewards</span>
@@ -148,7 +171,14 @@ export function renderCustomersView(state: any) {
             </div>
           </div>
           <div class="mt-3">
-            <p class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">₹${totalCustomerSpend.toLocaleString()}</p>
+            <div class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">
+              ${renderCounter({
+                value: totalCustomerSpend,
+                prefix: '₹',
+                fontWeight: 800,
+                gradientFrom: 'rgba(255, 255, 255, 0.75)'
+              })}
+            </div>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
               <span>Total orders logged</span>
               <span class="font-bold text-[#1E7E34]">High Retention</span>
@@ -473,7 +503,7 @@ export function renderSettleKhataModal(customer: any) {
                 required 
                 min="1" 
                 max="${currentDue * 2}"
-                value="${Math.min(currentDue, 1000)}" 
+                value="${currentDue}" 
                 placeholder="Enter amount..."
                 class="w-full pl-8 pr-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-base font-extrabold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               />
@@ -483,7 +513,7 @@ export function renderSettleKhataModal(customer: any) {
             <div class="mt-2 flex items-center justify-between text-xs px-1">
               <span class="text-[#7C7267]">Remaining Due After Payment:</span>
               <span class="font-extrabold text-[#1E7E34]" id="settle-remaining-calc">
-                ₹${Math.max(0, currentDue - Math.min(currentDue, 1000)).toLocaleString()}
+                ₹0
               </span>
             </div>
           </div>
@@ -551,7 +581,7 @@ export function renderSettleKhataModal(customer: any) {
               class="px-6 py-2.5 bg-[#1E7E34] hover:bg-[#166527] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
             >
               <span>✓</span>
-              <span id="settle-submit-btn-text">Confirm Settlement</span>
+              <span id="settle-submit-btn-text">Confirm Settlement (₹${currentDue.toLocaleString()})</span>
             </button>
           </div>
 

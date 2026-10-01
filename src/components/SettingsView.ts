@@ -305,13 +305,13 @@ export function renderSettingsView(state) {
 
           <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
             <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Orders Synced</span>
-            <span class="font-black text-[#2A1F1D] text-base">${state.orders?.length || 5} Orders</span>
+            <span class="font-black text-[#2A1F1D] text-base">${state.orders?.length ?? 0} Orders</span>
             <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Stream Active</span>
           </div>
 
           <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
             <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Performance KPIs</span>
-            <span class="font-black text-[#2A1F1D] text-base">₹${(state.kpis?.revenue?.value || 42850).toLocaleString()}</span>
+            <span class="font-black text-[#2A1F1D] text-base">₹${(state.kpis?.sales?.value ?? state.kpis?.revenue?.value ?? 0).toLocaleString()}</span>
             <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Financials Live</span>
           </div>
         </div>

@@ -26,7 +26,7 @@ export function renderCheckoutModal(state: any) {
         </div>
 
         <!-- Customer Profile & Loyalty Card -->
-        <div class="bg-[var(--bg-subtle)] p-3.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between">
+        <div id="checkout-customer-section" class="bg-[var(--bg-subtle)] p-3.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-full ${selectedCustomer ? 'bg-[var(--brand-primary)]' : 'bg-stone-600'} text-white font-bold text-xs flex items-center justify-center shadow-xs">
               ${selectedCustomer ? selectedCustomer.name.split(' ').map((n: string)=>n[0]).join('').slice(0, 2) : 'WC'}
@@ -49,9 +49,16 @@ export function renderCheckoutModal(state: any) {
               ` : ''}
             </div>
           </div>
-          <button type="button" id="checkout-edit-customer-btn" class="text-xs font-semibold text-[var(--brand-primary)] hover:underline">
-            Switch
-          </button>
+          <div class="flex items-center gap-2">
+            ${selectedCustomer ? `
+              <button type="button" id="checkout-detach-customer-btn" class="text-xs font-semibold text-stone-400 hover:text-rose-600 hover:underline cursor-pointer" title="Detach customer and switch to Walk-in">
+                Detach
+              </button>
+            ` : ''}
+            <button type="button" id="checkout-edit-customer-btn" class="px-3 py-1.5 bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-hover)] rounded-xl text-xs font-bold shadow-2xs transition-all cursor-pointer">
+              ${selectedCustomer ? 'Switch' : '+ Attach Customer'}
+            </button>
+          </div>
         </div>
 
         <!-- Order Items Review with Live Weighing & Presets (250g, 500g, 750g, 1kg) -->

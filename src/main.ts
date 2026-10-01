@@ -6,28 +6,37 @@ import {
   deleteBranchOrderFromCloud,
   saveBranchKpisToCloud, 
   saveCustomerToCloud, 
+  saveBranchCustomerToCloud,
   loadBranchDataFromCloud,
   uploadOrderToStorage,
   syncAllToFirebaseCloud,
   subscribeToBranchOrders,
   subscribeToCustomers,
+  subscribeToBranchCustomers,
   subscribeToBranchSweets,
   subscribeToBranchKpis,
   subscribeToActiveCheckout,
   saveActiveCheckoutToCloud,
   clearActiveCheckoutInCloud,
   firestoreLiveState,
-  onFirestoreStatusChange
+  onFirestoreStatusChange,
+  getBranchDefaultCatalog
 } from './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.ts';
 import { renderTopBar } from './components/TopBar.ts';
 import { renderMobileBottomNav, renderMobileDrawer } from './components/MobileNav.ts';
 import { renderDashboardView } from './components/DashboardView.ts';
-import { renderPosView } from './components/PosView.ts';
+import { 
+  renderPosView, 
+  renderCardActionBtn, 
+  renderDesktopCartItemsHtml, 
+  renderMobileCartItemsHtml 
+} from './components/PosView.ts';
 import { renderCheckoutModal } from './components/CheckoutModal.ts';
 import { initSlideCommit } from './components/SlideCommit.ts';
 import { initAllSwipeRows } from './components/SwipeRow.ts';
+import { initAllCounters } from './components/Counter.ts';
 import { renderOrderSuccessModal } from './components/OrderSuccessModal.ts';
 import { renderThermalReceiptModal } from './components/ThermalReceiptModal.ts';
 import { renderOrdersView } from './components/OrdersView.ts';
@@ -66,6 +75,10 @@ import {
 } from './components/StaffView.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
+
+// Auto-delay timer holders for checkout completion & thermal receipt
+let receiptAutoTimer: any = null;
+let receiptProgressInterval: any = null;
 
 // Load stored state or initialize
 function getStoredState() {
@@ -141,26 +154,21 @@ const state = {
   ordersViewMode: stored?.ordersViewMode || 'swipe',
   customersFilterTab: 'all',
   productsFilterCategory: 'All',
+  expensesFilterCategory: 'All',
   timeFilter: 'month',
 
   // POS State (Walk-in counter by default - no pre-selected patron)
   selectedCustomer: (stored?.selectedCustomer && stored.selectedCustomer.name !== 'Jignesh Shah') ? stored.selectedCustomer : null,
-  posCart: stored?.posCart || [
-    { ...initialData.sweets[0], qty: 0.5, rate: initialData.sweets[0].pricePerKg, total: 225 },
-    { ...initialData.sweets[2], qty: 1, rate: initialData.sweets[2].pricePerKg, total: 180 },
-    { ...initialData.sweets[3], qty: 1, rate: initialData.sweets[3].pricePerKg, total: 160 }
-  ],
-  quickCart: stored?.quickCart || [
-    { ...initialData.sweets[0], qty: 0.5, rate: initialData.sweets[0].pricePerKg, total: 225 },
-    { ...initialData.sweets[2], qty: 1, rate: initialData.sweets[2].pricePerKg, total: 180 },
-    { ...initialData.sweets[3], qty: 1, rate: initialData.sweets[3].pricePerKg, total: 160 }
-  ],
+  posCart: stored?.posCart || [],
+  quickCart: stored?.quickCart || [],
   discountPercent: 0,
   paymentMethod: 'Cash',
   orderNote: '',
 
   // Modals & Drawers
   showCheckoutModal: false,
+  showAddExpenseModal: false,
+  returnToCheckout: false,
   showSuccessModal: false,
   showThermalModal: false,
   showOrderDetailsModal: false,
@@ -242,42 +250,86 @@ function syncActiveCheckoutDraft() {
   });
 }
 
-// Enterprise Firestore Real-time Subscriptions (Orders, 100 Sweets, KPIs & Profits)
+// Guard function: prevent background cloud sync from re-rendering active user modals (eliminates 3x modal popup flashing)
+function shouldBackgroundSyncRender(): boolean {
+  if (state.showSuccessModal || state.showThermalModal || state.showCheckoutModal || state.showCustomerDialerModal) {
+    return false;
+  }
+  return true;
+}
+
+// Enterprise Branch Snapshot & Isolation System
+export const getBranchStorageKey = (branchId: string) => `radhe_branch_${branchId}_snapshot_v2`;
+
+export function saveBranchSnapshot(branchId: string) {
+  try {
+    const snapshot = {
+      branchId,
+      sweets: state.sweets,
+      orders: state.orders,
+      kpis: state.kpis,
+      orderStatusCounts: state.orderStatusCounts,
+      expenses: state.expenses,
+      customers: state.customers,
+      parkedBills: state.parkedBills,
+      savedAt: Date.now()
+    };
+    localStorage.setItem(getBranchStorageKey(branchId), JSON.stringify(snapshot));
+    // Backup to Cloud Firestore
+    saveBranchSweetsToCloud(branchId, state.sweets);
+    saveBranchKpisToCloud(branchId, state.kpis);
+  } catch (e) {
+    console.error('Failed to save branch snapshot:', e);
+  }
+}
+
+export function getBranchLocalSnapshot(branchId: string) {
+  try {
+    const raw = localStorage.getItem(getBranchStorageKey(branchId));
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to parse branch snapshot:', e);
+  }
+  return null;
+}
+
+// Enterprise Firestore Real-time Subscriptions (Strict Branch Isolation - Never merge foreign branch orders!)
 let activeSubscriptions: Array<() => void> = [];
 
-function setupBranchFirestoreListeners(branchId: string) {
+export function setupBranchFirestoreListeners(branchId: string) {
   activeSubscriptions.forEach(unsub => {
     try { unsub(); } catch(e) {}
   });
   activeSubscriptions = [];
 
-  // 1. Live Orders Listener
+  // 1. Live Orders Listener (Branch isolated)
   const unsubOrders = subscribeToBranchOrders(branchId, (cloudOrders: any[]) => {
+    if (branchId !== state.currentBranchId) return;
+
     if (cloudOrders && cloudOrders.length > 0) {
-      const orderMap = new Map();
-      cloudOrders.forEach(o => orderMap.set(o.id, o));
-      state.orders.forEach(o => {
-        if (!orderMap.has(o.id)) orderMap.set(o.id, o);
-      });
-      state.orders = Array.from(orderMap.values());
-      state.orderStatusCounts.total = state.orders.length;
-      state.orderStatusCounts.completed = state.orders.filter(o => o.status === 'Completed').length;
-      state.orderStatusCounts.advance = state.orders.filter(o => o.status === 'Advance Booking').length;
-      state.orderStatusCounts.kitchen = state.orders.filter(o => o.status === 'Kitchen Packing').length;
-      saveState();
-      if (['orders', 'dashboard'].includes(state.activeTab)) {
-        renderApp();
-      }
+      state.orders = cloudOrders;
+    } else {
+      const snap = getBranchLocalSnapshot(branchId);
+      state.orders = snap?.orders || [];
+    }
+    state.orderStatusCounts.total = state.orders.length;
+    state.orderStatusCounts.completed = state.orders.filter(o => o.status === 'Completed').length;
+    state.orderStatusCounts.advance = state.orders.filter(o => o.status === 'Advance Booking').length;
+    state.orderStatusCounts.kitchen = state.orders.filter(o => o.status === 'Kitchen Packing').length;
+    saveState();
+    if (['orders', 'dashboard'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
+      renderApp();
     }
   });
   activeSubscriptions.push(unsubOrders);
 
-  // 2. Live Sweets Catalog (All 100 sweets & inventory)
+  // 2. Live Sweets Catalog (All 100 sweets & inventory for this branch)
   const unsubSweets = subscribeToBranchSweets(branchId, (cloudSweets: any[]) => {
+    if (branchId !== state.currentBranchId) return;
     if (cloudSweets && cloudSweets.length >= 50) {
       state.sweets = cloudSweets;
       saveState();
-      if (['pos', 'products', 'dashboard'].includes(state.activeTab)) {
+      if (['pos', 'products', 'dashboard'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
         renderApp();
       }
     }
@@ -286,36 +338,179 @@ function setupBranchFirestoreListeners(branchId: string) {
 
   // 3. Live Branch KPIs & Gross Profits
   const unsubKpis = subscribeToBranchKpis(branchId, (cloudKpis: any) => {
-    if (cloudKpis && cloudKpis.sales) {
+    if (branchId !== state.currentBranchId) return;
+    if (cloudKpis && (cloudKpis.sales || cloudKpis.revenue !== undefined)) {
+      if (branchId !== 'br-1' && state.orders.length === 0) return;
       state.kpis = { ...state.kpis, ...cloudKpis };
       saveState();
-      if (['dashboard', 'analytics'].includes(state.activeTab)) {
+      if (['dashboard', 'analytics'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
         renderApp();
       }
     }
   });
   activeSubscriptions.push(unsubKpis);
-}
 
-let unsubCustomers: (() => void) | null = null;
-function setupGlobalFirestoreListeners() {
-  if (unsubCustomers) {
-    try { unsubCustomers(); } catch(e) {}
-  }
-  unsubCustomers = subscribeToCustomers((cloudCustomers: any[]) => {
-    if (cloudCustomers && cloudCustomers.length > 0) {
-      const custMap = new Map();
-      cloudCustomers.forEach(c => custMap.set(c.id, c));
-      state.customers.forEach(c => {
-        if (!custMap.has(c.id)) custMap.set(c.id, c);
-      });
-      state.customers = Array.from(custMap.values());
-      saveState();
-      if (['customers', 'pos'].includes(state.activeTab) || state.showCheckoutModal) {
-        renderApp();
-      }
+  // 4. Live Branch Customers Listener (Branch-isolated patrons & Khata)
+  const unsubCusts = subscribeToBranchCustomers(branchId, (cloudCustomers: any[]) => {
+    if (branchId !== state.currentBranchId) return;
+    if (branchId === 'br-1') {
+      state.customers = (cloudCustomers && cloudCustomers.length > 0) ? cloudCustomers : [...initialData.customers];
+    } else {
+      state.customers = cloudCustomers || [];
+    }
+    state.kpis.customers = state.kpis.customers || { value: 0 };
+    state.kpis.customers.value = state.customers.length;
+    state.kpis.customers.formatted = String(state.customers.length);
+    saveState();
+    if (['customers', 'pos'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
+      renderApp();
     }
   });
+  activeSubscriptions.push(unsubCusts);
+}
+
+// Master Branch Switch Handler: Switches stock, catalog, customers, orders, and resets profit/metrics to 0
+export async function handleBranchSwitch(targetBranchId: string) {
+  if (!targetBranchId || targetBranchId === state.currentBranchId) return;
+
+  const departingBranchId = state.currentBranchId;
+
+  // 1. Snapshot and save departing branch state (sweets, orders, KPIs, customers)
+  saveBranchSnapshot(departingBranchId);
+
+  // 2. Switch current branch ID
+  state.currentBranchId = targetBranchId;
+
+  // 3. Clear transient checkout & counter draft state (prevent leaking cart or selected customer)
+  state.posCart = [];
+  state.quickCart = [];
+  state.selectedCustomer = null;
+  state.discountPercent = 0;
+  state.paymentMethod = 'Cash';
+  state.orderNote = '';
+  state.activeOrder = null;
+  state.lastPlacedOrder = null;
+  state.showCheckoutModal = false;
+  state.showCustomerDialerModal = false;
+  state.showAddCustomerModal = false;
+
+  // 4. Restore target branch data or initialize with 0-reset defaults
+  const existingSnapshot = getBranchLocalSnapshot(targetBranchId);
+
+  if (existingSnapshot && existingSnapshot.sweets && existingSnapshot.sweets.length > 0) {
+    state.sweets = existingSnapshot.sweets;
+    state.orders = existingSnapshot.orders || [];
+    if (targetBranchId !== 'br-1') {
+      const isLegacyInherited = existingSnapshot.customers && (
+        existingSnapshot.customers.length === initialData.customers.length &&
+        existingSnapshot.customers[0]?.id === initialData.customers[0]?.id
+      );
+      state.customers = isLegacyInherited ? [] : (existingSnapshot.customers || []);
+    } else {
+      state.customers = existingSnapshot.customers || [...initialData.customers];
+    }
+    
+    if (targetBranchId !== 'br-1' && state.orders.length === 0) {
+      state.kpis = {
+        sales: { value: 0, formatted: '₹0', change: '0.0% today', isUp: false },
+        profit: { value: 0, formatted: '₹0', margin: '0.0%', change: '0.0% margin', isUp: false },
+        orders: { value: 0, formatted: '0', change: '0 orders', isUp: false },
+        cost: { value: 0, formatted: '₹0', change: '0.0%', isUp: false },
+        customers: { value: state.customers.length, formatted: String(state.customers.length), change: `${state.customers.length} patrons` },
+        returningCustomers: { value: 0, formatted: '0' },
+        sweetsSold: { value: 0, unit: 'kg', formatted: '0 kg', change: '0 kg' }
+      };
+    } else {
+      state.kpis = existingSnapshot.kpis || {
+        sales: { value: 0, formatted: '₹0' },
+        profit: { value: 0, formatted: '₹0', margin: '0.0%' },
+        orders: { value: 0, formatted: '0' },
+        cost: { value: 0, formatted: '₹0' },
+        customers: { value: state.customers.length, formatted: String(state.customers.length) },
+        returningCustomers: { value: 0, formatted: '0' }
+      };
+    }
+
+    state.orderStatusCounts = existingSnapshot.orderStatusCounts || {
+      total: state.orders.length,
+      completed: state.orders.filter(o => o.status === 'Completed').length,
+      advance: state.orders.filter(o => o.status === 'Advance Booking').length,
+      kitchen: state.orders.filter(o => o.status === 'Kitchen Packing').length
+    };
+    if (existingSnapshot.expenses) state.expenses = existingSnapshot.expenses;
+  } else {
+    // Brand new switch to this branch:
+    // User request: "make switching branch switch everything reset profit and etc to 0 switching branch switch portfolios customer stock mithais and everything"
+    const branchDefaults = getBranchDefaultCatalog(targetBranchId);
+    state.sweets = branchDefaults.sweets;
+    state.orders = [];
+    state.orderStatusCounts = { total: 0, completed: 0, advance: 0, kitchen: 0 };
+    state.customers = targetBranchId === 'br-1' ? [...initialData.customers] : [];
+
+    // Explicit 0-metric reset
+    state.kpis = {
+      sales: { value: 0, formatted: '₹0', change: '0.0% today', isUp: false },
+      profit: { value: 0, formatted: '₹0', margin: '0.0%', change: '0.0% margin', isUp: false },
+      orders: { value: 0, formatted: '0', change: '0 orders', isUp: false },
+      cost: { value: 0, formatted: '₹0', change: '0.0%', isUp: false },
+      customers: { value: state.customers.length, formatted: String(state.customers.length), change: `${state.customers.length} patrons` },
+      returningCustomers: { value: 0, formatted: '0' },
+      sweetsSold: { value: 0, unit: 'kg', formatted: '0 kg', change: '0 kg' }
+    };
+
+    // Persist new branch snapshot
+    saveBranchSnapshot(targetBranchId);
+  }
+
+  // 5. Update branch entry in branches array for analytics & portfolio ranking
+  const activeBranchObj = state.branches.find(b => b.id === targetBranchId);
+  if (activeBranchObj) {
+    const totalSales = state.orders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalOrders = state.orders.length;
+    activeBranchObj.revenue = totalSales;
+    activeBranchObj.orders = totalOrders;
+    if (totalSales > 0 && state.kpis.profit?.value) {
+      activeBranchObj.margin = `${((state.kpis.profit.value / totalSales) * 100).toFixed(1)}%`;
+    } else {
+      activeBranchObj.margin = '0.0%';
+    }
+  }
+
+  // 6. Connect real-time Firestore listeners for target branch
+  setupBranchFirestoreListeners(targetBranchId);
+
+  // 7. Background Firestore load for target branch
+  loadBranchDataFromCloud(targetBranchId).then((cloudData: any) => {
+    if (targetBranchId !== state.currentBranchId) return;
+    if (cloudData && cloudData.sweets && cloudData.sweets.length >= 50) {
+      state.sweets = cloudData.sweets;
+      if (cloudData.kpis && (targetBranchId === 'br-1' || state.orders.length > 0)) {
+        state.kpis = { ...state.kpis, ...cloudData.kpis };
+      }
+      saveState();
+      renderApp();
+    }
+  }).catch(() => {});
+
+  // 8. Audit log & persistence
+  state.auditLogs.unshift({
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    user: state.shopInfo.owner || 'Admin',
+    action: 'Branch Switched',
+    details: `Switched active branch to ${activeBranchObj?.name || targetBranchId}. Loaded isolated sweets catalog, stock & reset financial portfolio.`
+  });
+
+  saveState();
+  renderApp();
+
+  showToast(`Switched to ${activeBranchObj?.name || targetBranchId} • All stock, orders & metrics isolated`, 'info');
+}
+
+(window as any).handleBranchSwitch = handleBranchSwitch;
+(window as any).appState = state;
+
+function setupGlobalFirestoreListeners() {
+  // Branch-specific listeners are configured per active branch in setupBranchFirestoreListeners
 }
 
 // Dynamic SEO Metadata & URL Hash Synchronization for Google Crawling
@@ -480,7 +675,12 @@ export function renderApp() {
       }
     }
 
-    if (modalsRoot) modalsRoot.innerHTML = renderModals();
+    if (modalsRoot) {
+      const nextModals = renderModals();
+      if (modalsRoot.innerHTML.trim() !== nextModals.trim()) {
+        modalsRoot.innerHTML = nextModals;
+      }
+    }
   }
 
   attachEventListeners();
@@ -559,8 +759,30 @@ function renderModals() {
   `;
 }
 
+// Unified Customer Selection & Attachment Handler (accessible across all event handlers & key listeners)
+export function completeCustomerSelection(customer: any) {
+  state.selectedCustomer = customer;
+  state.showCustomerDialerModal = false;
+  state.showAddCustomerModal = false;
+  if (state.returnToCheckout) {
+    state.showCheckoutModal = true;
+    state.returnToCheckout = false;
+  }
+  saveState();
+  syncActiveCheckoutDraft();
+  renderApp();
+  if (customer) {
+    showToast(`Customer ${customer.name} attached!`, 'success');
+  } else {
+    showToast('Switched to Walk-in Counter Customer', 'info');
+  }
+}
+
 // Event Listeners Binder
 function attachEventListeners() {
+  // Initialize rolling odometer counters
+  initAllCounters();
+
   // Mobile Drawer Toggle
   document.getElementById('mobile-menu-toggle')?.addEventListener('click', () => {
     state.showMobileDrawer = true;
@@ -796,11 +1018,14 @@ function attachEventListeners() {
     topbarClearBtn?.classList.add('hidden');
   });
 
-  document.addEventListener('click', (e: any) => {
-    if (!document.getElementById('topbar-search-container')?.contains(e.target)) {
-      topbarDropdown?.classList.add('hidden');
-    }
-  });
+  if (!(window as any)._hasTopbarClickBound) {
+    (window as any)._hasTopbarClickBound = true;
+    document.addEventListener('click', (e: any) => {
+      if (!document.getElementById('topbar-search-container')?.contains(e.target)) {
+        document.getElementById('topbar-search-dropdown')?.classList.add('hidden');
+      }
+    });
+  }
 
   if (state.showSearchModal) {
     const bindSearchResultsActions = () => {
@@ -987,46 +1212,27 @@ function attachEventListeners() {
     });
   }
 
-  // Enterprise Multi-Branch Switchers with Cloud Firestore Sync
-  const handleBranchSwitch = async (targetBranchId: string) => {
-    if (!targetBranchId || targetBranchId === state.currentBranchId) return;
+  // Enterprise Multi-Branch Switchers (TopBar, Settings, Analytics)
+  document.getElementById('topbar-branch-select')?.addEventListener('change', (e: any) => {
+    handleBranchSwitch(e.target.value);
+  });
 
-    // 1. Save current branch data to Firestore before switching
-    saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
-    saveBranchKpisToCloud(state.currentBranchId, state.kpis);
-
-    // 2. Switch branch id
-    state.currentBranchId = targetBranchId;
-
-    // 3. Switch real-time Firestore listeners to target branch
-    setupBranchFirestoreListeners(targetBranchId);
-
-    // 4. Load target branch's distinct sweets, stock & revenue from Cloud Firestore
-    const branchData = await loadBranchDataFromCloud(targetBranchId);
-    if (branchData) {
-      state.sweets = branchData.sweets;
-      if (branchData.kpis) {
-        state.kpis = { ...state.kpis, ...branchData.kpis };
-      }
-    }
-
-    state.auditLogs.unshift({
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      user: state.shopInfo.owner,
-      action: 'Branch Switched',
-      details: `Switched active branch to ${targetBranchId}. Loaded branch catalog and stock.`
-    });
-
-    saveState();
-    renderApp();
-  };
-
-  // Active Branch Switcher (In Settings)
   document.querySelectorAll('[data-setting-select-branch]').forEach(el => {
     el.addEventListener('click', () => {
       const branchId = el.getAttribute('data-setting-select-branch');
       if (branchId) handleBranchSwitch(branchId);
     });
+  });
+
+  document.querySelectorAll('[data-switch-branch]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const branchId = btn.getAttribute('data-switch-branch');
+      if (branchId) handleBranchSwitch(branchId);
+    });
+  });
+
+  document.getElementById('branch-select')?.addEventListener('change', (e: any) => {
+    handleBranchSwitch(e.target.value);
   });
 
   // Theme Toggles
@@ -1144,53 +1350,12 @@ function attachEventListeners() {
     showToast('Redirected to POS Counter', 'info');
   });
 
-  // Dashboard Scroll-Driven KPI Grid Morphing (2x3 Grid <--> 1x6 Grid) with Smooth Ease-In Animation
+  // Dashboard Scroll Reveal Observer
   if (state.activeTab === 'dashboard') {
-    const kpiContainer = document.getElementById('kpi-tiles-container');
-    const scrollContainer = document.getElementById('main-content-scroll-container');
-
-    // Clean up any previously attached scroll handler
     if ((window as any)._dashboardScrollCleanUp) {
       (window as any)._dashboardScrollCleanUp();
+      (window as any)._dashboardScrollCleanUp = null;
     }
-
-    const handleDashboardScroll = () => {
-      const scrollY = (scrollContainer ? scrollContainer.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
-      
-      // Hysteresis threshold to prevent jitter:
-      // When scrolled down > 140px, smoothly morph into docked 1x6 Grid Bar
-      // When scrolled back up < 45px, smoothly ease back into full 2x3 Grid
-      if (scrollY > 140) {
-        if (!kpiContainer?.classList.contains('kpi-grid-1x6')) {
-          kpiContainer?.classList.remove('kpi-grid-2x3');
-          kpiContainer?.classList.add('kpi-grid-1x6');
-        }
-      } else if (scrollY < 45) {
-        if (!kpiContainer?.classList.contains('kpi-grid-2x3')) {
-          kpiContainer?.classList.remove('kpi-grid-1x6');
-          kpiContainer?.classList.add('kpi-grid-2x3');
-        }
-      }
-    };
-
-    let scrollRafId: number | null = null;
-    const throttledScrollHandler = () => {
-      if (scrollRafId !== null) return;
-      scrollRafId = requestAnimationFrame(() => {
-        handleDashboardScroll();
-        scrollRafId = null;
-      });
-    };
-
-    window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-    scrollContainer?.addEventListener('scroll', throttledScrollHandler, { passive: true });
-    (window as any)._dashboardScrollCleanUp = () => {
-      window.removeEventListener('scroll', throttledScrollHandler);
-      scrollContainer?.removeEventListener('scroll', throttledScrollHandler);
-    };
-
-    // Initialize scroll state on render
-    handleDashboardScroll();
 
     // IntersectionObserver for Staggered Section Reveal
     const revealItems = document.querySelectorAll('.scroll-reveal-item');
@@ -1276,12 +1441,14 @@ function attachEventListeners() {
   });
 
   // Escape to close devotional modal
-  const handleKeydownSplash = (e) => {
-    if (state.showSplashModal && e.key === 'Escape') {
-      handleDismissSplash('dashboard');
-    }
-  };
-  window.addEventListener('keydown', handleKeydownSplash);
+  if (!(window as any)._hasSplashKeydownBound) {
+    (window as any)._hasSplashKeydownBound = true;
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (state.showSplashModal && e.key === 'Escape') {
+        handleDismissSplash('dashboard');
+      }
+    });
+  }
 
   // Global Search Input
   const searchInput = document.getElementById('global-search-input');
@@ -1297,113 +1464,314 @@ function attachEventListeners() {
     });
   }
 
-  // POS Category Filter Buttons
-  document.querySelectorAll('[data-pos-category]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      state.activeCategory = btn.getAttribute('data-pos-category');
-      renderApp();
-    });
-  });
+  // --- IN-PLACE POS & CHECKOUT OPTIMIZATIONS (ZERO-REFRESH & MUTEX PROTECTED) ---
 
-  // POS Search Input
-  document.getElementById('pos-search-input')?.addEventListener('input', (e) => {
-    state.posSearchQuery = (e.target as HTMLInputElement).value;
-    renderApp();
-  });
+  // Live in-place DOM updater for POS Cart (Zero screen refresh / flicker)
+  const updatePosCartDOM = () => {
+    const cartSubtotal = state.posCart.reduce((sum: number, it: any) => sum + (it.rate * it.qty), 0);
+    const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
+    const totalPayable = Math.max(0, cartSubtotal - discountAmount);
 
-  // Add sweet to POS cart
-  document.querySelectorAll('[data-add-to-pos], [data-add-sweet]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const sweetId = btn.getAttribute('data-add-to-pos') || btn.getAttribute('data-add-sweet');
-      const sweet = state.sweets.find(s => s.id === sweetId);
-      if (sweet) {
-        const existing = state.posCart.find(i => i.id === sweetId);
-        if (existing) {
-          existing.qty += 0.5;
-          existing.total = Math.round(existing.qty * existing.rate);
-        } else {
-          state.posCart.push({
-            id: sweet.id,
-            name: sweet.name,
-            qty: 1,
-            rate: sweet.pricePerKg,
-            unit: sweet.unit,
-            total: sweet.pricePerKg,
-            image: sweet.image || `/assets/sweets/${sweet.id}.png`,
-            fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
-          });
-        }
-        // Also update quickCart on dashboard
-        state.quickCart = [...state.posCart];
-        saveState();
-        renderApp();
-        showToast(`Added ${sweet.name} to counter cart!`, 'success');
+    // 1. Desktop Cart Items list & Count
+    const desktopItemsEl = document.getElementById('pos-desktop-cart-items');
+    if (desktopItemsEl) {
+      desktopItemsEl.innerHTML = renderDesktopCartItemsHtml(state.posCart);
+    }
+    const desktopCountEl = document.getElementById('pos-desktop-cart-count');
+    if (desktopCountEl) {
+      desktopCountEl.textContent = `${state.posCart.length} items`;
+    }
+    const desktopActionsEl = document.getElementById('pos-desktop-cart-actions');
+    if (desktopActionsEl) {
+      desktopActionsEl.innerHTML = state.posCart.length > 0 ? `
+        <button id="clear-pos-cart-btn" class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer">
+          Clear
+        </button>
+      ` : '';
+    }
+
+    // 2. Desktop Totals
+    const subtotalEl = document.getElementById('pos-cart-subtotal');
+    if (subtotalEl) subtotalEl.textContent = `₹${cartSubtotal.toLocaleString()}`;
+    const discountEl = document.getElementById('pos-cart-discount');
+    if (discountEl) discountEl.textContent = `- ₹${discountAmount.toLocaleString()}`;
+    const totalEl = document.getElementById('pos-cart-total');
+    if (totalEl) totalEl.textContent = `₹${totalPayable.toLocaleString()}`;
+
+    // 3. Desktop Checkout Button
+    const checkoutBtn = document.getElementById('pos-proceed-checkout-btn') as HTMLButtonElement | null;
+    if (checkoutBtn) {
+      checkoutBtn.disabled = state.posCart.length === 0;
+      checkoutBtn.innerHTML = `
+        <span>Proceed to Checkout</span>
+        <span class="font-extrabold text-amber-200">• ₹${totalPayable.toLocaleString()}</span>
+      `;
+    }
+
+    // 4. Header Badges & Checkout Button
+    const headerStep1Badge = document.getElementById('pos-header-step1-badge');
+    if (headerStep1Badge) headerStep1Badge.textContent = `${state.posCart.length} items`;
+    const headerStep2Badge = document.getElementById('pos-header-step2-badge');
+    if (headerStep2Badge) headerStep2Badge.textContent = state.selectedCustomer ? 'Patron Linked' : 'Walk-in OTC';
+    const headerCheckoutBtn = document.getElementById('pos-header-checkout-btn') as HTMLButtonElement | null;
+    if (headerCheckoutBtn) {
+      headerCheckoutBtn.disabled = state.posCart.length === 0;
+      headerCheckoutBtn.innerHTML = `
+        <span>Proceed to Checkout</span>
+        <span class="text-xs opacity-90">(₹${totalPayable.toLocaleString()})</span>
+      `;
+    }
+
+    // 5. Mobile Floating Checkout Bar
+    const mobileFloatingBar = document.getElementById('mobile-floating-checkout-bar');
+    if (mobileFloatingBar) {
+      if (state.posCart.length > 0) {
+        mobileFloatingBar.classList.remove('hidden');
+      } else {
+        mobileFloatingBar.classList.add('hidden');
+      }
+    }
+    const mobileBarCount = document.getElementById('mobile-bar-count');
+    if (mobileBarCount) mobileBarCount.textContent = `${state.posCart.length} items`;
+    const mobileBarTotal = document.getElementById('mobile-bar-total');
+    if (mobileBarTotal) mobileBarTotal.textContent = `₹${totalPayable.toLocaleString()}`;
+
+    // 6. Mobile Sheet Cart
+    const mobileSheetItems = document.getElementById('pos-mobile-cart-items');
+    if (mobileSheetItems) mobileSheetItems.innerHTML = renderMobileCartItemsHtml(state.posCart);
+    const mobileSubtotal = document.getElementById('mobile-sheet-subtotal');
+    if (mobileSubtotal) mobileSubtotal.textContent = `₹${cartSubtotal.toLocaleString()}`;
+    const mobileDiscount = document.getElementById('mobile-sheet-discount');
+    if (mobileDiscount) mobileDiscount.textContent = `- ₹${discountAmount.toLocaleString()}`;
+    const mobileTotal = document.getElementById('mobile-sheet-total');
+    if (mobileTotal) mobileTotal.textContent = `₹${totalPayable.toLocaleString()}`;
+    const mobileSheetCheckoutBtn = document.getElementById('mobile-sheet-proceed-checkout-btn') as HTMLButtonElement | null;
+    if (mobileSheetCheckoutBtn) {
+      mobileSheetCheckoutBtn.disabled = state.posCart.length === 0;
+      mobileSheetCheckoutBtn.textContent = `Proceed to Counter Checkout • ₹${totalPayable.toLocaleString()}`;
+    }
+
+    // 7. Update Sweet Cards Action Containers in the Grid
+    state.sweets.forEach((sweet: any) => {
+      const container = document.getElementById(`action-container-${sweet.id}`);
+      if (container) {
+        const item = state.posCart.find((i: any) => i.id === sweet.id);
+        container.innerHTML = renderCardActionBtn(sweet, item);
       }
     });
-  });
 
-  // Increment / Decrement / Remove Cart
-  document.querySelectorAll('[data-inc-cart]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const id = btn.getAttribute('data-inc-cart');
-      const item = state.posCart.find(i => i.id === id);
-      if (item) {
-        item.qty += 0.5;
-        item.total = Math.round(item.qty * item.rate);
-        state.quickCart = [...state.posCart];
-        saveState();
-        renderApp();
-      }
-    });
-  });
-
-  document.querySelectorAll('[data-dec-cart]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const id = btn.getAttribute('data-dec-cart');
-      const item = state.posCart.find(i => i.id === id);
-      if (item) {
-        item.qty -= 0.5;
-        if (item.qty <= 0) {
-          state.posCart = state.posCart.filter(i => i.id !== id);
-        } else {
-          item.total = Math.round(item.qty * item.rate);
-        }
-        state.quickCart = [...state.posCart];
-        saveState();
-        renderApp();
-      }
-    });
-  });
-
-  document.querySelectorAll('[data-remove-cart]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const id = btn.getAttribute('data-remove-cart');
-      state.posCart = state.posCart.filter(i => i.id !== id);
-      state.quickCart = [...state.posCart];
-      saveState();
-      renderApp();
-    });
-  });
-
-  document.getElementById('clear-pos-cart-btn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    state.posCart = [];
-    state.quickCart = [];
     saveState();
-    renderApp();
-    showToast('Cart cleared', 'info');
-  });
+    syncActiveCheckoutDraft();
+  };
 
+  // Live in-place DOM filter for POS Grid (Zero page re-render / zero image reload)
+  const filterPosGridInPlace = () => {
+    // 1. Update Category Tabs styling
+    document.querySelectorAll('[data-pos-category]').forEach(btn => {
+      const cat = btn.getAttribute('data-pos-category');
+      const isActive = cat === state.activeCategory;
+      if (isActive) {
+        btn.className = 'pos-cat-pill whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 shadow-xs cursor-pointer bg-[var(--brand-primary)] text-white';
+      } else {
+        btn.className = 'pos-cat-pill whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 shadow-xs cursor-pointer bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--border-color)] border border-[var(--border-color)]';
+      }
+    });
+
+    // 2. Filter Sweet Cards in DOM
+    const q = (state.posSearchQuery || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('[data-sweet-card]');
+    let visibleCount = 0;
+
+    cards.forEach(c => {
+      const card = c as HTMLElement;
+      const cat = card.getAttribute('data-card-category') || '';
+      const name = (card.getAttribute('data-card-name') || '').toLowerCase();
+      const matchCat = state.activeCategory === 'All' || cat === state.activeCategory;
+      const matchSearch = !q || name.includes(q);
+
+      if (matchCat && matchSearch) {
+        card.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    // 3. Update count & clear button
+    const countEl = document.getElementById('pos-sweets-count');
+    if (countEl) countEl.textContent = `${visibleCount} of 100 sweets available`;
+    const clearBtn = document.getElementById('pos-clear-filter-btn');
+    if (clearBtn) {
+      if (state.activeCategory !== 'All' || q) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+    }
+  };
+
+  // POS Master Container Event Delegation (Handles sweet add, inc, dec, remove, presets, clear without page refresh)
+  const posContainer = document.querySelector('[data-purpose="pos-master-container"]');
+  if (posContainer) {
+    posContainer.addEventListener('click', (e: Event) => {
+      const target = e.target as HTMLElement;
+
+      // 1. Category Filter Pill Click
+      const catBtn = target.closest('[data-pos-category]') as HTMLElement | null;
+      if (catBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        state.activeCategory = catBtn.getAttribute('data-pos-category') || 'All';
+        filterPosGridInPlace();
+        return;
+      }
+
+      // 2. Clear Category / Search filter
+      const clearFilterBtn = target.closest('#pos-clear-filter-btn') as HTMLElement | null;
+      if (clearFilterBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        state.activeCategory = 'All';
+        state.posSearchQuery = '';
+        const searchInput = document.getElementById('pos-search-input') as HTMLInputElement | null;
+        if (searchInput) searchInput.value = '';
+        filterPosGridInPlace();
+        return;
+      }
+
+      // 3. Add to POS
+      const addBtn = target.closest('[data-add-to-pos], [data-add-sweet]') as HTMLElement | null;
+      if (addBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const sweetId = addBtn.getAttribute('data-add-to-pos') || addBtn.getAttribute('data-add-sweet');
+        const sweet = state.sweets.find((s: any) => s.id === sweetId);
+        if (sweet) {
+          const existing = state.posCart.find((i: any) => i.id === sweetId);
+          if (existing) {
+            existing.qty += 0.5;
+            existing.total = Math.round(existing.qty * existing.rate);
+          } else {
+            state.posCart.push({
+              id: sweet.id,
+              name: sweet.name,
+              qty: 1,
+              rate: sweet.pricePerKg,
+              unit: sweet.unit || 'kg',
+              total: sweet.pricePerKg,
+              image: sweet.image || `/assets/sweets/${sweet.id}.png`,
+              fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
+            });
+          }
+          state.quickCart = [...state.posCart];
+          updatePosCartDOM();
+          showToast(`Added ${sweet.name} to counter cart!`, 'success');
+        }
+        return;
+      }
+
+      // 4. Increment Cart
+      const incBtn = target.closest('[data-inc-cart]') as HTMLElement | null;
+      if (incBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = incBtn.getAttribute('data-inc-cart');
+        const item = state.posCart.find((i: any) => i.id === id);
+        if (item) {
+          item.qty += 0.5;
+          item.total = Math.round(item.qty * item.rate);
+          state.quickCart = [...state.posCart];
+          updatePosCartDOM();
+        }
+        return;
+      }
+
+      // 5. Decrement Cart
+      const decBtn = target.closest('[data-dec-cart]') as HTMLElement | null;
+      if (decBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = decBtn.getAttribute('data-dec-cart');
+        const item = state.posCart.find((i: any) => i.id === id);
+        if (item) {
+          item.qty -= 0.5;
+          if (item.qty <= 0) {
+            state.posCart = state.posCart.filter((i: any) => i.id !== id);
+          } else {
+            item.total = Math.round(item.qty * item.rate);
+          }
+          state.quickCart = [...state.posCart];
+          updatePosCartDOM();
+        }
+        return;
+      }
+
+      // 6. Remove from Cart
+      const removeBtn = target.closest('[data-remove-cart]') as HTMLElement | null;
+      if (removeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = removeBtn.getAttribute('data-remove-cart');
+        state.posCart = state.posCart.filter((i: any) => i.id !== id);
+        state.quickCart = [...state.posCart];
+        updatePosCartDOM();
+        return;
+      }
+
+      // 7. Weight Presets (250g, 500g, 750g, 1kg)
+      const weightBtn = target.closest('[data-add-weight]') as HTMLElement | null;
+      if (weightBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const sweetId = weightBtn.getAttribute('data-add-weight');
+        const weight = parseFloat(weightBtn.getAttribute('data-weight') || '0.25');
+        const sweet = state.sweets.find((s: any) => s.id === sweetId);
+        if (sweet) {
+          const existing = state.posCart.find((i: any) => i.id === sweetId);
+          if (existing) {
+            existing.qty = weight;
+            existing.total = Math.round(existing.qty * existing.rate);
+          } else {
+            state.posCart.push({
+              id: sweet.id,
+              name: sweet.name,
+              qty: weight,
+              rate: sweet.pricePerKg,
+              unit: sweet.unit || 'kg',
+              total: Math.round(weight * sweet.pricePerKg),
+              image: sweet.image || `/assets/sweets/${sweet.id}.png`,
+              fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
+            });
+          }
+          state.quickCart = [...state.posCart];
+          updatePosCartDOM();
+          const displayLabel = weight >= 1 ? `${weight}kg` : `${Math.round(weight * 1000)}g`;
+          showToast(`${sweet.name} set to ${displayLabel} (₹${Math.round(weight * sweet.pricePerKg)})`, 'success');
+        }
+        return;
+      }
+
+      // 8. Clear Cart
+      const clearBtn = target.closest('#clear-pos-cart-btn') as HTMLElement | null;
+      if (clearBtn) {
+        e.preventDefault();
+        state.posCart = [];
+        state.quickCart = [];
+        updatePosCartDOM();
+        showToast('Cart cleared', 'info');
+        return;
+      }
+    });
+
+    // POS Search Input (In-place live filtering)
+    const posSearchInput = document.getElementById('pos-search-input') as HTMLInputElement | null;
+    if (posSearchInput) {
+      posSearchInput.addEventListener('input', (e: Event) => {
+        state.posSearchQuery = (e.target as HTMLInputElement).value;
+        filterPosGridInPlace();
+      });
+    }
+  }
 
   // Restock Raw Materials PO
   document.querySelectorAll('[data-restock-rm]').forEach(btn => {
@@ -1444,10 +1812,11 @@ function attachEventListeners() {
     }
   });
 
-  // Discount Select in POS
-  document.getElementById('pos-discount-select')?.addEventListener('change', (e) => {
-    state.discountPercent = Number(e.target.value);
-    renderApp();
+  // Discount Select in POS (ZERO REFRESH!)
+  document.getElementById('pos-discount-select')?.addEventListener('change', (e: any) => {
+    state.discountPercent = Number(e.target.value) || 0;
+    saveState();
+    updatePosCartDOM();
   });
 
   // Proceed to Checkout Triggers
@@ -1486,15 +1855,17 @@ function attachEventListeners() {
     renderApp();
   });
 
-  // Detach customer & Switch customer buttons
+  // Detach customer & Switch customer in POS
   document.getElementById('pos-clear-customer-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
     state.selectedCustomer = null;
     saveState();
     renderApp();
+    showToast('Customer detached. Switched to Walk-in.', 'info');
   });
   document.getElementById('dashboard-switch-customer-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
+    state.returnToCheckout = false;
     state.showCustomerDialerModal = true;
     state.dialerInput = '';
     renderApp();
@@ -1504,10 +1875,11 @@ function attachEventListeners() {
   document.getElementById('close-checkout-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
     state.showCheckoutModal = false;
+    state.returnToCheckout = false;
     renderApp();
   });
 
-  // Checkout Modal: Unit Toggle (g vs kg per item)
+  // Checkout Modal: Unit Toggle (g vs kg per item) - ZERO REFRESH!
   document.querySelectorAll('[data-checkout-unit]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1519,12 +1891,32 @@ function attachEventListeners() {
         item.checkoutUnit = unit;
         saveState();
         syncActiveCheckoutDraft();
-        renderApp();
+
+        const card = btn.closest('.p-3');
+        if (card) {
+          const input = card.querySelector('[data-checkout-qty-input]') as HTMLInputElement | null;
+          if (input) {
+            input.setAttribute('data-unit', unit);
+            input.step = unit === 'kg' ? '0.05' : '10';
+            input.min = unit === 'kg' ? '0.01' : '10';
+            input.value = unit === 'g' ? String(Math.round(item.qty * 1000)) : String(item.qty);
+            const unitLabel = input.nextElementSibling;
+            if (unitLabel) unitLabel.textContent = unit;
+          }
+          card.querySelectorAll('[data-checkout-unit]').forEach(b => {
+            const bUnit = b.getAttribute('data-unit');
+            if (bUnit === unit) {
+              b.className = 'px-2.5 py-0.5 rounded-lg transition-all cursor-pointer bg-[var(--brand-primary)] text-white shadow-2xs';
+            } else {
+              b.className = 'px-2.5 py-0.5 rounded-lg transition-all cursor-pointer text-stone-500 hover:text-stone-800';
+            }
+          });
+        }
       }
     });
   });
 
-  // Checkout Modal: Quick Presets (250g, 500g, 750g, 1kg)
+  // Checkout Modal: Quick Presets (250g, 500g, 750g, 1kg) - ZERO REFRESH!
   document.querySelectorAll('[data-checkout-preset]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1538,7 +1930,43 @@ function attachEventListeners() {
         state.quickCart = [...state.posCart];
         saveState();
         syncActiveCheckoutDraft();
-        renderApp();
+
+        const card = btn.closest('.p-3');
+        if (card) {
+          const itemTotalEl = card.querySelector('.font-extrabold.text-sm, .font-extrabold.text-base');
+          if (itemTotalEl) itemTotalEl.textContent = `₹${item.total}`;
+          const input = card.querySelector('[data-checkout-qty-input]') as HTMLInputElement | null;
+          if (input) {
+            const unit = input.getAttribute('data-unit') || 'kg';
+            input.value = unit === 'g' ? String(Math.round(kg * 1000)) : String(kg);
+          }
+          card.querySelectorAll('[data-checkout-preset]').forEach(b => {
+            const bKg = parseFloat(b.getAttribute('data-kg') || '0');
+            const isActive = Math.abs(bKg - kg) < 0.001;
+            if (isActive) {
+              b.className = 'py-1 px-1 rounded-xl text-[11px] font-bold text-center transition-all cursor-pointer bg-amber-600 text-white shadow-xs ring-1 ring-amber-700';
+            } else {
+              b.className = 'py-1 px-1 rounded-xl text-[11px] font-bold text-center transition-all cursor-pointer bg-white hover:bg-amber-50 text-stone-700 border border-stone-200';
+            }
+          });
+        }
+
+        const cartSubtotal = state.posCart.reduce((sum: number, it: any) => sum + (it.rate * it.qty), 0);
+        const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
+        const totalPayable = Math.max(0, cartSubtotal - discountAmount);
+
+        const subtotalEl = document.getElementById('checkout-subtotal-val');
+        if (subtotalEl) subtotalEl.textContent = `₹${cartSubtotal.toLocaleString()}`;
+        const discountEl = document.getElementById('checkout-discount-val');
+        if (discountEl) discountEl.textContent = `- ₹${discountAmount.toLocaleString()}`;
+        const totalEl = document.getElementById('checkout-total-val');
+        if (totalEl) totalEl.textContent = `₹${totalPayable}`;
+        const confirmLabel = document.getElementById('confirm-btn-label');
+        if (confirmLabel) confirmLabel.textContent = `Instant Click Pay • ₹${totalPayable}`;
+        const sliderLabel = document.querySelector('#checkout-slide-commit-label span span');
+        if (sliderLabel) sliderLabel.textContent = `Slide to checkout • ₹${totalPayable}`;
+        const khataDetails = document.getElementById('checkout-khata-details');
+        if (khataDetails) khataDetails.textContent = `₹${totalPayable} will be added to ${state.selectedCustomer?.name || 'Customer'}'s Khata account.`;
       }
     });
   });
@@ -1573,10 +2001,12 @@ function attachEventListeners() {
         if (discountEl) discountEl.textContent = `- ₹${discountAmount.toLocaleString()}`;
         const totalEl = document.getElementById('checkout-total-val');
         if (totalEl) totalEl.textContent = `₹${totalPayable}`;
-        const btnTextEl = document.getElementById('checkout-confirm-btn-text');
-        if (btnTextEl) btnTextEl.textContent = `Instant Click Pay • ₹${totalPayable.toLocaleString()}`;
+        const confirmLabel = document.getElementById('confirm-btn-label');
+        if (confirmLabel) confirmLabel.textContent = `Instant Click Pay • ₹${totalPayable}`;
         const sliderLabel = document.querySelector('#checkout-slide-commit-label span span');
-        if (sliderLabel) sliderLabel.textContent = `Slide to checkout • ₹${totalPayable.toLocaleString()}`;
+        if (sliderLabel) sliderLabel.textContent = `Slide to checkout • ₹${totalPayable}`;
+        const khataDetails = document.getElementById('checkout-khata-details');
+        if (khataDetails) khataDetails.textContent = `₹${totalPayable} will be added to ${state.selectedCustomer?.name || 'Customer'}'s Khata account.`;
 
         saveState();
         syncActiveCheckoutDraft();
@@ -1586,7 +2016,6 @@ function attachEventListeners() {
     input.addEventListener('change', () => {
       saveState();
       syncActiveCheckoutDraft();
-      renderApp();
     });
   });
 
@@ -1607,104 +2036,198 @@ function attachEventListeners() {
     });
   });
 
-  // Select Payment Method
+  // Select Payment Method (ZERO-REFRESH in Checkout Modal!)
   document.querySelectorAll('[data-select-payment]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.paymentMethod = btn.getAttribute('data-select-payment');
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const method = btn.getAttribute('data-select-payment');
+      if (!method) return;
+      state.paymentMethod = method;
+
+      // Update button styling in-place (ZERO REFRESH!)
+      document.querySelectorAll('[data-select-payment]').forEach(b => {
+        const isCurrent = b.getAttribute('data-select-payment') === method;
+        if (isCurrent) {
+          b.className = 'payment-method-pill p-2.5 rounded-xl border text-center text-xs font-bold transition-all border-[var(--brand-primary)] bg-[var(--brand-primary-light)] text-[var(--brand-primary)] shadow-xs ring-2 ring-[var(--brand-primary)]/20 cursor-pointer';
+        } else {
+          b.className = 'payment-method-pill p-2.5 rounded-xl border text-center text-xs font-bold transition-all border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:border-[var(--brand-primary)] cursor-pointer';
+        }
+      });
+
+      // Toggle Khata section in-place (ZERO REFRESH!)
+      const khataEl = document.getElementById('checkout-khata-info');
+      if (khataEl) {
+        if (method === 'Khata') {
+          khataEl.classList.remove('hidden');
+        } else {
+          khataEl.classList.add('hidden');
+        }
+      }
+
+      saveState();
       syncActiveCheckoutDraft();
-      renderApp();
     });
   });
 
-  // Place Order Execution Handler (Used by both SlideCommit slider and instant button)
-  const processPlaceOrder = async () => {
-    const orderNum = 130 + state.orders.length;
-    const cartSubtotal = state.posCart.reduce((sum, item) => sum + (item.rate * item.qty), 0);
-    const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
-    const totalPayable = Math.max(0, cartSubtotal - discountAmount);
-
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-    const newOrder = {
-      id: `SA00${orderNum}`,
-      date: `25 Sep 2026, ${timeStr}`,
-      customerId: state.selectedCustomer?.id || `walkin-${Date.now()}`,
-      customerName: state.selectedCustomer?.name || 'Walk-in Counter Customer',
-      customerPhone: state.selectedCustomer?.phone || 'OTC Cash / UPI',
-      customerAddress: state.selectedCustomer?.address || 'Ahmedabad, Gujarat',
-      itemsCount: state.posCart.length,
-      subtotal: cartSubtotal,
-      discount: discountAmount,
-      tax: 0,
-      total: totalPayable,
-      paymentMethod: state.paymentMethod,
-      status: 'Completed',
-      notes: state.orderNote || 'Counter Fresh Pack',
-      items: state.posCart.map(item => ({
-        name: item.name,
-        quantity: item.qty,
-        unit: item.unit,
-        rate: item.rate,
-        total: item.total
-      }))
-    };
-
-    // Update state & inventory
-    state.orders.unshift(newOrder);
-    state.lastPlacedOrder = newOrder;
-    state.activeOrder = newOrder;
-    state.orderStatusCounts.total += 1;
-    state.orderStatusCounts.completed = (state.orderStatusCounts.completed || 0) + 1;
-    state.kpis.orders.value += 1;
-    state.kpis.orders.formatted = String(state.kpis.orders.value);
-    state.kpis.sales.value += totalPayable;
-    state.kpis.sales.formatted = `₹${state.kpis.sales.value.toLocaleString()}`;
-
-    // Decrement sweet inventory
-    state.posCart.forEach(cartItem => {
-      const sweet = state.sweets.find(s => s.id === cartItem.id);
-      if (sweet) {
-        sweet.stock = Math.max(0, Math.round(sweet.stock - cartItem.qty));
-        if (sweet.stock <= 10) sweet.stockStatus = 'Low Stock';
-      }
-    });
-
-    // Update active branch revenue & orders
-    const curBranch = state.branches.find(b => b.id === state.currentBranchId);
-    if (curBranch) {
-      curBranch.revenue = (curBranch.revenue || 0) + totalPayable;
-      curBranch.orders = (curBranch.orders || 0) + 1;
-    }
-
-    // Save to Cloud Firestore & Firebase Storage per branch
-    saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers);
-    uploadOrderToStorage(newOrder);
-    saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
-    saveBranchKpisToCloud(state.currentBranchId, state.kpis);
-    clearActiveCheckoutInCloud(state.currentBranchId);
-
-    // Update customer stats & Khata ledger in Firestore
-    if (state.selectedCustomer) {
-      const cust = state.customers.find((c: any) => c.id === state.selectedCustomer.id);
-      if (cust) {
-        cust.totalOrders = (cust.totalOrders || 0) + 1;
-        cust.totalSpent = (cust.totalSpent || 0) + totalPayable;
-        if (state.paymentMethod === 'Khata') {
-          cust.khataBalance = (cust.khataBalance || 0) + totalPayable;
-        }
-        cust.loyaltyPoints = (cust.loyaltyPoints || 0) + Math.floor(totalPayable / 100);
-        saveCustomerToCloud(cust);
-      }
-    }
-
-    // Reset cart
-    state.posCart = [];
-    state.quickCart = [];
+  // Checkout Modal Customer Attachment / Switch / Detach
+  document.getElementById('checkout-edit-customer-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.returnToCheckout = true;
     state.showCheckoutModal = false;
-    state.showSuccessModal = true;
+    handleOpenCustomerDialer();
+  });
+
+  document.getElementById('checkout-detach-customer-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.selectedCustomer = null;
     saveState();
+    syncActiveCheckoutDraft();
     renderApp();
+    showToast('Customer detached. Switched to Walk-in.', 'info');
+  });
+
+  // Place Order Execution Handler (Single-Execution Mutex Protected)
+  let isProcessingOrder = false;
+
+  const processPlaceOrder = async () => {
+    if (isProcessingOrder) {
+      console.warn('Order already being processed, ignoring duplicate trigger.');
+      return;
+    }
+    if (!state.posCart || state.posCart.length === 0) {
+      showToast('Cart is empty, cannot checkout.', 'warning');
+      return;
+    }
+
+    isProcessingOrder = true;
+
+    // Immediately disable checkout confirm button and show confirmation
+    const confirmBtn = document.getElementById('confirm-place-order-btn') as HTMLButtonElement | null;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.className = "font-bold text-emerald-600 flex items-center gap-1.5 py-1 text-xs sm:text-sm";
+      confirmBtn.innerHTML = `<span>✓</span><span>Order Checked Out!</span>`;
+    }
+
+    try {
+      const orderNum = 130 + state.orders.length;
+      const cartSubtotal = state.posCart.reduce((sum, item) => sum + (item.rate * item.qty), 0);
+      const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
+      const totalPayable = Math.max(0, cartSubtotal - discountAmount);
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      const newOrder = {
+        id: `SA00${orderNum}`,
+        branchId: state.currentBranchId,
+        date: `25 Sep 2026, ${timeStr}`,
+        customerId: state.selectedCustomer?.id || `walkin-${Date.now()}`,
+        customerName: state.selectedCustomer?.name || 'Walk-in Counter Customer',
+        customerPhone: state.selectedCustomer?.phone || 'OTC Cash / UPI',
+        customerAddress: state.selectedCustomer?.address || 'Ahmedabad, Gujarat',
+        itemsCount: state.posCart.length,
+        subtotal: cartSubtotal,
+        discount: discountAmount,
+        tax: 0,
+        total: totalPayable,
+        paymentMethod: state.paymentMethod,
+        status: 'Completed',
+        notes: state.orderNote || 'Counter Fresh Pack',
+        items: state.posCart.map(item => ({
+          name: item.name,
+          quantity: item.qty,
+          unit: item.unit,
+          rate: item.rate,
+          total: item.total
+        }))
+      };
+
+      // Update state & inventory
+      state.orders.unshift(newOrder);
+      state.lastPlacedOrder = newOrder;
+      state.activeOrder = newOrder;
+      state.orderStatusCounts.total += 1;
+      state.orderStatusCounts.completed = (state.orderStatusCounts.completed || 0) + 1;
+
+      // Compute order cost & dynamic profit
+      let orderCost = 0;
+      state.posCart.forEach(cartItem => {
+        const sw = state.sweets.find(s => s.id === cartItem.id);
+        const cost = sw?.costPrice || (cartItem.rate * 0.6);
+        orderCost += cartItem.qty * cost;
+      });
+      const orderProfit = Math.max(0, totalPayable - Math.round(orderCost));
+
+      state.kpis.orders.value = (state.kpis.orders.value || 0) + 1;
+      state.kpis.orders.formatted = String(state.kpis.orders.value);
+      state.kpis.sales.value = (state.kpis.sales.value || 0) + totalPayable;
+      state.kpis.sales.formatted = `₹${state.kpis.sales.value.toLocaleString()}`;
+      state.kpis.profit = state.kpis.profit || { value: 0 };
+      state.kpis.profit.value = (state.kpis.profit.value || 0) + orderProfit;
+      state.kpis.profit.formatted = `₹${state.kpis.profit.value.toLocaleString()}`;
+      if (state.kpis.sales.value > 0) {
+        state.kpis.profit.margin = `${((state.kpis.profit.value / state.kpis.sales.value) * 100).toFixed(1)}%`;
+      }
+      state.kpis.cost = state.kpis.cost || { value: 0 };
+      state.kpis.cost.value = Math.max(0, state.kpis.sales.value - state.kpis.profit.value);
+      state.kpis.cost.formatted = `₹${state.kpis.cost.value.toLocaleString()}`;
+
+      // Decrement sweet inventory
+      state.posCart.forEach(cartItem => {
+        const sweet = state.sweets.find(s => s.id === cartItem.id);
+        if (sweet) {
+          sweet.stock = Math.max(0, Math.round(sweet.stock - cartItem.qty));
+          if (sweet.stock <= 10) sweet.stockStatus = 'Low Stock';
+        }
+      });
+
+      // Update active branch revenue & orders
+      const curBranch = state.branches.find(b => b.id === state.currentBranchId);
+      if (curBranch) {
+        curBranch.revenue = (curBranch.revenue || 0) + totalPayable;
+        curBranch.orders = (curBranch.orders || 0) + 1;
+        if (curBranch.revenue > 0) {
+          curBranch.margin = `${(((state.kpis.profit?.value || 0) / curBranch.revenue) * 100).toFixed(1)}%`;
+        }
+      }
+
+      // Save branch snapshot locally & to Cloud Firestore
+      saveBranchSnapshot(state.currentBranchId);
+      saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers);
+      uploadOrderToStorage(newOrder);
+      saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
+      saveBranchKpisToCloud(state.currentBranchId, state.kpis);
+      clearActiveCheckoutInCloud(state.currentBranchId);
+
+      // Update customer stats & Khata ledger in Firestore
+      if (state.selectedCustomer) {
+        const cust = state.customers.find((c: any) => c.id === state.selectedCustomer.id);
+        if (cust) {
+          cust.totalOrders = (cust.totalOrders || 0) + 1;
+          cust.totalSpent = (cust.totalSpent || 0) + totalPayable;
+          if (state.paymentMethod === 'Khata') {
+            cust.khataBalance = (cust.khataBalance || 0) + totalPayable;
+          }
+          cust.loyaltyPoints = (cust.loyaltyPoints || 0) + Math.floor(totalPayable / 100);
+          saveCustomerToCloud(cust, state.currentBranchId);
+        }
+      }
+
+      // Smooth visual delay so user sees "Checked Out" confirmation
+      await new Promise(r => setTimeout(r, 350));
+
+      // Reset cart and activate the Checkout Complete celebration modal
+      state.posCart = [];
+      state.quickCart = [];
+      state.showCheckoutModal = false;
+      state.showSuccessModal = true;
+      saveState();
+      renderApp();
+    } finally {
+      isProcessingOrder = false;
+    }
   };
 
   // Initialize SlideCommit Slider for Checkout
@@ -1727,58 +2250,17 @@ function attachEventListeners() {
     processPlaceOrder();
   });
 
-  // Success Modal Actions
-  document.getElementById('print-order-bill-btn')?.addEventListener('click', () => {
-    state.showSuccessModal = false;
-    state.showThermalModal = true;
-    renderApp();
-  });
-
-  document.getElementById('share-whatsapp-btn')?.addEventListener('click', () => {
-    const o = state.lastPlacedOrder;
-    if (o) {
-      const msg = `🙏 *Radhe Sweets - Sweets & More*\nThank you ${o.customerName}! Your order #${o.id} of ₹${o.total} has been confirmed.\nItems: ${o.items.map(i=>`${i.name} (${i.quantity}${i.unit})`).join(', ')}\nAddress: Ahmedabad, Gujarat\n_Sweet Moments With Radhe Krishna_`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  // Helper: Clear Receipt Auto-Delay Timers
+  const clearReceiptAutoTimer = () => {
+    if (receiptAutoTimer) {
+      clearTimeout(receiptAutoTimer);
+      receiptAutoTimer = null;
     }
-  });
-
-  document.getElementById('view-orders-after-success-btn')?.addEventListener('click', () => {
-    state.showSuccessModal = false;
-    state.activeTab = 'orders';
-    renderApp();
-  });
-
-  document.getElementById('new-sale-after-success-btn')?.addEventListener('click', () => {
-    state.showSuccessModal = false;
-    state.activeTab = 'pos';
-    renderApp();
-  });
-
-  // Thermal Receipt Modal Controls
-  document.getElementById('close-receipt-btn')?.addEventListener('click', () => {
-    state.showThermalModal = false;
-    renderApp();
-  });
-  document.getElementById('dismiss-receipt-btn')?.addEventListener('click', () => {
-    state.showThermalModal = false;
-    renderApp();
-  });
-  document.getElementById('trigger-print-btn')?.addEventListener('click', () => {
-    window.print();
-  });
-
-  // Orders View Handlers
-  document.querySelectorAll('[data-orders-tab]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.ordersFilterTab = btn.getAttribute('data-orders-tab');
-      renderApp();
-    });
-  });
-
-  document.getElementById('orders-search-input')?.addEventListener('input', (e) => {
-    state.ordersSearchQuery = e.target.value;
-    renderApp();
-  });
+    if (receiptProgressInterval) {
+      clearInterval(receiptProgressInterval);
+      receiptProgressInterval = null;
+    }
+  };
 
   // Helper: Send Order Invoice on WhatsApp
   const sendOrderInvoiceWhatsApp = (order: any) => {
@@ -1812,6 +2294,82 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
     window.open(url, '_blank');
   };
+
+  // Success Modal Action Handlers (Only triggered when explicitly clicked by user - NO auto-opening)
+  document.getElementById('close-success-modal-btn')?.addEventListener('click', () => {
+    state.showSuccessModal = false;
+    renderApp();
+  });
+
+  document.getElementById('print-order-bill-btn')?.addEventListener('click', () => {
+    state.showSuccessModal = false;
+    if (state.lastPlacedOrder) {
+      state.activeOrder = state.lastPlacedOrder;
+    }
+    state.showThermalModal = true;
+    renderApp();
+  });
+
+  document.getElementById('instant-open-receipt-btn')?.addEventListener('click', () => {
+    state.showSuccessModal = false;
+    if (state.lastPlacedOrder) {
+      state.activeOrder = state.lastPlacedOrder;
+    }
+    state.showThermalModal = true;
+    renderApp();
+  });
+
+  document.getElementById('share-whatsapp-btn')?.addEventListener('click', () => {
+    const o = state.lastPlacedOrder;
+    if (o) {
+      sendOrderInvoiceWhatsApp(o);
+    }
+  });
+
+  document.getElementById('view-orders-after-success-btn')?.addEventListener('click', () => {
+    state.showSuccessModal = false;
+    state.activeTab = 'orders';
+    renderApp();
+  });
+
+  document.getElementById('new-sale-after-success-btn')?.addEventListener('click', () => {
+    state.showSuccessModal = false;
+    state.activeTab = 'pos';
+    renderApp();
+  });
+
+  document.getElementById('order-success-modal')?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement)?.id === 'order-success-modal') {
+      state.showSuccessModal = false;
+      renderApp();
+    }
+  });
+
+  // Thermal Receipt Modal Controls
+  document.getElementById('close-receipt-btn')?.addEventListener('click', () => {
+    state.showThermalModal = false;
+    renderApp();
+  });
+  document.getElementById('dismiss-receipt-btn')?.addEventListener('click', () => {
+    state.showThermalModal = false;
+    renderApp();
+  });
+  document.getElementById('trigger-print-btn')?.addEventListener('click', () => {
+    window.print();
+  });
+
+  // Orders View Handlers
+  document.querySelectorAll('[data-orders-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.ordersFilterTab = btn.getAttribute('data-orders-tab');
+      renderApp();
+    });
+  });
+
+  document.getElementById('orders-search-input')?.addEventListener('input', (e) => {
+    state.ordersSearchQuery = (e.target as HTMLInputElement).value;
+    renderApp();
+  });
 
   // Orders View Mode Toggle (Swipe Rows vs Table)
   document.getElementById('orders-toggle-swipe-view')?.addEventListener('click', () => {
@@ -2115,16 +2673,20 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     // Record in global shop audit logs
     state.auditLogs.unshift({
       time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      user: 'Admin (AS)',
+      user: state.shopInfo?.owner || 'Admin',
       action: 'Khata Payment Settled',
       details: `Received ₹${settleAmt.toLocaleString()} from ${cust.name} via ${paymentMode}. Balance: ₹${newBal.toLocaleString()}`
     });
+
+    // Save to Firebase Firestore cloud & local storage
+    saveCustomerToCloud(cust, state.currentBranchId);
+    saveBranchSnapshot(state.currentBranchId);
 
     state.showSettleKhataModal = false;
     state.settlingCustomer = null;
     saveState();
     renderApp();
-    showToast(`Received ₹${settleAmt.toLocaleString()} payment from ${cust.name}! Remaining Khata: ₹${newBal.toLocaleString()}`, 'success');
+    showToast(`✓ Received ₹${settleAmt.toLocaleString()} payment from ${cust.name}! Remaining Khata: ₹${newBal.toLocaleString()}`, 'success');
   });
 
   // Add Customer Modal
@@ -2132,22 +2694,19 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.showAddCustomerModal = true;
     renderApp();
   });
-  document.getElementById('pos-add-new-customer-btn')?.addEventListener('click', () => {
-    state.showAddCustomerModal = true;
-    renderApp();
-  });
-  document.getElementById('close-add-customer-btn')?.addEventListener('click', () => {
+  const handleCloseAddCustomerModal = () => {
     state.showAddCustomerModal = false;
+    if (state.returnToCheckout) {
+      state.showCheckoutModal = true;
+      state.returnToCheckout = false;
+    }
     renderApp();
-  });
-  document.getElementById('cancel-add-customer-btn')?.addEventListener('click', () => {
-    state.showAddCustomerModal = false;
-    renderApp();
-  });
+  };
+  document.getElementById('close-add-customer-btn')?.addEventListener('click', handleCloseAddCustomerModal);
+  document.getElementById('cancel-add-customer-btn')?.addEventListener('click', handleCloseAddCustomerModal);
   document.getElementById('add-customer-modal')?.addEventListener('click', (e: any) => {
     if (e.target.id === 'add-customer-modal') {
-      state.showAddCustomerModal = false;
-      renderApp();
+      handleCloseAddCustomerModal();
     }
   });
 
@@ -2170,12 +2729,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       notes: (fd.get('notes') as string) || ''
     };
     state.customers.unshift(newCust);
-    state.selectedCustomer = newCust;
-    state.kpis.customers.value += 1;
-    state.showAddCustomerModal = false;
-    saveState();
-    renderApp();
-    showToast(`Customer ${newCust.name} registered successfully!`, 'success');
+    state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+    state.kpis.customers.formatted = String(state.kpis.customers.value);
+    saveCustomerToCloud(newCust, state.currentBranchId);
+    saveBranchSnapshot(state.currentBranchId);
+    completeCustomerSelection(newCust);
   });
 
   // Products & Confectionery Inventory Management Handlers
@@ -2551,6 +3109,15 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         saveState();
         renderApp();
       }
+    });
+  });
+
+  // Category filter tabs for expenses (All, Raw Materials, Utilities, Staff Salary, Marketing, Other)
+  document.querySelectorAll('[data-expenses-category]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cat = btn.getAttribute('data-expenses-category') || 'All';
+      state.expensesFilterCategory = cat;
+      renderApp();
     });
   });
 
@@ -2939,6 +3506,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   document.getElementById('pos-select-customer-btn')?.addEventListener('click', handleOpenCustomerDialer);
   document.getElementById('pos-add-new-customer-btn')?.addEventListener('click', handleOpenCustomerDialer);
   document.getElementById('checkout-edit-customer-btn')?.addEventListener('click', () => {
+    state.returnToCheckout = true;
     state.showCheckoutModal = false;
     handleOpenCustomerDialer();
   });
@@ -2982,40 +3550,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.selectedWeightUnit = 'g';
     saveState();
     renderApp();
-  });
-
-  // Dual-Unit Quick Weight Chips (250g, 500g, 750g, 1kg)
-  document.querySelectorAll('[data-add-weight]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const sweetId = btn.getAttribute('data-add-weight');
-      const weight = parseFloat(btn.getAttribute('data-weight')) || 0.25;
-      const sweet = state.sweets.find(s => s.id === sweetId);
-      if (sweet) {
-        const existing = state.posCart.find(i => i.id === sweetId);
-        if (existing) {
-          existing.qty = weight;
-          existing.total = Math.round(existing.qty * existing.rate);
-        } else {
-          state.posCart.push({
-            id: sweet.id,
-            name: sweet.name,
-            qty: weight,
-            rate: sweet.pricePerKg,
-            unit: sweet.unit,
-            total: Math.round(weight * sweet.pricePerKg),
-            image: sweet.image || `/assets/sweets/${sweet.id}.png`,
-            fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
-          });
-        }
-        state.quickCart = [...state.posCart];
-        saveState();
-        renderApp();
-        const displayLabel = weight >= 1 ? `${weight}kg` : `${Math.round(weight * 1000)}g`;
-        showToast(`${sweet.name} set to ${displayLabel} (₹${Math.round(weight * sweet.pricePerKg)})`, 'success');
-      }
-    });
   });
 
   // Hold / Park Bill during counter rush
@@ -3104,29 +3638,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     renderApp();
   });
 
-  // Customer Khata Settlement
-  document.querySelectorAll('[data-settle-khata]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const custId = btn.getAttribute('data-settle-khata');
-      const cust = state.customers.find(c => c.id === custId);
-      if (cust && cust.khataBalance > 0) {
-        const settledAmount = cust.khataBalance;
-        cust.khataBalance = 0;
-        cust.totalSpent += settledAmount;
-        
-        state.auditLogs.unshift({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          user: state.shopInfo.owner,
-          action: 'Khata Settled',
-          details: `Settled ₹${settledAmount} Khata balance for ${cust.name}`
-        });
-
-        saveState();
-        alert(`Recorded full payment of ₹${settledAmount} for ${cust.name}'s Khata account! Balance is now ₹0.`);
-        renderApp();
-      }
-    });
-  });
 
   // Raw Material PO Restock
   document.querySelectorAll('[data-restock-rm]').forEach(btn => {
@@ -3156,16 +3667,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     if (!custId) return;
     const cust = state.customers.find((c: any) => c.id === custId);
     if (cust) {
-      state.selectedCustomer = cust;
-      state.showCustomerDialerModal = false;
-      state.auditLogs.unshift({
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        user: state.shopInfo.owner,
-        action: 'Customer Attached',
-        details: `Customer ${cust.name} (${cust.phone}) attached to counter order.`
-      });
-      saveState();
-      renderApp();
+      completeCustomerSelection(cust);
     }
   };
 
@@ -3205,18 +3707,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         };
 
         state.customers.unshift(newCustomer);
-        state.selectedCustomer = newCustomer;
-        state.showCustomerDialerModal = false;
-        state.kpis.customers.value += 1;
-        saveCustomerToCloud(newCustomer);
-        state.auditLogs.unshift({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          user: state.shopInfo.owner,
-          action: 'Customer Registered',
-          details: `New customer ${name} (${newCustomer.phone}) registered via Phone Dialer.`
-        });
-        saveState();
-        renderApp();
+        state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+        state.kpis.customers.formatted = String(state.kpis.customers.value);
+        saveCustomerToCloud(newCustomer, state.currentBranchId);
+        saveBranchSnapshot(state.currentBranchId);
+        completeCustomerSelection(newCustomer);
       });
     }
   };
@@ -3243,16 +3738,17 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   document.getElementById('close-dialer-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
     state.showCustomerDialerModal = false;
+    if (state.returnToCheckout) {
+      state.showCheckoutModal = true;
+      state.returnToCheckout = false;
+    }
     renderApp();
   });
 
   // Instant Walk-in Sale (No Phone Needed)
   document.getElementById('dialer-instant-walkin-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
-    state.selectedCustomer = null;
-    state.showCustomerDialerModal = false;
-    saveState();
-    renderApp();
+    completeCustomerSelection(null);
   });
 
   // Dial Pad Digit Buttons (0-9) - ZERO REFRESH!
@@ -3329,10 +3825,7 @@ window.addEventListener('keydown', (e) => {
             const custId = btn.getAttribute('data-dialer-pick-customer');
             const cust = state.customers.find((c: any) => c.id === custId);
             if (cust) {
-              state.selectedCustomer = cust;
-              state.showCustomerDialerModal = false;
-              saveState();
-              renderApp();
+              completeCustomerSelection(cust);
             }
           });
         });
@@ -3353,6 +3846,10 @@ window.addEventListener('keydown', (e) => {
     }
   } else if (e.key === 'Escape') {
     state.showCustomerDialerModal = false;
+    if (state.returnToCheckout) {
+      state.showCheckoutModal = true;
+      state.returnToCheckout = false;
+    }
     renderApp();
   }
 });
@@ -3405,53 +3902,42 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
   }
 });
 
-// Initialize when DOM is ready with Google Deep Linking & Cloud Sync
-window.addEventListener('DOMContentLoaded', () => {
+// Initialize with Google Deep Linking & Cloud Sync
+function initApp() {
   const initialHash = window.location.hash.replace('#/', '').replace('#', '');
   if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(initialHash)) {
     state.activeTab = initialHash;
   }
   renderApp();
 
-  // 1. Setup Global Real-time Firestore Listeners (Customers directory)
+  // Baseline snapshot for active branch if not stored
+  if (!getBranchLocalSnapshot(state.currentBranchId)) {
+    saveBranchSnapshot(state.currentBranchId);
+  }
+
+  // 1. Setup Global Real-time Firestore Listeners
   setupGlobalFirestoreListeners();
 
-  // 2. Setup Active Branch Real-time Firestore Listeners (Orders, 100 Sweets, KPIs & Profits)
+  // 2. Setup Active Branch Real-time Firestore Listeners (Orders, 100 Sweets, KPIs & Profits, Branch Customers)
   setupBranchFirestoreListeners(state.currentBranchId);
 
-  // 3. Real-time Firestore status listener
-  onFirestoreStatusChange((status: any) => {
-    const badge = document.getElementById('firestore-cloud-status-badge');
-    if (badge) {
-      if (status.syncStatus === 'syncing') {
-        badge.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-amber-500 animate-spin"></span>
-          <span>Syncing...</span>
-          <span class="text-[9px] bg-amber-200/70 text-amber-900 px-1 py-0.2 rounded font-mono">Cloud</span>
-        `;
-        badge.className = "hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer bg-amber-50 text-amber-800 border-amber-200/90 shadow-2xs";
-      } else {
-        badge.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Firestore Live</span>
-          <span class="text-[9px] bg-emerald-200/70 text-emerald-900 px-1 py-0.2 rounded font-mono">Real-time</span>
-        `;
-        badge.className = "hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200/90 shadow-2xs hover:bg-emerald-100";
-      }
-    }
-  });
-
-  // 4. Background Cloud Sync for active branch from Cloud Firestore
+  // 3. Background Cloud Sync for active branch from Cloud Firestore
   loadBranchDataFromCloud(state.currentBranchId).then((data: any) => {
     if (data && data.sweets && data.sweets.length >= 50) {
       state.sweets = data.sweets;
-      if (data.kpis) {
+      if (data.kpis && (state.currentBranchId === 'br-1' || state.orders.length > 0)) {
         state.kpis = { ...state.kpis, ...data.kpis };
       }
       renderApp();
     }
   }).catch(() => {});
-});
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // Google Sitemap Deep Linking - Listen for browser URL hash changes
 window.addEventListener('hashchange', () => {

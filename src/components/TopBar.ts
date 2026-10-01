@@ -43,6 +43,7 @@ export function renderTopBar(state: any) {
           placeholder="Search anything... (sweets, customers, orders)" 
           autocomplete="off"
           class="w-full pl-10 pr-20 py-2 bg-stone-50/90 hover:bg-white focus:bg-white border border-[#F0ECE4] focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs"
+          style="padding-left: 2.75rem !important;"
         />
         <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
           <button 
@@ -80,19 +81,34 @@ export function renderTopBar(state: any) {
           </svg>
         </button>
 
-        <!-- Firestore Live Cloud Sync Badge -->
-        <div 
-          id="firestore-cloud-status-badge"
-          class="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200/90 shadow-2xs hover:bg-emerald-100"
-          title="Real-time Cloud Firestore Active (Orders, Customers, 100 Sweets, Khata, Profits)"
-        >
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Firestore Live</span>
-          <span class="text-[9px] bg-emerald-200/70 text-emerald-900 px-1 py-0.2 rounded font-mono">Real-time</span>
+        <!-- Active Branch Selector Pill (Quick Branch Switching) -->
+        <div class="flex items-center">
+          <div class="relative flex items-center bg-amber-50/90 dark:bg-stone-800/90 hover:bg-amber-100/80 border border-amber-200/90 dark:border-stone-700 rounded-full pl-3 pr-2 py-1 shadow-2xs transition-all">
+            <span class="text-xs mr-1.5 select-none">📍</span>
+            <select 
+              id="topbar-branch-select"
+              class="bg-transparent text-xs font-bold text-[#C86D3B] dark:text-amber-400 cursor-pointer border-0 border-none outline-none focus:outline-none focus:ring-0 focus:border-0 shadow-none ring-0 appearance-none pr-5 py-0"
+              style="border: none !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none; -moz-appearance: none; background: transparent !important;"
+              title="Switch Active Store Branch"
+            >
+              ${(state.branches || []).map((b: any) => `
+                <option value="${b.id}" ${b.id === state.currentBranchId ? 'selected' : ''} class="text-[#2A1F1D] dark:text-white bg-white dark:bg-stone-800 font-semibold">
+                  ${b.name}
+                </option>
+              `).join('')}
+            </select>
+            <span class="pointer-events-none -ml-4 flex items-center text-[#C86D3B] dark:text-amber-400">
+              <svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
         </div>
 
+
+
         <!-- Current Date Indicator -->
-        <div class="hidden sm:flex items-center space-x-2 bg-stone-50 border border-[#F0ECE4] px-3 py-1.5 rounded-xl text-xs text-stone-600 shadow-2xs">
+        <div class="hidden lg:flex items-center space-x-2 bg-stone-50 border border-[#F0ECE4] px-3 py-1.5 rounded-xl text-xs text-stone-600 shadow-2xs">
           <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
             <line x1="16" x2="16" y1="2" y2="6"></line>

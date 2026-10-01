@@ -38,23 +38,23 @@ export const DEFAULT_INVOICE_ACTIONS: SwipeAction[] = [
   {
     id: 'delete',
     label: 'Delete',
-    color: '#e5484d',
+    color: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
     dismiss: true,
-    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path></svg>`
+    icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path></svg>`
   },
   {
     id: 'view',
     label: 'View / Edit',
-    color: '#C86D3B',
+    color: 'linear-gradient(135deg, #F59E0B 0%, #C86D3B 100%)',
     dismiss: false,
-    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg>`
+    icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path></svg>`
   },
   {
     id: 'whatsapp',
     label: 'WhatsApp',
-    color: '#16a34a',
+    color: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
     dismiss: false,
-    icon: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.54 1.761.82 2.791.82 3.181 0 5.768-2.587 5.768-5.766.001-3.182-2.585-5.806-5.768-5.806zm3.374 8.243c-.145.407-.741.777-1.033.826-.292.05-.67.072-1.077-.061-.258-.084-.59-.199-1.018-.387-1.796-.789-2.96-2.616-3.05-2.736-.09-.12-1.033-1.378-1.033-2.628 0-1.25.646-1.866.877-2.12.231-.254.508-.318.677-.318.17 0 .339.002.486.01.154.009.362-.058.566.432.215.518.736 1.792.8 1.923.064.13.107.283.02.454-.087.17-.13.277-.258.428-.128.151-.27.337-.386.452-.128.129-.262.27-.113.526.149.256.662 1.092 1.419 1.766.974.867 1.795 1.135 2.052 1.264.257.129.407.114.558-.06.151-.173.646-.752.818-1.01.172-.258.344-.216.578-.129.234.086 1.488.701 1.745.83.257.129.428.194.492.302.064.108.064.625-.081 1.032z"></path></svg>`
+    icon: `<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.54 1.761.82 2.791.82 3.181 0 5.768-2.587 5.768-5.766.001-3.182-2.585-5.806-5.768-5.806zm3.374 8.243c-.145.407-.741.777-1.033.826-.292.05-.67.072-1.077-.061-.258-.084-.59-.199-1.018-.387-1.796-.789-2.96-2.616-3.05-2.736-.09-.12-1.033-1.378-1.033-2.628 0-1.25.646-1.866.877-2.12.231-.254.508-.318.677-.318.17 0 .339.002.486.01.154.009.362-.058.566.432.215.518.736 1.792.8 1.923.064.13.107.283.02.454-.087.17-.13.277-.258.428-.128.151-.27.337-.386.452-.128.129-.262.27-.113.526.149.256.662 1.092 1.419 1.766.974.867 1.795 1.135 2.052 1.264.257.129.407.114.558-.06.151-.173.646-.752.818-1.01.172-.258.344-.216.578-.129.234.086 1.488.701 1.745.83.257.129.428.194.492.302.064.108.064.625-.081 1.032z"></path></svg>`
   }
 ];
 
@@ -65,9 +65,9 @@ export function renderSwipeRow(
   const {
     id,
     actions = DEFAULT_INVOICE_ACTIONS,
-    height = 68,
-    radius = 16,
-    actionWidth = 80,
+    height = 80,
+    radius = 20,
+    actionWidth = 84,
     direction = 'left',
     collapseMs = 200,
     disabled = false,
@@ -82,7 +82,7 @@ export function renderSwipeRow(
   return `
     <div
       id="swipe-row-${id}"
-      class="swipe-row-root group relative overflow-hidden select-none transition-all duration-200 mb-2.5 ${disabled ? 'opacity-55 pointer-events-none' : ''} ${className}"
+      class="swipe-row-root group relative select-none transition-all duration-200 mb-3 ${disabled ? 'opacity-55 pointer-events-none' : ''} ${className}"
       data-id="${id}"
       data-direction="${direction}"
       data-action-width="${actionWidth}"
@@ -95,13 +95,13 @@ export function renderSwipeRow(
     >
       <div 
         class="swipe-row-inner relative w-full h-full overflow-hidden" 
-        style="border-radius: ${radius}px; background: var(--bg-surface, #ffffff);"
+        style="border-radius: ${radius}px; background: transparent;"
       >
-        <!-- Background Drawer Rail for Action Buttons -->
+        <!-- Background Drawer Rail with Sleek Ergonomic Capsule Action Buttons -->
         <div
           id="swipe-rail-${id}"
-          class="swipe-rail absolute inset-0 flex items-center justify-end z-0 pointer-events-auto"
-          style="background: #27272a;"
+          class="swipe-rail absolute inset-0 flex items-center justify-end z-0 pointer-events-auto p-1.5"
+          style="background: linear-gradient(135deg, #18181B 0%, #292524 100%); border-radius: ${radius}px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);"
         >
           <!-- Secondary Actions (e.g. WhatsApp, View/Edit) -->
           ${secondaryActions.map((action, idx) => `
@@ -109,18 +109,19 @@ export function renderSwipeRow(
               type="button"
               data-action-id="${action.id}"
               data-row-id="${id}"
-              class="swipe-action-btn absolute top-0 h-full flex flex-col items-center justify-center cursor-pointer select-none text-white hover:brightness-110 active:scale-95 transition-transform"
+              class="swipe-action-btn absolute top-1.5 bottom-1.5 flex flex-col items-center justify-center cursor-pointer select-none text-white shadow-md active:scale-95 transition-all"
               style="
-                width: ${actionWidth}px;
-                right: ${(idx + 1) * actionWidth}px;
+                width: ${actionWidth - 8}px;
+                right: ${(idx + 1) * actionWidth + 4}px;
                 background: ${action.color || '#3f3f46'};
+                border-radius: ${Math.max(10, radius - 6)}px;
               "
               title="${action.label}"
             >
               <span class="inline-flex items-center justify-center mb-1">
                 ${action.icon || ''}
               </span>
-              <span class="text-[10px] font-bold leading-tight tracking-tight">${action.label}</span>
+              <span class="text-[10px] sm:text-[11px] font-bold leading-tight tracking-tight">${action.label}</span>
             </button>
           `).join('')}
 
@@ -128,10 +129,11 @@ export function renderSwipeRow(
           ${primary ? `
             <div
               id="swipe-primary-block-${id}"
-              class="swipe-primary-block absolute top-0 right-0 h-full flex items-center justify-center cursor-pointer select-none text-white transition-colors"
+              class="swipe-primary-block absolute top-1.5 bottom-1.5 right-1.5 flex items-center justify-center cursor-pointer select-none text-white transition-all shadow-md"
               style="
-                width: ${actionWidth}px;
+                width: ${actionWidth - 8}px;
                 background: ${primary.color || '#e5484d'};
+                border-radius: ${Math.max(10, radius - 6)}px;
               "
             >
               <button
@@ -144,27 +146,29 @@ export function renderSwipeRow(
                 <span class="inline-flex items-center justify-center mb-1">
                   ${primary.icon || ''}
                 </span>
-                <span class="text-[10px] font-bold leading-tight tracking-tight">${primary.label}</span>
+                <span class="text-[10px] sm:text-[11px] font-bold leading-tight tracking-tight">${primary.label}</span>
               </button>
             </div>
           ` : ''}
         </div>
 
-        <!-- Foreground Surface Card -->
+        <!-- Foreground Surface Card with Luxury Porcelain Depth -->
         <div
           id="swipe-surface-${id}"
-          class="swipe-surface relative z-10 w-full h-full flex items-center px-4 bg-white dark:bg-[#241816] text-[#2A1F1D] dark:text-[#FAF7F2] border border-[#F0ECE4] dark:border-[#3C2E2A] rounded-[${radius}px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] cursor-grab active:cursor-grabbing touch-pan-y"
+          class="swipe-surface relative z-10 w-full h-full flex items-center px-3.5 sm:px-5 bg-white dark:bg-[#201715] text-[#2A1F1D] dark:text-[#FAF7F2] rounded-[${radius}px] cursor-grab active:cursor-grabbing touch-pan-y"
           style="
             border-radius: ${radius}px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #FDFBF8 100%);
+            box-shadow: 0 4px 16px -3px rgba(74, 58, 47, 0.05), 0 1px 3px rgba(74, 58, 47, 0.03);
+            border: 1px solid rgba(228, 220, 208, 0.7);
             transform: translate3d(0, 0, 0);
-            transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
           "
         >
           ${contentHtml}
 
           <!-- Visual Swipe Hint Indicator -->
-          <div class="swipe-hint ml-auto pl-2 shrink-0 text-stone-300 dark:text-stone-600 sm:hidden pointer-events-none">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <div class="swipe-hint ml-2 shrink-0 text-stone-300 dark:text-stone-600 sm:hidden pointer-events-none">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </div>
@@ -215,9 +219,9 @@ export function initSwipeRow(
     if (primaryBlock) {
       const extra = Math.max(0, Math.abs(offset) - totalDrawerWidth);
       if (extra > 0 && offset < 0) {
-        primaryBlock.style.width = `${actionWidth + extra}px`;
+        primaryBlock.style.width = `${(actionWidth - 8) + extra}px`;
       } else {
-        primaryBlock.style.width = `${actionWidth}px`;
+        primaryBlock.style.width = `${actionWidth - 8}px`;
       }
     }
   };

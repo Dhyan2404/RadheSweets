@@ -10,8 +10,7 @@ export function renderProductsView(state: any) {
     rawMaterials = [] 
   } = state;
 
-  const categories = ["All", "Sweets", "Snacks", "Beverages", "⚠️ Low Stock", "🌾 Raw Materials"];
-  const isRawMaterialTab = productsFilterCategory === '🌾 Raw Materials' || productsFilterCategory === 'Raw Materials';
+  const categories = ["All", "Sweets", "Snacks", "Beverages", "⚠️ Low Stock"];
   const isLowStockTab = productsFilterCategory === '⚠️ Low Stock' || productsFilterCategory === 'Low Stock';
 
   // Compute Live Inventory Metrics
@@ -117,8 +116,8 @@ export function renderProductsView(state: any) {
         </div>
       </section>
 
-      <!-- 4 High-Impact Inventory Valuation & Health KPI Cards -->
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <!-- 3 High-Impact Finished Confectionery Valuation & Health KPI Cards -->
+      <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         
         <!-- CARD 1: Total Inventory Stock Valuation -->
         <article class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between">
@@ -184,26 +183,6 @@ export function renderProductsView(state: any) {
           </div>
         </article>
 
-        <!-- CARD 4: Raw Material Pantry Ledger -->
-        <article 
-          data-products-category="🌾 Raw Materials"
-          class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between cursor-pointer hover:border-[#DDA15E] hover:shadow-md transition-all group"
-        >
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-[#7C7267] group-hover:text-[#2A1F1D]">Raw Materials & PO</span>
-            <div class="w-9 h-9 rounded-2xl bg-[#FEF9C3] flex items-center justify-center text-[#A16207]">
-              🌾
-            </div>
-          </div>
-          <div class="mt-3">
-            <p class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">${rawMaterials.length} <span class="text-sm font-normal text-[#7C7267]">ingredients</span></p>
-            <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
-              <span>Ghee, Mawa, Sugar, Dry Fruits</span>
-              <span class="font-bold text-[#A16207] underline">View Pantry &rarr;</span>
-            </div>
-          </div>
-        </article>
-
       </section>
 
       <!-- Search, Category Filters & View Switcher -->
@@ -256,120 +235,51 @@ export function renderProductsView(state: any) {
             </div>
 
             <!-- View Switcher (Table vs Grid) -->
-            ${!isRawMaterialTab ? `
-              <div class="flex items-center p-1 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl">
-                <button 
-                  id="view-mode-table-btn"
-                  class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    productsViewMode === 'table' 
-                      ? 'bg-white text-[#C86D3B] shadow-xs' 
-                      : 'text-[#7C7267] hover:text-[#2A1F1D]'
-                  }"
-                  title="Table Ledger View"
-                >
-                  📋
-                </button>
-                <button 
-                  id="view-mode-grid-btn"
-                  class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    productsViewMode === 'grid' 
-                      ? 'bg-white text-[#C86D3B] shadow-xs' 
-                      : 'text-[#7C7267] hover:text-[#2A1F1D]'
-                  }"
-                  title="Grid Cards View"
-                >
-                  🎴
-                </button>
-              </div>
-            ` : ''}
+            <div class="flex items-center p-1 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl">
+              <button 
+                id="view-mode-table-btn"
+                class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  productsViewMode === 'table' 
+                    ? 'bg-white text-[#C86D3B] shadow-xs' 
+                    : 'text-[#7C7267] hover:text-[#2A1F1D]'
+                }"
+                title="Table Ledger View"
+              >
+                📋
+              </button>
+              <button 
+                id="view-mode-grid-btn"
+                class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  productsViewMode === 'grid' 
+                    ? 'bg-white text-[#C86D3B] shadow-xs' 
+                    : 'text-[#7C7267] hover:text-[#2A1F1D]'
+                }"
+                title="Grid Cards View"
+              >
+                🎴
+              </button>
+            </div>
           </div>
 
         </div>
       </section>
 
-      ${isRawMaterialTab ? `
-        <!-- Raw Material Stock Ledger Table -->
-        <section class="bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_4px_25px_-5px_rgba(74,58,47,0.04)] overflow-hidden">
-          <div class="p-5 sm:p-6 border-b border-[#F4EFE9] flex items-center justify-between">
-            <div>
-              <h2 class="text-base font-bold text-[#2A1F1D]">Raw Material Stock Ledger & Pantry</h2>
-              <p class="text-xs text-[#7C7267]">Inward procurement rates, safe threshold limits & expiry schedules</p>
-            </div>
-            <button id="open-add-rm-modal-btn" class="px-3.5 py-2 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C86D3B] border border-[#FED7AA] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5">
-              <span>+</span>
-              <span>Inward PO</span>
-            </button>
+      <!-- Raw Materials Operational Note -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 bg-gradient-to-r from-amber-50/90 to-orange-50/70 border border-amber-200/80 rounded-3xl shadow-xs">
+        <div class="flex items-center space-x-3">
+          <span class="text-xl select-none">🌾</span>
+          <div>
+            <p class="text-xs font-bold text-[#2A1F1D]">Raw Materials Procurement (Pure Desi Ghee, Mawa, Sugar, Dry Fruits)</p>
+            <p class="text-[11px] text-[#7C7267]">Raw ingredients are logged under operational expenses rather than finished goods inventory.</p>
           </div>
+        </div>
+        <button data-tab="expenses" class="px-3.5 py-1.5 bg-white hover:bg-amber-100/60 border border-amber-300/80 rounded-xl text-xs font-bold text-[#C86D3B] transition-all self-start sm:self-auto shadow-2xs hover:scale-102 active:scale-98">
+          View Expenses Ledger &rarr;
+        </button>
+      </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-[#FAF7F2] border-b border-[#EFE7DE] text-[#7C7267] font-bold text-[11px] uppercase tracking-wider">
-                  <th class="py-3.5 px-5">Ingredient / Consumable</th>
-                  <th class="py-3.5 px-4 text-center">Available Stock</th>
-                  <th class="py-3.5 px-4 text-center">Procurement Cost</th>
-                  <th class="py-3.5 px-4 text-center">Min. Reorder Threshold</th>
-                  <th class="py-3.5 px-4 text-center">Shelf Life / Expiry</th>
-                  <th class="py-3.5 px-4 text-center">Pantry Health</th>
-                  <th class="py-3.5 px-5 text-right">Quick Restock</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-[#F7F3EE]">
-                ${rawMaterials.map((rm: any) => {
-                  const isLow = (rm.stock || 0) <= (rm.reorderLevel || 20);
-                  return `
-                    <tr class="hover:bg-[#FAF7F2]/60 transition-colors">
-                      <td class="py-4 px-5">
-                        <p class="font-bold text-[#2A1F1D] text-sm">${rm.name}</p>
-                        <span class="text-[10px] font-mono font-semibold text-[#A89F95]">${rm.id}</span>
-                      </td>
-                      <td class="py-4 px-4 text-center">
-                        <span class="text-sm font-extrabold text-[#2A1F1D] tabular-nums">${rm.stock}</span>
-                        <span class="text-[11px] text-[#7C7267] ml-0.5">${rm.unit}</span>
-                      </td>
-                      <td class="py-4 px-4 text-center font-semibold text-[#2A1F1D] tabular-nums">
-                        ₹${rm.unitCost} <span class="text-[10px] font-normal text-[#7C7267]">/${rm.unit.replace('boxes', 'box')}</span>
-                      </td>
-                      <td class="py-4 px-4 text-center text-[#7C7267]">
-                        ${rm.reorderLevel} ${rm.unit}
-                      </td>
-                      <td class="py-4 px-4 text-center">
-                        <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold ${
-                          rm.isPerishable 
-                            ? 'bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA]' 
-                            : 'bg-[#FAF7F2] text-[#7C7267] border border-[#EFE7DE]'
-                        }">
-                          ${rm.expiry}
-                        </span>
-                      </td>
-                      <td class="py-4 px-4 text-center">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
-                          isLow 
-                            ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]' 
-                            : 'bg-[#E6F4EA] text-[#1E7E34] border border-[#CDE9D3]'
-                        }">
-                          <span class="w-1.5 h-1.5 rounded-full ${isLow ? 'bg-[#DC2626] animate-pulse' : 'bg-[#1E7E34]'}"></span>
-                          ${isLow ? 'Order Needed' : 'Adequate'}
-                        </span>
-                      </td>
-                      <td class="py-4 px-5 text-right">
-                        <button 
-                          data-restock-rm="${rm.id}" 
-                          class="px-3.5 py-1.5 bg-[#FFF7ED] hover:bg-[#C86D3B] hover:text-white text-[#C86D3B] border border-[#FED7AA] rounded-xl text-xs font-bold transition-all shadow-2xs"
-                        >
-                          + Inward PO
-                        </button>
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ` : `
-        <!-- Main Finished Confectionery Products Catalog -->
-        ${filteredProducts.length === 0 ? `
+      <!-- Main Finished Confectionery Products Catalog -->
+      ${filteredProducts.length === 0 ? `
           <div class="bg-white rounded-3xl border border-[#F0ECE4] p-12 text-center shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)]">
             <div class="w-16 h-16 rounded-full bg-[#FAF7F2] border border-[#F0ECE4] flex items-center justify-center mx-auto text-2xl mb-3 text-[#C86D3B]">
               🍬
@@ -674,7 +584,6 @@ export function renderProductsView(state: any) {
             </div>
           </section>
         `}
-      `}
     </div>
   `;
 }

@@ -98,16 +98,10 @@ export function renderSidebar(currentTab) {
         </nav>
       </div>
 
-      <!-- Brand Artwork (Exact 1:1 match with Stitch screen.png) -->
-      <div class="mt-auto pt-4 border-t border-[#F0ECE4]/60" data-purpose="sidebar-bottom-art">
-        <div class="relative overflow-hidden rounded-2xl group cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-          <img 
-            src="/assets/sweet_moments.png" 
-            alt="Sweet moments... Better together" 
-            class="w-full h-auto object-contain select-none pointer-events-none drop-shadow-sm transition-transform duration-500 group-hover:scale-105" 
-            loading="lazy"
-          />
-        </div>
+      <!-- Clean Brand Footer (Zero overflow artifacts) -->
+      <div class="mt-auto pt-4 border-t border-[#F0ECE4]/60 text-center" data-purpose="sidebar-bottom">
+        <p class="text-[11px] font-bold text-[#C86D3B]/90 tracking-wide">🙏 Jai Radhe Krishna</p>
+        <p class="text-[10px] text-stone-400 mt-0.5">Sweets &amp; Pure Ghee Mithai</p>
       </div>
     </aside>
   `;

@@ -3,22 +3,22 @@
 export function renderAnalyticsView(state) {
   const { kpis, analytics, branches = [], expenses, shopInfo } = state;
 
-  const currentBranch = branches.find(b => b.id === state.currentBranchId) || branches[0] || {
+  const currentBranch = branches.find((b: any) => b.id === state.currentBranchId) || branches[0] || {
     id: "br-1", code: "BR-NAV-01", name: "Navrangpura Flagship", revenue: 42850, orders: 126, margin: "34.1%"
   };
 
   // Financial breakdown calculation based on True Net Profit formula:
   // Net Profit = Gross Revenue - (Raw Materials + Packaging + Labor + Utilities + Rent/Maintenance + Taxes)
-  const grossRevenue = kpis.sales.value;
-  const rawMaterialCost = 12450;
-  const packagingCost = 2000;
-  const laborCost = 6000;
-  const utilitiesCost = 5320;
-  const rentMaintenanceCost = 2460;
+  const grossRevenue = kpis?.sales?.value ?? currentBranch.revenue ?? 0;
+  const rawMaterialCost = grossRevenue > 0 ? Math.round(grossRevenue * 0.291) : 0;
+  const packagingCost = grossRevenue > 0 ? Math.round(grossRevenue * 0.047) : 0;
+  const laborCost = grossRevenue > 0 ? Math.round(grossRevenue * 0.14) : 0;
+  const utilitiesCost = grossRevenue > 0 ? Math.round(grossRevenue * 0.124) : 0;
+  const rentMaintenanceCost = grossRevenue > 0 ? Math.round(grossRevenue * 0.057) : 0;
   const taxCost = 0; // 0% fresh mithai exemption
   const totalOperatingCosts = rawMaterialCost + packagingCost + laborCost + utilitiesCost + rentMaintenanceCost + taxCost;
-  const trueNetProfit = grossRevenue - totalOperatingCosts;
-  const netMarginPercent = ((trueNetProfit / grossRevenue) * 100).toFixed(1);
+  const trueNetProfit = Math.max(0, grossRevenue - totalOperatingCosts);
+  const netMarginPercent = grossRevenue > 0 ? ((trueNetProfit / grossRevenue) * 100).toFixed(1) : "0.0";
 
   return `
     <div class="space-y-6">
@@ -58,10 +58,14 @@ export function renderAnalyticsView(state) {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          ${branches.map((b, idx) => {
+          ${branches.map((b: any, idx: number) => {
             const isRank1 = idx === 0;
+            const isCurrent = b.id === state.currentBranchId;
+            const bRevenue = isCurrent ? grossRevenue : (b.revenue || 0);
+            const bOrders = isCurrent ? (state.orders?.length ?? b.orders ?? 0) : (b.orders || 0);
+            const bMargin = isCurrent ? `${netMarginPercent}%` : (b.margin || '0.0%');
             return `
-              <div class="p-4 rounded-xl border ${b.id === state.currentBranchId ? 'border-[var(--brand-primary)] bg-[var(--bg-highlight)] ring-2 ring-[var(--brand-primary)]/10' : 'border-[var(--border-color)] bg-[var(--bg-subtle)]'} flex flex-col justify-between">
+              <div class="p-4 rounded-xl border ${isCurrent ? 'border-[var(--brand-primary)] bg-[var(--bg-highlight)] ring-2 ring-[var(--brand-primary)]/10' : 'border-[var(--border-color)] bg-[var(--bg-subtle)]'} flex flex-col justify-between">
                 <div>
                   <div class="flex items-start justify-between">
                     <div>
@@ -77,19 +81,19 @@ export function renderAnalyticsView(state) {
                   <div class="mt-3 grid grid-cols-2 gap-2 text-xs pt-2 border-t border-[var(--border-subtle)]">
                     <div>
                       <p class="text-[10px] text-[var(--text-light)]">Gross Revenue</p>
-                      <p class="font-extrabold text-[var(--text-main)] mt-0.5">₹${b.revenue.toLocaleString()}</p>
+                      <p class="font-extrabold text-[var(--text-main)] mt-0.5">₹${bRevenue.toLocaleString()}</p>
                     </div>
                     <div>
                       <p class="text-[10px] text-[var(--text-light)]">Net Margin</p>
-                      <p class="font-extrabold text-emerald-600 mt-0.5">${b.margin}</p>
+                      <p class="font-extrabold text-emerald-600 mt-0.5">${bMargin}</p>
                     </div>
                   </div>
                 </div>
 
                 <div class="mt-3 pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px]">
-                  <span class="text-[var(--text-light)]">${b.orders} Orders Completed</span>
-                  <button data-switch-branch="${b.id}" class="text-[var(--brand-primary)] font-bold hover:underline">
-                    ${b.id === state.currentBranchId ? 'Active Branch ✓' : 'Switch Branch →'}
+                  <span class="text-[var(--text-light)]">${bOrders} Orders Completed</span>
+                  <button data-switch-branch="${b.id}" class="text-[var(--brand-primary)] font-bold hover:underline cursor-pointer">
+                    ${isCurrent ? 'Active Branch ✓' : 'Switch Branch →'}
                   </button>
                 </div>
               </div>
@@ -136,7 +140,7 @@ export function renderAnalyticsView(state) {
                 </td>
                 <td class="py-3 px-4 text-center text-[var(--text-muted)]">Operating Inflow</td>
                 <td class="py-3 px-4 text-right font-extrabold text-emerald-700 text-sm">₹${grossRevenue.toLocaleString()}</td>
-                <td class="py-3 px-4 text-right font-bold text-emerald-700">100.0%</td>
+                <td class="py-3 px-4 text-right font-bold text-emerald-700">${grossRevenue > 0 ? '100.0%' : '0.0%'}</td>
               </tr>
 
               <!-- Raw Material Cost -->
@@ -144,7 +148,7 @@ export function renderAnalyticsView(state) {
                 <td class="py-2.5 px-4 text-[var(--text-main)] pl-8">(-) Raw Material Consumption (Ghee, Mawa, Sugar, Cashews)</td>
                 <td class="py-2.5 px-4 text-center text-[var(--text-light)]">COGS / Production</td>
                 <td class="py-2.5 px-4 text-right font-semibold text-rose-600">- ₹${rawMaterialCost.toLocaleString()}</td>
-                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">29.1%</td>
+                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">${grossRevenue > 0 ? '29.1%' : '0.0%'}</td>
               </tr>
 
               <!-- Packaging -->
@@ -152,7 +156,7 @@ export function renderAnalyticsView(state) {
                 <td class="py-2.5 px-4 text-[var(--text-main)] pl-8">(-) Packaging Expense (Gold Boxes, Pouches, Bags)</td>
                 <td class="py-2.5 px-4 text-center text-[var(--text-light)]">Direct Production</td>
                 <td class="py-2.5 px-4 text-right font-semibold text-rose-600">- ₹${packagingCost.toLocaleString()}</td>
-                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">4.7%</td>
+                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">${grossRevenue > 0 ? '4.7%' : '0.0%'}</td>
               </tr>
 
               <!-- Staff Payroll & Wages -->
@@ -160,7 +164,7 @@ export function renderAnalyticsView(state) {
                 <td class="py-2.5 px-4 text-[var(--text-main)] pl-8">(-) Staff Payroll & Halwai Wages</td>
                 <td class="py-2.5 px-4 text-center text-[var(--text-light)]">Operating Overhead</td>
                 <td class="py-2.5 px-4 text-right font-semibold text-rose-600">- ₹${laborCost.toLocaleString()}</td>
-                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">14.0%</td>
+                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">${grossRevenue > 0 ? '14.0%' : '0.0%'}</td>
               </tr>
 
               <!-- Utilities -->
@@ -168,7 +172,7 @@ export function renderAnalyticsView(state) {
                 <td class="py-2.5 px-4 text-[var(--text-main)] pl-8">(-) Utilities & Energy (Commercial LPG, Power, Water)</td>
                 <td class="py-2.5 px-4 text-center text-[var(--text-light)]">Operating Overhead</td>
                 <td class="py-2.5 px-4 text-right font-semibold text-rose-600">- ₹${utilitiesCost.toLocaleString()}</td>
-                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">12.4%</td>
+                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">${grossRevenue > 0 ? '12.4%' : '0.0%'}</td>
               </tr>
 
               <!-- Rent & Facility Maintenance -->
@@ -176,7 +180,7 @@ export function renderAnalyticsView(state) {
                 <td class="py-2.5 px-4 text-[var(--text-main)] pl-8">(-) Store Lease Rent & Equipment Maintenance</td>
                 <td class="py-2.5 px-4 text-center text-[var(--text-light)]">Fixed Overhead</td>
                 <td class="py-2.5 px-4 text-right font-semibold text-rose-600">- ₹${rentMaintenanceCost.toLocaleString()}</td>
-                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">5.7%</td>
+                <td class="py-2.5 px-4 text-right text-[var(--text-muted)]">${grossRevenue > 0 ? '5.7%' : '0.0%'}</td>
               </tr>
 
               <!-- Taxes -->

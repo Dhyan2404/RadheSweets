@@ -53,7 +53,7 @@ export function renderSlideCommit(config: SlideCommitConfig = {}): string {
       <!-- Center Shimmering Guide Track Label -->
       <div 
         id="${id}-label" 
-        class="absolute inset-0 flex items-center justify-center pointer-events-none text-xs sm:text-sm font-bold tracking-wide transition-opacity duration-200"
+        class="absolute inset-0 flex items-center justify-center pointer-events-none text-xs sm:text-sm font-bold tracking-wide transition-opacity duration-200 z-10"
         style="color: rgba(250, 247, 242, 0.85); padding-left: ${height - 8}px; padding-right: 16px;"
       >
         <span class="truncate flex items-center gap-1.5 animate-pulse">
@@ -64,23 +64,30 @@ export function renderSlideCommit(config: SlideCommitConfig = {}): string {
         </span>
       </div>
 
+      <!-- Progressive Slide Fill Track Behind Handle -->
+      <div 
+        id="${id}-fill" 
+        class="absolute top-0 left-0 bottom-0 pointer-events-none transition-all duration-75 z-5"
+        style="width: 0px; border-radius: inherit; background: linear-gradient(90deg, rgba(22, 163, 74, 0.35), rgba(22, 163, 74, 0.85));"
+      ></div>
+
       <!-- Error Label (Hidden initially) -->
       <div 
         id="${id}-error-label" 
-        class="absolute inset-0 hidden items-center justify-center pointer-events-none text-xs sm:text-sm font-bold text-white tracking-wide z-10"
-        style="background: ${dangerColor};"
+        class="absolute inset-0 hidden items-center justify-center pointer-events-none text-xs sm:text-sm font-bold text-white tracking-wide z-20"
+        style="background: ${dangerColor}; border-radius: inherit;"
       >
         <span>⚠️ ${errorLabel}</span>
       </div>
 
-      <!-- Success Done Pill (Fills track on complete) -->
+      <!-- Success Done Pill (Seamlessly Fills Entire Track) -->
       <div 
         id="${id}-done-overlay" 
-        class="absolute inset-0 flex items-center justify-center pointer-events-none text-xs sm:text-sm font-black text-white tracking-wide opacity-0 transition-all duration-300 z-20 scale-95"
-        style="background: linear-gradient(135deg, ${successColor}, #22c55e); border-radius: ${radius}px;"
+        class="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none text-xs sm:text-sm font-black text-white tracking-wide opacity-0 transition-opacity duration-200 z-30"
+        style="background: linear-gradient(135deg, ${successColor}, #22c55e); border-radius: inherit;"
       >
         <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+          <div class="w-6 h-6 rounded-full bg-white/25 flex items-center justify-center shadow-xs">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
@@ -92,7 +99,7 @@ export function renderSlideCommit(config: SlideCommitConfig = {}): string {
       <!-- Drag Handle (Thumb Capsule) -->
       <div 
         id="${id}-handle" 
-        class="absolute top-1 left-1 bottom-1 flex items-center justify-center cursor-grab active:cursor-grabbing text-white font-bold shadow-md transition-transform duration-75 z-10"
+        class="absolute top-1 left-1 bottom-1 flex items-center justify-center cursor-grab active:cursor-grabbing text-white font-bold shadow-md transition-transform duration-75 z-15"
         style="
           width: ${height - 8}px; 
           height: ${height - 8}px; 
@@ -131,6 +138,7 @@ export function initSlideCommit(
   const root = document.getElementById(`${sliderId}-root`);
   const handle = document.getElementById(`${sliderId}-handle`);
   const label = document.getElementById(`${sliderId}-label`);
+  const fill = document.getElementById(`${sliderId}-fill`);
   const doneOverlay = document.getElementById(`${sliderId}-done-overlay`);
   const errorLabel = document.getElementById(`${sliderId}-error-label`);
   const arrow = document.getElementById(`${sliderId}-handle-arrow`);
@@ -154,6 +162,12 @@ export function initSlideCommit(
     currentX = Math.max(0, Math.min(x, maxTravel));
     handle.style.transform = `translate3d(${currentX}px, 0, 0)`;
     
+    // Update progressive green fill width behind handle
+    if (fill) {
+      const handleWidth = handle.clientWidth || 48;
+      fill.style.width = `${currentX + handleWidth}px`;
+    }
+
     // Fade out guide label as handle slides
     if (label) {
       const progress = currentX / maxTravel;
@@ -163,9 +177,11 @@ export function initSlideCommit(
 
   const returnHome = (bounce: boolean = true) => {
     handle.style.transition = bounce ? 'transform 0.42s cubic-bezier(0.23, 1, 0.32, 1)' : 'transform 0.2s ease-out';
+    if (fill) fill.style.transition = bounce ? 'width 0.42s cubic-bezier(0.23, 1, 0.32, 1)' : 'width 0.2s ease-out';
     updatePosition(0);
     setTimeout(() => {
       handle.style.transition = 'transform 0.05s ease-out';
+      if (fill) fill.style.transition = 'width 0.05s ease-out';
     }, 450);
   };
 
@@ -179,16 +195,23 @@ export function initSlideCommit(
     if (spinner) spinner.classList.remove('hidden');
 
     try {
-      const outcome = callbacks.onConfirm();
-      if (outcome && typeof (outcome as any).then === 'function') {
-        await outcome;
+      // Seamlessly morph the entire container to solid radiant emerald green
+      root.setAttribute('data-state', 'done');
+      root.style.background = 'linear-gradient(135deg, #16a34a, #22c55e)';
+      root.style.borderColor = '#16a34a';
+      root.style.boxShadow = '0 8px 24px -4px rgba(22, 163, 74, 0.45)';
+
+      // Hide the drag handle so it never sticks out at the edges
+      handle.style.opacity = '0';
+      handle.style.pointerEvents = 'none';
+
+      if (fill) {
+        fill.style.width = '100%';
+        fill.style.opacity = '0';
       }
 
-      // Success transition
-      root.setAttribute('data-state', 'done');
       if (doneOverlay) {
         doneOverlay.style.opacity = '1';
-        doneOverlay.style.transform = 'scale(1)';
       }
       if (spinner) spinner.classList.add('hidden');
 
@@ -197,10 +220,16 @@ export function initSlideCommit(
         if ('vibrate' in navigator) navigator.vibrate([20, 30, 20]);
       } catch (e) {}
 
+      // Brief visual hold so user sees the slide complete
+      await new Promise(r => setTimeout(r, 380));
+
+      const outcome = callbacks.onConfirm();
+      if (outcome && typeof (outcome as any).then === 'function') {
+        await outcome;
+      }
+
       if (callbacks.onDone) {
-        setTimeout(() => {
-          callbacks.onDone?.();
-        }, 300);
+        callbacks.onDone();
       }
     } catch (err) {
       root.setAttribute('data-state', 'error');
@@ -292,9 +321,17 @@ export function initSlideCommit(
     reset: () => {
       isCommitted = false;
       root.setAttribute('data-state', 'idle');
+      root.style.background = '#241816';
+      root.style.borderColor = 'rgba(200, 109, 59, 0.25)';
+      root.style.boxShadow = 'inset 0 2px 6px rgba(0,0,0,0.35), 0 2px 8px rgba(36,24,22,0.15)';
+      handle.style.opacity = '1';
+      handle.style.pointerEvents = 'auto';
+      if (fill) {
+        fill.style.width = '0px';
+        fill.style.opacity = '1';
+      }
       if (doneOverlay) {
         doneOverlay.style.opacity = '0';
-        doneOverlay.style.transform = 'scale(0.95)';
       }
       if (errorLabel) errorLabel.classList.add('hidden');
       if (arrow) arrow.classList.remove('hidden');
