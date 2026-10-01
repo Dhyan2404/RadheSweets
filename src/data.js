@@ -367,12 +367,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-1.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-1.png"
     },
     {
         "id": "sw-2",
         "num": 2,
-        "name": "Gulab Jamun",
+        "name": "Kesar Pista Roll",
         "tagline": "Mawa Sweet",
         "category": "Mawa & Khoya",
         "pricePerKg": 360,
@@ -389,12 +389,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-2.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-2.png"
     },
     {
         "id": "sw-3",
         "num": 3,
-        "name": "Rasgulla",
+        "name": "Shrikhand",
         "tagline": "Fresh Chhena",
         "category": "Bengali & Chhena",
         "pricePerKg": 340,
@@ -411,12 +411,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-3.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-3.png"
     },
     {
         "id": "sw-4",
         "num": 4,
-        "name": "Rasmalai",
+        "name": "Sandesh",
         "tagline": "Saffron Clotted Milk",
         "category": "Bengali & Chhena",
         "pricePerKg": 480,
@@ -433,12 +433,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-4.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-4.png"
     },
     {
         "id": "sw-5",
         "num": 5,
-        "name": "Jalebi",
+        "name": "Nariyal Ladoo",
         "tagline": "Desi Ghee Spiral",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 320,
@@ -455,12 +455,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-5.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-5.png"
     },
     {
         "id": "sw-6",
         "num": 6,
-        "name": "Motichoor Ladoo",
+        "name": "Chikoo Barfi",
         "tagline": "Desi Ghee Pearls",
         "category": "Ladoo",
         "pricePerKg": 380,
@@ -477,12 +477,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-6.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-6.png"
     },
     {
         "id": "sw-7",
         "num": 7,
-        "name": "Besan Ladoo",
+        "name": "Rasgulla Brown",
         "tagline": "Roasted Gram Flour",
         "category": "Ladoo",
         "pricePerKg": 360,
@@ -499,12 +499,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-7.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-7.png"
     },
     {
         "id": "sw-8",
         "num": 8,
-        "name": "Soan Papdi",
+        "name": "Besan Barfi",
         "tagline": "Crisp & Flaky",
         "category": "Traditional & Flaky",
         "pricePerKg": 300,
@@ -521,12 +521,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-8.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-8.png"
     },
     {
         "id": "sw-9",
         "num": 9,
-        "name": "Peda",
+        "name": "Anarsa",
         "tagline": "Mathura Style",
         "category": "Barfi & Peda",
         "pricePerKg": 420,
@@ -543,12 +543,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-9.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-9.png"
     },
     {
         "id": "sw-10",
         "num": 10,
-        "name": "Barfi",
+        "name": "Jalidar Peda",
         "tagline": "Pure Mawa Fudge",
         "category": "Barfi & Peda",
         "pricePerKg": 400,
@@ -565,12 +565,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "0.00",
         "image": "/assets/sweets/sw-10.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-10.png"
     },
     {
         "id": "sw-11",
         "num": 11,
-        "name": "Kesar Pista Roll",
+        "name": "Gulab Jamun",
         "tagline": "Saffron Pistachio",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 960,
@@ -587,7 +587,7 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-11.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-11.png"
     },
     {
         "id": "sw-12",
@@ -609,12 +609,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-12.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-12.png"
     },
     {
         "id": "sw-13",
         "num": 13,
-        "name": "Cham Cham",
+        "name": "Basundi",
         "tagline": "Bengali Chhena Sweet",
         "category": "Bengali & Chhena",
         "pricePerKg": 380,
@@ -631,12 +631,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-13.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-13.png"
     },
     {
         "id": "sw-14",
         "num": 14,
-        "name": "Malpua",
+        "name": "Mishti Doi",
         "tagline": "Fried Sweet Pancake",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 360,
@@ -653,12 +653,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-14.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-14.png"
     },
     {
         "id": "sw-15",
         "num": 15,
-        "name": "Ghevar",
+        "name": "Pinni",
         "tagline": "Rajasthani Honeycomb",
         "category": "Traditional & Flaky",
         "pricePerKg": 580,
@@ -675,12 +675,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-15.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-15.png"
     },
     {
         "id": "sw-16",
         "num": 16,
-        "name": "Imarti",
+        "name": "Rasakadam",
         "tagline": "Flower Shaped Jalebi",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 360,
@@ -697,12 +697,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-16.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-16.png"
     },
     {
         "id": "sw-17",
         "num": 17,
-        "name": "Laddu (Boondi)",
+        "name": "Kala Jamun",
         "tagline": "Juicy Sweet Boondi",
         "category": "Ladoo",
         "pricePerKg": 340,
@@ -719,12 +719,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-17.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-17.png"
     },
     {
         "id": "sw-18",
         "num": 18,
-        "name": "Balushahi",
+        "name": "Cornflour Halwa",
         "tagline": "Flaky Glazed Pastry",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 360,
@@ -741,12 +741,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-18.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-18.png"
     },
     {
         "id": "sw-19",
         "num": 19,
-        "name": "Mawa Kachori",
+        "name": "Puran Poli",
         "tagline": "Jodhpur Royal Sweet",
         "category": "Traditional & Flaky",
         "pricePerKg": 420,
@@ -763,12 +763,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-19.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-19.png"
     },
     {
         "id": "sw-20",
         "num": 20,
-        "name": "Chandrakala",
+        "name": "Kesar Barfi",
         "tagline": "Crescent Moon Sweet",
         "category": "Mawa & Khoya",
         "pricePerKg": 440,
@@ -785,12 +785,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "11.11",
         "image": "/assets/sweets/sw-20.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-20.png"
     },
     {
         "id": "sw-21",
         "num": 21,
-        "name": "Shrikhand",
+        "name": "Rasgulla",
         "tagline": "Kesar Elaichi Curd",
         "category": "Bengali & Chhena",
         "pricePerKg": 320,
@@ -807,12 +807,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-21.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-21.png"
     },
     {
         "id": "sw-22",
         "num": 22,
-        "name": "Basundi",
+        "name": "Cham Cham",
         "tagline": "Thick Sweet Milk",
         "category": "Traditional & Milk",
         "pricePerKg": 360,
@@ -829,7 +829,7 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-22.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-22.png"
     },
     {
         "id": "sw-23",
@@ -851,12 +851,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-23.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-23.png"
     },
     {
         "id": "sw-24",
         "num": 24,
-        "name": "Kheer",
+        "name": "Chhena Poda",
         "tagline": "Rice & Cardamom",
         "category": "Traditional & Milk",
         "pricePerKg": 260,
@@ -873,12 +873,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-24.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-24.png"
     },
     {
         "id": "sw-25",
         "num": 25,
-        "name": "Phirni",
+        "name": "Chocolate Barfi",
         "tagline": "Clay Pot Ground Rice",
         "category": "Traditional & Milk",
         "pricePerKg": 280,
@@ -895,12 +895,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-25.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-25.png"
     },
     {
         "id": "sw-26",
         "num": 26,
-        "name": "Kulfi",
+        "name": "Makhana Ladoo",
         "tagline": "Malai Matka Kulfi",
         "category": "Traditional & Milk",
         "pricePerKg": 320,
@@ -917,12 +917,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-26.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-26.png"
     },
     {
         "id": "sw-27",
         "num": 27,
-        "name": "Falooda",
+        "name": "Peni",
         "tagline": "Rose & Basil Seeds",
         "category": "Beverages",
         "pricePerKg": 220,
@@ -939,12 +939,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-27.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-27.png"
     },
     {
         "id": "sw-28",
         "num": 28,
-        "name": "Angoori Petha",
+        "name": "Dry Fruit Kachori",
         "tagline": "Agra Ash Gourd",
         "category": "Traditional & Flaky",
         "pricePerKg": 260,
@@ -961,12 +961,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-28.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-28.png"
     },
     {
         "id": "sw-29",
         "num": 29,
-        "name": "Kaju Pista Roll",
+        "name": "Balu Shahi",
         "tagline": "Dual Nut Roll",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 980,
@@ -983,12 +983,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-29.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-29.png"
     },
     {
         "id": "sw-30",
         "num": 30,
-        "name": "Dry Fruit Barfi",
+        "name": "Chhena Murki",
         "tagline": "Sugarfree Dates & Fig",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 850,
@@ -1005,12 +1005,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "22.22",
         "image": "/assets/sweets/sw-30.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-30.png"
     },
     {
         "id": "sw-31",
         "num": 31,
-        "name": "Sandesh",
+        "name": "Rasmalai",
         "tagline": "Kolkata Special",
         "category": "Bengali & Chhena",
         "pricePerKg": 420,
@@ -1027,12 +1027,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-31.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-31.png"
     },
     {
         "id": "sw-32",
         "num": 32,
-        "name": "Mishti Doi",
+        "name": "Malpua",
         "tagline": "Caramelized Sweet Curd",
         "category": "Bengali & Chhena",
         "pricePerKg": 240,
@@ -1049,12 +1049,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-32.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-32.png"
     },
     {
         "id": "sw-33",
         "num": 33,
-        "name": "Chhena Poda",
+        "name": "Kheer",
         "tagline": "Baked Cottage Cheese",
         "category": "Bengali & Chhena",
         "pricePerKg": 460,
@@ -1071,7 +1071,7 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-33.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-33.png"
     },
     {
         "id": "sw-34",
@@ -1093,12 +1093,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-34.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-34.png"
     },
     {
         "id": "sw-35",
         "num": 35,
-        "name": "Moong Dal Halwa",
+        "name": "Mewa Bati",
         "tagline": "Shuddh Ghee Moong",
         "category": "Halwa",
         "pricePerKg": 440,
@@ -1115,12 +1115,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-35.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-35.png"
     },
     {
         "id": "sw-36",
         "num": 36,
-        "name": "Atta Halwa",
+        "name": "Gond Ladoo",
         "tagline": "Kada Prasad Style",
         "category": "Halwa",
         "pricePerKg": 320,
@@ -1137,12 +1137,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-36.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-36.png"
     },
     {
         "id": "sw-37",
         "num": 37,
-        "name": "Suji Halwa",
+        "name": "Khoya Barfi",
         "tagline": "Rava Sheera",
         "category": "Halwa",
         "pricePerKg": 280,
@@ -1159,12 +1159,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-37.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-37.png"
     },
     {
         "id": "sw-38",
         "num": 38,
-        "name": "Sohan Halwa",
+        "name": "Ghughra",
         "tagline": "Caramelized Brittle",
         "category": "Halwa",
         "pricePerKg": 520,
@@ -1181,12 +1181,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-38.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-38.png"
     },
     {
         "id": "sw-39",
         "num": 39,
-        "name": "Dry Fruit Ladoo",
+        "name": "Chena Jalebi",
         "tagline": "Nutrient Rich",
         "category": "Ladoo",
         "pricePerKg": 840,
@@ -1203,12 +1203,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-39.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-39.png"
     },
     {
         "id": "sw-40",
         "num": 40,
-        "name": "Til Ladoo",
+        "name": "Mango Peda",
         "tagline": "Sesame & Jaggery",
         "category": "Ladoo",
         "pricePerKg": 320,
@@ -1225,12 +1225,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "33.33",
         "image": "/assets/sweets/sw-40.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-40.png"
     },
     {
         "id": "sw-41",
         "num": 41,
-        "name": "Nariyal Ladoo",
+        "name": "Jalebi",
         "tagline": "Fresh Coconut",
         "category": "Ladoo",
         "pricePerKg": 340,
@@ -1247,12 +1247,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-41.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-41.png"
     },
     {
         "id": "sw-42",
         "num": 42,
-        "name": "Pinni",
+        "name": "Ghevar",
         "tagline": "Punjabi Energy Sweet",
         "category": "Traditional & Ghee",
         "pricePerKg": 460,
@@ -1269,12 +1269,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-42.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-42.png"
     },
     {
         "id": "sw-43",
         "num": 43,
-        "name": "Chocolate Barfi",
+        "name": "Phirni",
         "tagline": "Dual Chocolate Mawa",
         "category": "Barfi & Peda",
         "pricePerKg": 460,
@@ -1291,12 +1291,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-43.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-43.png"
     },
     {
         "id": "sw-44",
         "num": 44,
-        "name": "Mewa Bati",
+        "name": "Moong Dal Halwa",
         "tagline": "Stuffed Gulab Jamun",
         "category": "Mawa & Khoya",
         "pricePerKg": 440,
@@ -1313,7 +1313,7 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-44.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-44.png"
     },
     {
         "id": "sw-45",
@@ -1335,12 +1335,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-45.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-45.png"
     },
     {
         "id": "sw-46",
         "num": 46,
-        "name": "Pista Barfi",
+        "name": "Rajbhog",
         "tagline": "Emerald Pistachio",
         "category": "Barfi & Peda",
         "pricePerKg": 980,
@@ -1357,12 +1357,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-46.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-46.png"
     },
     {
         "id": "sw-47",
         "num": 47,
-        "name": "Anjeer Barfi",
+        "name": "Singori",
         "tagline": "Afghan Figs",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 880,
@@ -1379,12 +1379,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-47.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-47.png"
     },
     {
         "id": "sw-48",
         "num": 48,
-        "name": "Rose Barfi",
+        "name": "Pethe ki Barfi",
         "tagline": "Damask Rose Petals",
         "category": "Barfi & Peda",
         "pricePerKg": 460,
@@ -1401,12 +1401,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-48.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-48.png"
     },
     {
         "id": "sw-49",
         "num": 49,
-        "name": "Mango Barfi",
+        "name": "Adhirasam",
         "tagline": "Ratnagiri Alphonso",
         "category": "Barfi & Peda",
         "pricePerKg": 460,
@@ -1423,12 +1423,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-49.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-49.png"
     },
     {
         "id": "sw-50",
         "num": 50,
-        "name": "Coconut Barfi",
+        "name": "Litchi Burfi",
         "tagline": "Classic Kopra Pak",
         "category": "Barfi & Peda",
         "pricePerKg": 360,
@@ -1445,12 +1445,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "44.44",
         "image": "/assets/sweets/sw-50.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-50.png"
     },
     {
         "id": "sw-51",
         "num": 51,
-        "name": "Chikoo Barfi",
+        "name": "Motichoor Ladoo",
         "tagline": "Sapota Fruit Fudge",
         "category": "Barfi & Peda",
         "pricePerKg": 460,
@@ -1467,12 +1467,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-51.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-51.png"
     },
     {
         "id": "sw-52",
         "num": 52,
-        "name": "Rasakadam",
+        "name": "Imarti",
         "tagline": "Kheer Kadam",
         "category": "Bengali & Chhena",
         "pricePerKg": 480,
@@ -1489,12 +1489,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-52.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-52.png"
     },
     {
         "id": "sw-53",
         "num": 53,
-        "name": "Makhana Ladoo",
+        "name": "Kulfi",
         "tagline": "Foxnut Superfood",
         "category": "Ladoo",
         "pricePerKg": 640,
@@ -1511,12 +1511,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-53.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-53.png"
     },
     {
         "id": "sw-54",
         "num": 54,
-        "name": "Gond Ladoo",
+        "name": "Atta Halwa",
         "tagline": "Edible Gum & Ghee",
         "category": "Ladoo",
         "pricePerKg": 520,
@@ -1533,12 +1533,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-54.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-54.png"
     },
     {
         "id": "sw-55",
         "num": 55,
-        "name": "Rajbhog",
+        "name": "Pista Barfi",
         "tagline": "Royal Yellow Rasgulla",
         "category": "Bengali & Chhena",
         "pricePerKg": 420,
@@ -1555,7 +1555,7 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-55.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-55.png"
     },
     {
         "id": "sw-56",
@@ -1577,12 +1577,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-56.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-56.png"
     },
     {
         "id": "sw-57",
         "num": 57,
-        "name": "Lauki Halwa",
+        "name": "Moti Pak",
         "tagline": "Doodhi Halwa",
         "category": "Halwa",
         "pricePerKg": 320,
@@ -1599,12 +1599,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-57.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-57.png"
     },
     {
         "id": "sw-58",
         "num": 58,
-        "name": "Paan Ladoo",
+        "name": "Khopra Pak",
         "tagline": "Betel Leaf & Gulkand",
         "category": "Ladoo",
         "pricePerKg": 480,
@@ -1621,12 +1621,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-58.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-58.png"
     },
     {
         "id": "sw-59",
         "num": 59,
-        "name": "Kimami Sewai",
+        "name": "Mysore Pak",
         "tagline": "Awadhi Roasted Vermicelli",
         "category": "Traditional & Ghee",
         "pricePerKg": 360,
@@ -1643,12 +1643,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-59.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-59.png"
     },
     {
         "id": "sw-60",
         "num": 60,
-        "name": "Shahi Tukda",
+        "name": "Kaju Anjeer Roll",
         "tagline": "Royal Mughlai Dessert",
         "category": "Traditional & Ghee",
         "pricePerKg": 340,
@@ -1665,12 +1665,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "55.56",
         "image": "/assets/sweets/sw-60.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-60.png"
     },
     {
         "id": "sw-61",
         "num": 61,
-        "name": "Rasgulla (Brown)",
+        "name": "Besan Ladoo",
         "tagline": "Nolen Gur Special",
         "category": "Bengali & Chhena",
         "pricePerKg": 360,
@@ -1687,12 +1687,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-61.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-61.png"
     },
     {
         "id": "sw-62",
         "num": 62,
-        "name": "Kala Jamun",
+        "name": "Boondi Ladoo",
         "tagline": "Dark Caramelized Jamun",
         "category": "Mawa & Khoya",
         "pricePerKg": 380,
@@ -1709,12 +1709,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-62.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-62.png"
     },
     {
         "id": "sw-63",
         "num": 63,
-        "name": "Peni",
+        "name": "Falooda",
         "tagline": "Layered Crisp Peni",
         "category": "Traditional & Ghee",
         "pricePerKg": 380,
@@ -1731,12 +1731,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-63.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-63.png"
     },
     {
         "id": "sw-64",
         "num": 64,
-        "name": "Khoya Barfi",
+        "name": "Suji Halwa",
         "tagline": "Plain Milk Fudge",
         "category": "Barfi & Peda",
         "pricePerKg": 420,
@@ -1753,12 +1753,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-64.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-64.png"
     },
     {
         "id": "sw-65",
         "num": 65,
-        "name": "Singori",
+        "name": "Anjeer Barfi",
         "tagline": "Molu Leaf Cone",
         "category": "Traditional & Ghee",
         "pricePerKg": 460,
@@ -1775,12 +1775,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-65.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-65.png"
     },
     {
         "id": "sw-66",
         "num": 66,
-        "name": "Moti Pak",
+        "name": "Lauki Halwa",
         "tagline": "Besan & Khoya Slice",
         "category": "Barfi & Peda",
         "pricePerKg": 420,
@@ -1797,7 +1797,7 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-66.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-66.png"
     },
     {
         "id": "sw-67",
@@ -1819,12 +1819,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-67.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-67.png"
     },
     {
         "id": "sw-68",
         "num": 68,
-        "name": "Elaichi Barfi",
+        "name": "Meethi Mathri",
         "tagline": "Green Cardamom",
         "category": "Barfi & Peda",
         "pricePerKg": 420,
@@ -1841,12 +1841,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-68.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-68.png"
     },
     {
         "id": "sw-69",
         "num": 69,
-        "name": "Pineapple Pastry",
+        "name": "Dharwad Peda",
         "tagline": "Pineapple Halwa Cake",
         "category": "Halwa & Special",
         "pricePerKg": 440,
@@ -1863,12 +1863,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-69.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-69.png"
     },
     {
         "id": "sw-70",
         "num": 70,
-        "name": "Chamcham",
+        "name": "Nutty Bites",
         "tagline": "Malai Roll Chamcham",
         "category": "Bengali & Chhena",
         "pricePerKg": 380,
@@ -1885,12 +1885,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "66.67",
         "image": "/assets/sweets/sw-70.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-70.png"
     },
     {
         "id": "sw-71",
         "num": 71,
-        "name": "Besan Barfi",
+        "name": "Soan Papdi",
         "tagline": "Mohanthal Style",
         "category": "Barfi & Peda",
         "pricePerKg": 380,
@@ -1907,12 +1907,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-71.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-71.png"
     },
     {
         "id": "sw-72",
         "num": 72,
-        "name": "Cornflour Halwa",
+        "name": "Balushahi",
         "tagline": "Bombay Karachi Halwa",
         "category": "Halwa",
         "pricePerKg": 360,
@@ -1929,12 +1929,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-72.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-72.png"
     },
     {
         "id": "sw-73",
         "num": 73,
-        "name": "Dry Fruit Kachori",
+        "name": "Angoori Petha",
         "tagline": "Sweet Nutty Puffs",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 480,
@@ -1951,12 +1951,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-73.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-73.png"
     },
     {
         "id": "sw-74",
         "num": 74,
-        "name": "Ghughra",
+        "name": "Sohan Halwa",
         "tagline": "Gujarati Karanji",
         "category": "Traditional & Ghee",
         "pricePerKg": 380,
@@ -1973,12 +1973,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-74.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-74.png"
     },
     {
         "id": "sw-75",
         "num": 75,
-        "name": "Pethe ki Barfi",
+        "name": "Rose Barfi",
         "tagline": "Ash Gourd Fudge",
         "category": "Traditional & Ghee",
         "pricePerKg": 320,
@@ -1995,12 +1995,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-75.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-75.png"
     },
     {
         "id": "sw-76",
         "num": 76,
-        "name": "Khopra Pak",
+        "name": "Paan Ladoo",
         "tagline": "Saffron Coconut",
         "category": "Barfi & Peda",
         "pricePerKg": 380,
@@ -2017,12 +2017,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-76.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-76.png"
     },
     {
         "id": "sw-77",
         "num": 77,
-        "name": "Meethi Mathri",
+        "name": "Elaichi Barfi",
         "tagline": "Sweet Biscuit",
         "category": "Traditional & Ghee",
         "pricePerKg": 280,
@@ -2039,7 +2039,7 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-77.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-77.png"
     },
     {
         "id": "sw-78",
@@ -2061,12 +2061,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-78.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-78.png"
     },
     {
         "id": "sw-79",
         "num": 79,
-        "name": "Gujiya",
+        "name": "Kunda",
         "tagline": "Holi Festival Special",
         "category": "Traditional & Ghee",
         "pricePerKg": 420,
@@ -2083,12 +2083,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-79.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-79.png"
     },
     {
         "id": "sw-80",
         "num": 80,
-        "name": "Thekua",
+        "name": "Rabri Malpua",
         "tagline": "Bihari Chhath Prasad",
         "category": "Traditional & Ghee",
         "pricePerKg": 280,
@@ -2105,12 +2105,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "77.78",
         "image": "/assets/sweets/sw-80.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-80.png"
     },
     {
         "id": "sw-81",
         "num": 81,
-        "name": "Anarsa",
+        "name": "Peda",
         "tagline": "Sesame Rice Pastry",
         "category": "Traditional & Ghee",
         "pricePerKg": 340,
@@ -2127,12 +2127,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-81.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-81.png"
     },
     {
         "id": "sw-82",
         "num": 82,
-        "name": "Puran Poli",
+        "name": "Mawa Kachori",
         "tagline": "Sweet Lentil Bread",
         "category": "Traditional & Ghee",
         "pricePerKg": 300,
@@ -2149,12 +2149,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-82.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-82.png"
     },
     {
         "id": "sw-83",
         "num": 83,
-        "name": "Balu Shahi",
+        "name": "Kaju Pista Roll",
         "tagline": "Crisp Glazed Ring",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 360,
@@ -2171,12 +2171,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-83.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-83.png"
     },
     {
         "id": "sw-84",
         "num": 84,
-        "name": "Chena Jalebi",
+        "name": "Dry Fruit Ladoo",
         "tagline": "Chhena Spun Coil",
         "category": "Bengali & Chhena",
         "pricePerKg": 420,
@@ -2193,12 +2193,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-84.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-84.png"
     },
     {
         "id": "sw-85",
         "num": 85,
-        "name": "Adhirasam",
+        "name": "Mango Barfi",
         "tagline": "Tamil Deep South Sweet",
         "category": "Traditional & Ghee",
         "pricePerKg": 320,
@@ -2215,12 +2215,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-85.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-85.png"
     },
     {
         "id": "sw-86",
         "num": 86,
-        "name": "Mysore Pak",
+        "name": "Kimami Sewai",
         "tagline": "Melt-In-Mouth Ghee",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 480,
@@ -2237,12 +2237,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-86.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-86.png"
     },
     {
         "id": "sw-87",
         "num": 87,
-        "name": "Dharwad Peda",
+        "name": "Pineapple Pastry",
         "tagline": "Caramelized Karnataka",
         "category": "Barfi & Peda",
         "pricePerKg": 460,
@@ -2259,12 +2259,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-87.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-87.png"
     },
     {
         "id": "sw-88",
         "num": 88,
-        "name": "Kunda",
+        "name": "Gujiya",
         "tagline": "Belgaum Milk Sweet",
         "category": "Traditional & Milk",
         "pricePerKg": 420,
@@ -2281,7 +2281,7 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-88.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-88.png"
     },
     {
         "id": "sw-89",
@@ -2303,12 +2303,12 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-89.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-89.png"
     },
     {
         "id": "sw-90",
         "num": 90,
-        "name": "Badusha",
+        "name": "Dry Fruit Roll",
         "tagline": "South Indian Balushahi",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 360,
@@ -2325,12 +2325,12 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "88.89",
         "image": "/assets/sweets/sw-90.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-90.png"
     },
     {
         "id": "sw-91",
         "num": 91,
-        "name": "Jalidar Peda",
+        "name": "Barfi",
         "tagline": "Lattice Pattern Peda",
         "category": "Barfi & Peda",
         "pricePerKg": 440,
@@ -2347,12 +2347,12 @@ export const initialData = {
         "gridPosX": "0.00",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-91.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-91.png"
     },
     {
         "id": "sw-92",
         "num": 92,
-        "name": "Kesar Barfi",
+        "name": "Chandrakala",
         "tagline": "Pure Saffron Fudge",
         "category": "Barfi & Peda",
         "pricePerKg": 480,
@@ -2369,12 +2369,12 @@ export const initialData = {
         "gridPosX": "11.11",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-92.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-92.png"
     },
     {
         "id": "sw-93",
         "num": 93,
-        "name": "Chhena Murki",
+        "name": "Dry Fruit Barfi",
         "tagline": "Candied Chhena Cubes",
         "category": "Bengali & Chhena",
         "pricePerKg": 420,
@@ -2391,12 +2391,12 @@ export const initialData = {
         "gridPosX": "22.22",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-93.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-93.png"
     },
     {
         "id": "sw-94",
         "num": 94,
-        "name": "Mango Peda",
+        "name": "Til Ladoo",
         "tagline": "Fresh Mango Khoya",
         "category": "Barfi & Peda",
         "pricePerKg": 440,
@@ -2413,12 +2413,12 @@ export const initialData = {
         "gridPosX": "33.33",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-94.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-94.png"
     },
     {
         "id": "sw-95",
         "num": 95,
-        "name": "Litchi Burfi",
+        "name": "Coconut Barfi",
         "tagline": "Shahi Litchi Pulp",
         "category": "Barfi & Peda",
         "pricePerKg": 460,
@@ -2435,12 +2435,12 @@ export const initialData = {
         "gridPosX": "44.44",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-95.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-95.png"
     },
     {
         "id": "sw-96",
         "num": 96,
-        "name": "Kaju Anjeer Roll",
+        "name": "Shahi Tukda",
         "tagline": "Cashew & Fig Cylinder",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 980,
@@ -2457,12 +2457,12 @@ export const initialData = {
         "gridPosX": "55.56",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-96.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-96.png"
     },
     {
         "id": "sw-97",
         "num": 97,
-        "name": "Nutty Bites",
+        "name": "Chamcham",
         "tagline": "Roasted Almonds & Cashews",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 880,
@@ -2479,12 +2479,12 @@ export const initialData = {
         "gridPosX": "66.67",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-97.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-97.png"
     },
     {
         "id": "sw-98",
         "num": 98,
-        "name": "Rabri Malpua",
+        "name": "Thekua",
         "tagline": "Malpua with Rabri",
         "category": "Desi Ghee & Fried",
         "pricePerKg": 440,
@@ -2501,12 +2501,12 @@ export const initialData = {
         "gridPosX": "77.78",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-98.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-98.png"
     },
     {
         "id": "sw-99",
         "num": 99,
-        "name": "Dry Fruit Roll",
+        "name": "Badusha",
         "tagline": "Four Nut Medley",
         "category": "Kaju & Dry Fruit",
         "pricePerKg": 960,
@@ -2523,7 +2523,7 @@ export const initialData = {
         "gridPosX": "88.89",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-99.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-99.png"
     },
     {
         "id": "sw-100",
@@ -2545,7 +2545,7 @@ export const initialData = {
         "gridPosX": "100.00",
         "gridPosY": "100.00",
         "image": "/assets/sweets/sw-100.png",
-        "fallbackImage": "./assets/100_mithais_grid.png"
+        "fallbackImage": "/assets/sweets/sw-100.png"
     }
 ],
 

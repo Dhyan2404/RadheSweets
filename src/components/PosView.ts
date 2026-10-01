@@ -280,16 +280,16 @@ export function renderPosView(state) {
                           `}
                         </div>
 
-                        <!-- Dual-Unit Weighing Quick Chips (100g, 250g, 500g, 1kg) -->
+                        <!-- Dual-Unit Weighing Quick Chips (250g, 500g, 750g, 1kg) -->
                         <div class="grid grid-cols-4 gap-1 text-[10px] font-semibold text-[var(--text-muted)]">
-                          <button data-add-weight="${sweet.id}" data-weight="0.1" class="py-1 rounded bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white transition-colors text-center cursor-pointer active:scale-95" title="Add 100g">
-                            100g
-                          </button>
                           <button data-add-weight="${sweet.id}" data-weight="0.25" class="py-1 rounded bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white transition-colors text-center cursor-pointer active:scale-95" title="Add 250g">
                             250g
                           </button>
                           <button data-add-weight="${sweet.id}" data-weight="0.5" class="py-1 rounded bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white transition-colors text-center cursor-pointer active:scale-95" title="Add 500g">
                             500g
+                          </button>
+                          <button data-add-weight="${sweet.id}" data-weight="0.75" class="py-1 rounded bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white transition-colors text-center cursor-pointer active:scale-95" title="Add 750g">
+                            750g
                           </button>
                           <button data-add-weight="${sweet.id}" data-weight="1.0" class="py-1 rounded bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white transition-colors text-center cursor-pointer active:scale-95" title="Add 1kg">
                             1kg
@@ -355,6 +355,23 @@ export function renderPosView(state) {
                       <p class="text-[10px] text-[var(--text-light)]">
                         ${item.qty >= 1 ? `${item.qty} ${item.unit}` : `${Math.round(item.qty * 1000)}g`} × ₹${item.rate}/${item.unit}
                       </p>
+                      <!-- Preset Chips in Cart -->
+                      <div class="flex items-center gap-1 mt-1">
+                        ${[0.25, 0.5, 0.75, 1.0].map(w => `
+                          <button 
+                            type="button"
+                            data-add-weight="${item.id}" 
+                            data-weight="${w}" 
+                            class="px-1.5 py-0.2 rounded text-[9px] font-bold transition-all cursor-pointer ${
+                              Math.abs(item.qty - w) < 0.001 
+                                ? 'bg-amber-600 text-white shadow-2xs' 
+                                : 'bg-[var(--bg-subtle)] hover:bg-stone-200 text-stone-600'
+                            }"
+                          >
+                            ${w >= 1 ? `${w}kg` : `${Math.round(w * 1000)}g`}
+                          </button>
+                        `).join('')}
+                      </div>
                     </div>
                   </div>
 
@@ -500,6 +517,22 @@ export function renderPosView(state) {
                       <p class="text-[10px] text-stone-500">
                         ${item.qty >= 1 ? `${item.qty} ${item.unit}` : `${Math.round(item.qty * 1000)}g`} × ₹${item.rate}/${item.unit}
                       </p>
+                      <div class="flex items-center gap-1 mt-1">
+                        ${[0.25, 0.5, 0.75, 1.0].map(w => `
+                          <button 
+                            type="button"
+                            data-add-weight="${item.id}" 
+                            data-weight="${w}" 
+                            class="px-1.5 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                              Math.abs(item.qty - w) < 0.001 
+                                ? 'bg-amber-600 text-white shadow-2xs' 
+                                : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                            }"
+                          >
+                            ${w >= 1 ? `${w}kg` : `${Math.round(w * 1000)}g`}
+                          </button>
+                        `).join('')}
+                      </div>
                     </div>
                   </div>
 

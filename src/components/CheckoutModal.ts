@@ -53,32 +53,151 @@ export function renderCheckoutModal(state: any) {
           </button>
         </div>
 
-        <!-- Order Items Review -->
+        <!-- Order Items Review with Live Weighing & Presets (250g, 500g, 750g, 1kg) -->
         <div>
           <div class="flex items-center justify-between mb-2">
             <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Order Items (${posCart.length})</h4>
-            <span class="text-[11px] text-[var(--text-light)]">Instant weighing calculation</span>
+            <span class="text-[11px] font-semibold text-[var(--brand-primary)]">Presets &amp; Custom Weight (g / kg)</span>
           </div>
-          <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
-            ${posCart.map((item: any) => `
-              <div class="flex items-center justify-between py-1.5 border-b border-[var(--border-subtle)] text-xs">
-                <div class="flex items-center space-x-2.5">
-                  <img 
-                    src="${item.image}" 
-                    alt="${item.name}" 
-                    class="w-8 h-8 rounded-lg object-cover border border-[var(--border-color)] shadow-2xs"
-                    onerror="this.src='${item.fallbackImage}'"
-                  />
-                  <div>
-                    <p class="font-bold text-[var(--text-main)]">${item.name}</p>
-                    <p class="text-[10px] text-[var(--text-light)]">
-                      ${item.qty >= 1 ? `${item.qty} ${item.unit}` : `${Math.round(item.qty * 1000)}g`} × ₹${item.rate}/${item.unit}
-                    </p>
+          
+          <div class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+            ${posCart.length > 0 ? posCart.map((item: any) => {
+              const currentUnit = item.checkoutUnit || (item.qty < 1 ? 'g' : 'kg');
+              const displayQty = currentUnit === 'g' ? Math.round(item.qty * 1000) : item.qty;
+              const is250 = Math.abs(item.qty - 0.25) < 0.001;
+              const is500 = Math.abs(item.qty - 0.50) < 0.001;
+              const is750 = Math.abs(item.qty - 0.75) < 0.001;
+              const is1000 = Math.abs(item.qty - 1.00) < 0.001;
+
+              return `
+                <div class="p-3 bg-stone-50/90 rounded-2xl border border-stone-200/80 space-y-2 text-xs transition-all hover:border-amber-300 shadow-2xs">
+                  <!-- Sweet Header: Photo, Name, Rate and Item Total -->
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                      <img 
+                        src="${item.image || `/assets/sweets/${item.id}.png`}" 
+                        alt="${item.name}" 
+                        class="w-10 h-10 rounded-xl object-cover border border-amber-200/80 shadow-2xs shrink-0 bg-white"
+                        onerror="this.src='/assets/sweets/${item.id}.png'"
+                      />
+                      <div class="min-w-0">
+                        <p class="font-bold text-[var(--text-main)] text-xs sm:text-sm truncate">${item.name}</p>
+                        <p class="text-[10px] text-[var(--text-muted)] font-medium">₹${item.rate}/kg</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 shrink-0">
+                      <span class="font-extrabold text-sm sm:text-base text-[var(--brand-primary)]">
+                        ₹${Math.round(item.qty * item.rate)}
+                      </span>
+                      <button 
+                        type="button"
+                        data-checkout-remove="${item.id}"
+                        class="w-6 h-6 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
+                        title="Remove sweet"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Controls: Unit selector (g vs kg) + Custom typed quantity -->
+                  <div class="flex items-center justify-between gap-2 pt-1 border-t border-stone-200/60 flex-wrap">
+                    <!-- Unit toggle -->
+                    <div class="flex items-center bg-white p-0.5 rounded-xl border border-stone-200 text-[11px] font-bold shadow-2xs">
+                      <button 
+                        type="button"
+                        data-checkout-unit="${item.id}" 
+                        data-unit="g"
+                        class="px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${currentUnit === 'g' ? 'bg-[var(--brand-primary)] text-white shadow-2xs' : 'text-stone-500 hover:text-stone-800'}"
+                      >
+                        g (grams)
+                      </button>
+                      <button 
+                        type="button"
+                        data-checkout-unit="${item.id}" 
+                        data-unit="kg"
+                        class="px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${currentUnit === 'kg' ? 'bg-[var(--brand-primary)] text-white shadow-2xs' : 'text-stone-500 hover:text-stone-800'}"
+                      >
+                        kg
+                      </button>
+                    </div>
+
+                    <!-- Type Quantity Directly -->
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] font-semibold text-stone-500">Type Qty:</span>
+                      <div class="relative flex items-center">
+                        <input 
+                          type="number" 
+                          step="${currentUnit === 'kg' ? '0.05' : '10'}" 
+                          min="${currentUnit === 'kg' ? '0.01' : '10'}" 
+                          max="${currentUnit === 'kg' ? '100' : '100000'}" 
+                          value="${displayQty}" 
+                          data-checkout-qty-input="${item.id}"
+                          data-unit="${currentUnit}"
+                          class="w-20 px-2 py-1 bg-white border border-stone-300 rounded-xl text-center font-extrabold text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] shadow-2xs"
+                        />
+                        <span class="ml-1 text-[11px] font-bold text-stone-600">${currentUnit}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Quick Presets: 250g, 500g, 750g, 1kg -->
+                  <div class="grid grid-cols-4 gap-1.5 pt-0.5">
+                    <button 
+                      type="button"
+                      data-checkout-preset="${item.id}" 
+                      data-kg="0.25"
+                      class="py-1 px-1 rounded-xl text-[11px] font-bold text-center transition-all cursor-pointer ${
+                        is250 
+                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-700' 
+                          : 'bg-white hover:bg-amber-50 text-stone-700 border border-stone-200'
+                      }"
+                    >
+                      250g
+                    </button>
+                    <button 
+                      type="button"
+                      data-checkout-preset="${item.id}" 
+                      data-kg="0.5"
+                      class="py-1 px-1 rounded-xl text-[11px] font-bold text-center transition-all cursor-pointer ${
+                        is500 
+                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-700' 
+                          : 'bg-white hover:bg-amber-50 text-stone-700 border border-stone-200'
+                      }"
+                    >
+                      500g
+                    </button>
+                    <button 
+                      type="button"
+                      data-checkout-preset="${item.id}" 
+                      data-kg="0.75"
+                      class="py-1 px-1 rounded-xl text-[11px] font-bold text-center transition-all cursor-pointer ${
+                        is750 
+                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-700' 
+                          : 'bg-white hover:bg-amber-50 text-stone-700 border border-stone-200'
+                      }"
+                    >
+                      750g
+                    </button>
+                    <button 
+                      type="button"
+                      data-checkout-preset="${item.id}" 
+                      data-kg="1.0"
+                      class="py-1 px-1 rounded-xl text-[11px] font-bold text-center transition-all cursor-pointer ${
+                        is1000 
+                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-700' 
+                          : 'bg-white hover:bg-amber-50 text-stone-700 border border-stone-200'
+                      }"
+                    >
+                      1kg
+                    </button>
                   </div>
                 </div>
-                <span class="font-bold text-[var(--text-main)]">₹${Math.round(item.qty * item.rate)}</span>
-              </div>
-            `).join('')}
+              `;
+            }).join('') : `
+              <div class="text-center py-6 text-stone-400 text-xs font-medium">Cart is currently empty</div>
+            `}
           </div>
         </div>
 

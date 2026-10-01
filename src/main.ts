@@ -77,7 +77,8 @@ const state = {
     const initMatch = initialData.sweets.find((is: any) => is.id === s.id);
     return {
       ...s,
-      image: (s.image && s.image.startsWith('/assets/sweets/')) ? s.image : (initMatch?.image || `/assets/sweets/${s.id}.png`),
+      name: initMatch?.name || s.name,
+      image: `/assets/sweets/${s.id}.png`,
       fallbackImage: `/assets/sweets/${s.id}.png`
     };
   }),
@@ -1388,9 +1389,77 @@ function attachEventListeners() {
   });
 
   // Close Checkout Modal
-  document.getElementById('close-checkout-btn')?.addEventListener('click', () => {
+  document.getElementById('close-checkout-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
     state.showCheckoutModal = false;
     renderApp();
+  });
+
+  // Checkout Modal: Unit Toggle (g vs kg per item)
+  document.querySelectorAll('[data-checkout-unit]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const sweetId = btn.getAttribute('data-checkout-unit');
+      const unit = btn.getAttribute('data-unit') || 'g';
+      const item = state.posCart.find((i: any) => i.id === sweetId);
+      if (item) {
+        item.checkoutUnit = unit;
+        saveState();
+        renderApp();
+      }
+    });
+  });
+
+  // Checkout Modal: Quick Presets (250g, 500g, 750g, 1kg)
+  document.querySelectorAll('[data-checkout-preset]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const sweetId = btn.getAttribute('data-checkout-preset');
+      const kg = parseFloat(btn.getAttribute('data-kg') || '0.25');
+      const item = state.posCart.find((i: any) => i.id === sweetId);
+      if (item) {
+        item.qty = kg;
+        item.total = Math.round(item.qty * item.rate);
+        state.quickCart = [...state.posCart];
+        saveState();
+        renderApp();
+      }
+    });
+  });
+
+  // Checkout Modal: Custom Typed Quantity
+  document.querySelectorAll('[data-checkout-qty-input]').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const sweetId = input.getAttribute('data-checkout-qty-input');
+      const unit = input.getAttribute('data-unit') || 'g';
+      const val = parseFloat((e.target as HTMLInputElement).value) || 0;
+      const item = state.posCart.find((i: any) => i.id === sweetId);
+      if (item) {
+        item.qty = unit === 'g' ? Math.max(0.01, Math.round((val / 1000) * 1000) / 1000) : Math.max(0.01, val);
+        item.total = Math.round(item.qty * item.rate);
+        state.quickCart = [...state.posCart];
+        saveState();
+        renderApp();
+      }
+    });
+  });
+
+  // Checkout Modal: Remove Item
+  document.querySelectorAll('[data-checkout-remove]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const sweetId = btn.getAttribute('data-checkout-remove');
+      state.posCart = state.posCart.filter((i: any) => i.id !== sweetId);
+      state.quickCart = [...state.posCart];
+      if (state.posCart.length === 0) {
+        state.showCheckoutModal = false;
+      }
+      saveState();
+      renderApp();
+    });
   });
 
   // Select Payment Method
@@ -2628,27 +2697,27 @@ function attachEventListeners() {
     renderApp();
   });
 
-  // Dual-Unit Quick Weight Chips (100g, 250g, 500g, 1kg)
+  // Dual-Unit Quick Weight Chips (250g, 500g, 750g, 1kg)
   document.querySelectorAll('[data-add-weight]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       const sweetId = btn.getAttribute('data-add-weight');
-      const weightDelta = parseFloat(btn.getAttribute('data-weight')) || 0.5;
+      const weight = parseFloat(btn.getAttribute('data-weight')) || 0.25;
       const sweet = state.sweets.find(s => s.id === sweetId);
       if (sweet) {
         const existing = state.posCart.find(i => i.id === sweetId);
         if (existing) {
-          existing.qty = Math.round((existing.qty + weightDelta) * 100) / 100;
+          existing.qty = weight;
           existing.total = Math.round(existing.qty * existing.rate);
         } else {
           state.posCart.push({
             id: sweet.id,
             name: sweet.name,
-            qty: weightDelta,
+            qty: weight,
             rate: sweet.pricePerKg,
             unit: sweet.unit,
-            total: Math.round(weightDelta * sweet.pricePerKg),
+            total: Math.round(weight * sweet.pricePerKg),
             image: sweet.image || `/assets/sweets/${sweet.id}.png`,
             fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
           });
@@ -2656,6 +2725,8 @@ function attachEventListeners() {
         state.quickCart = [...state.posCart];
         saveState();
         renderApp();
+        const displayLabel = weight >= 1 ? `${weight}kg` : `${Math.round(weight * 1000)}g`;
+        showToast(`${sweet.name} set to ${displayLabel} (₹${Math.round(weight * sweet.pricePerKg)})`, 'success');
       }
     });
   });
