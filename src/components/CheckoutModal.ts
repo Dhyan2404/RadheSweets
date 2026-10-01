@@ -1,5 +1,6 @@
 // Checkout Modal Component
 // Streamlined Counter Billing with Cash, UPI, Card & Khata
+import { renderSlideCommit } from './SlideCommit.ts';
 
 export function renderCheckoutModal(state: any) {
   const { selectedCustomer, posCart, discountPercent = 0, paymentMethod = 'Cash' } = state;
@@ -259,15 +260,37 @@ export function renderCheckoutModal(state: any) {
           </div>
         </div>
 
-        <!-- Place Order Button -->
-        <button 
-          type="button"
-          id="confirm-place-order-btn"
-          class="w-full py-3.5 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] active:scale-98 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
-        >
-          <span id="checkout-confirm-btn-text">Confirm &amp; Print Bill • ₹${totalPayable}</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        </button>
+        <!-- Slide to Checkout Action (SlideCommit with Chocolate Brand Theme & Green Confirmation) -->
+        <div class="pt-2 space-y-2">
+          ${renderSlideCommit({
+            id: 'checkout-slide-commit',
+            label: 'Slide to checkout',
+            doneLabel: 'Checked Out',
+            errorLabel: 'Payment failed',
+            trackColor: '#241816', // Main website roasted dark chocolate color
+            handleColor: '#C86D3B', // Warm signature chocolate terracotta
+            successColor: '#16a34a', // Vibrant green for checked out
+            dangerColor: '#e5484d',
+            height: 56,
+            radius: 28,
+            totalPayable,
+            disabled: posCart.length === 0
+          })}
+
+          <div class="flex items-center justify-between px-1 text-[11px] text-stone-500">
+            <span class="flex items-center gap-1.5">
+              <kbd class="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-300 font-mono text-[10px] text-stone-600">Space</kbd> or drag right to pay
+            </span>
+            <button 
+              type="button" 
+              id="confirm-place-order-btn" 
+              class="font-bold text-[var(--brand-primary)] hover:underline cursor-pointer flex items-center gap-1 py-1"
+            >
+              <span>Instant Click Pay • ₹${totalPayable}</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `;

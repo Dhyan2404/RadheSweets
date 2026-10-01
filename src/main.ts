@@ -25,6 +25,7 @@ import { renderMobileBottomNav, renderMobileDrawer } from './components/MobileNa
 import { renderDashboardView } from './components/DashboardView.ts';
 import { renderPosView } from './components/PosView.ts';
 import { renderCheckoutModal } from './components/CheckoutModal.ts';
+import { initSlideCommit } from './components/SlideCommit.ts';
 import { renderOrderSuccessModal } from './components/OrderSuccessModal.ts';
 import { renderThermalReceiptModal } from './components/ThermalReceiptModal.ts';
 import { renderOrdersView } from './components/OrdersView.ts';
@@ -1558,9 +1559,11 @@ function attachEventListeners() {
         const discountEl = document.getElementById('checkout-discount-val');
         if (discountEl) discountEl.textContent = `- ₹${discountAmount.toLocaleString()}`;
         const totalEl = document.getElementById('checkout-total-val');
-        if (totalEl) totalEl.textContent = `₹${totalPayable.toLocaleString()}`;
+        if (totalEl) totalEl.textContent = `₹${totalPayable}`;
         const btnTextEl = document.getElementById('checkout-confirm-btn-text');
-        if (btnTextEl) btnTextEl.textContent = `Confirm & Print Bill • ₹${totalPayable.toLocaleString()}`;
+        if (btnTextEl) btnTextEl.textContent = `Instant Click Pay • ₹${totalPayable.toLocaleString()}`;
+        const sliderLabel = document.querySelector('#checkout-slide-commit-label span span');
+        if (sliderLabel) sliderLabel.textContent = `Slide to checkout • ₹${totalPayable.toLocaleString()}`;
 
         saveState();
         syncActiveCheckoutDraft();
@@ -1600,8 +1603,8 @@ function attachEventListeners() {
     });
   });
 
-  // Confirm Place Order
-  document.getElementById('confirm-place-order-btn')?.addEventListener('click', () => {
+  // Place Order Execution Handler (Used by both SlideCommit slider and instant button)
+  const processPlaceOrder = async () => {
     const orderNum = 130 + state.orders.length;
     const cartSubtotal = state.posCart.reduce((sum, item) => sum + (item.rate * item.qty), 0);
     const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
@@ -1689,6 +1692,26 @@ function attachEventListeners() {
     state.showSuccessModal = true;
     saveState();
     renderApp();
+  };
+
+  // Initialize SlideCommit Slider for Checkout
+  if (state.showCheckoutModal) {
+    initSlideCommit('checkout-slide-commit', {
+      onConfirm: async () => {
+        await processPlaceOrder();
+      },
+      onDone: () => {
+        showToast('✓ Order Checked Out Successfully!', 'success');
+      },
+      onError: () => {
+        showToast('Checkout transaction failed', 'error');
+      }
+    });
+  }
+
+  // Confirm Place Order (Instant Click Fallback)
+  document.getElementById('confirm-place-order-btn')?.addEventListener('click', () => {
+    processPlaceOrder();
   });
 
   // Success Modal Actions
