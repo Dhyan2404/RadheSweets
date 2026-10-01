@@ -272,7 +272,9 @@ function updatePageSeoMetadata(activeTab: string) {
   }
 }
 
-// Master Render Function
+// Master Render Function with Zero-Flicker In-Place DOM Reconciliation
+let currentRenderedTab: string | null = null;
+
 export function renderApp() {
   const appContainer = document.getElementById('app');
   if (!appContainer) return;
@@ -284,35 +286,102 @@ export function renderApp() {
   document.body.classList.toggle('theme-serene-ice', state.currentTheme === 'ice');
   document.body.classList.toggle('dark-mode', state.isDarkMode);
 
-  // Fully Responsive Layout: Auto-adjusts cleanly between Phone and PC Web without upper bar
-  appContainer.innerHTML = `
-    <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D]">
-      <!-- Desktop Sidebar Navigation (Visible on md and up) -->
-      ${renderSidebar(state.activeTab)}
+  const mainScrollContainer = document.getElementById('main-content-scroll-container');
+  const mainTabContent = document.getElementById('main-tab-content');
+  const modalsRoot = document.getElementById('modals-root');
+  const desktopSidebarContainer = document.getElementById('desktop-sidebar-container');
+  const topbarContainer = document.getElementById('topbar-container');
+  const mobileNavContainer = document.getElementById('mobile-nav-container');
 
-      <!-- Main Content Area -->
-      <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <!-- Top Navigation Header (Exact 1:1 match with Stitch screen.png) -->
-        ${renderTopBar(state)}
+  const isInitialMount = !mainTabContent || !mainScrollContainer || !modalsRoot;
+  const isTabSwitch = currentRenderedTab !== state.activeTab;
+  currentRenderedTab = state.activeTab;
 
-        <!-- Active Tab Body -->
-        <main class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter">
-          ${renderTabContent()}
-        </main>
+  if (isInitialMount) {
+    // Initial mount: build the complete persistent shell once
+    appContainer.innerHTML = `
+      <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D]">
+        <!-- Desktop Sidebar Navigation (Visible on md and up) -->
+        <div id="desktop-sidebar-container">
+          ${renderSidebar(state.activeTab)}
+        </div>
+
+        <!-- Main Content Area with Persistent Scroll Container -->
+        <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          <!-- Top Navigation Header -->
+          <div id="topbar-container">
+            ${renderTopBar(state)}
+          </div>
+
+          <!-- Active Tab Body -->
+          <main id="main-tab-content" class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter">
+            ${renderTabContent()}
+          </main>
+        </div>
+
+        <!-- Mobile Bottom Navigation -->
+        <div id="mobile-nav-container" class="md:hidden">
+          ${renderMobileBottomNav(state.activeTab)}
+        </div>
       </div>
 
-      <!-- Mobile Bottom Navigation (Pinned at bottom on mobile screens < 768px) -->
-      <div class="md:hidden">
-        ${renderMobileBottomNav(state.activeTab)}
+      <!-- Modals Container -->
+      <div id="modals-root">
+        ${renderModals()}
       </div>
-    </div>
 
-    <!-- Modals -->
-    ${renderModals()}
+      <!-- shadcn-ui Toast Notification Container -->
+      <div id="toast-container"></div>
+    `;
+  } else {
+    // Incremental, ZERO-FLICKER render: Preserve scroll positions and input focus
+    const savedScrollTop = mainScrollContainer.scrollTop;
+    const savedWindowScroll = window.scrollY || document.documentElement.scrollTop;
 
-    <!-- shadcn-ui Toast Notification Container -->
-    <div id="toast-container"></div>
-  `;
+    // Capture currently focused element & selection range
+    const activeEl = document.activeElement as HTMLInputElement | HTMLTextAreaElement | null;
+    const activeId = activeEl && activeEl.id ? activeEl.id : null;
+    const selStart = activeEl?.selectionStart ?? null;
+    const selEnd = activeEl?.selectionEnd ?? null;
+
+    if (isTabSwitch) {
+      // Tab changed: Update navigation, run entry animation, and scroll to top
+      if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
+      if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab);
+      if (topbarContainer) topbarContainer.innerHTML = renderTopBar(state);
+
+      mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter";
+      mainTabContent.innerHTML = renderTabContent();
+
+      mainScrollContainer.scrollTop = 0;
+      window.scrollTo(0, 0);
+    } else {
+      // In-page click/action: DO NOT play animate-page-enter (prevents blank/flicker flash!)
+      if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
+      if (topbarContainer) topbarContainer.innerHTML = renderTopBar(state);
+      if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab);
+
+      mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8";
+      mainTabContent.innerHTML = renderTabContent();
+
+      // Restore scroll positions seamlessly
+      if (savedScrollTop) mainScrollContainer.scrollTop = savedScrollTop;
+      if (savedWindowScroll) window.scrollTo({ top: savedWindowScroll, behavior: 'instant' as ScrollBehavior });
+
+      // Restore focused input & cursor position
+      if (activeId) {
+        const newEl = document.getElementById(activeId) as HTMLInputElement | HTMLTextAreaElement | null;
+        if (newEl) {
+          newEl.focus();
+          if (selStart !== null && selEnd !== null && newEl.setSelectionRange) {
+            try { newEl.setSelectionRange(selStart, selEnd); } catch (_) {}
+          }
+        }
+      }
+    }
+
+    if (modalsRoot) modalsRoot.innerHTML = renderModals();
+  }
 
   attachEventListeners();
 }
@@ -1117,7 +1186,9 @@ function attachEventListeners() {
 
   // POS Category Filter Buttons
   document.querySelectorAll('[data-pos-category]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       state.activeCategory = btn.getAttribute('data-pos-category');
       renderApp();
     });
@@ -1125,13 +1196,15 @@ function attachEventListeners() {
 
   // POS Search Input
   document.getElementById('pos-search-input')?.addEventListener('input', (e) => {
-    state.posSearchQuery = e.target.value;
+    state.posSearchQuery = (e.target as HTMLInputElement).value;
     renderApp();
   });
 
   // Add sweet to POS cart
   document.querySelectorAll('[data-add-to-pos], [data-add-sweet]').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const sweetId = btn.getAttribute('data-add-to-pos') || btn.getAttribute('data-add-sweet');
       const sweet = state.sweets.find(s => s.id === sweetId);
       if (sweet) {
@@ -1162,7 +1235,9 @@ function attachEventListeners() {
 
   // Increment / Decrement / Remove Cart
   document.querySelectorAll('[data-inc-cart]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const id = btn.getAttribute('data-inc-cart');
       const item = state.posCart.find(i => i.id === id);
       if (item) {
@@ -1176,7 +1251,9 @@ function attachEventListeners() {
   });
 
   document.querySelectorAll('[data-dec-cart]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const id = btn.getAttribute('data-dec-cart');
       const item = state.posCart.find(i => i.id === id);
       if (item) {
@@ -1194,7 +1271,9 @@ function attachEventListeners() {
   });
 
   document.querySelectorAll('[data-remove-cart]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const id = btn.getAttribute('data-remove-cart');
       state.posCart = state.posCart.filter(i => i.id !== id);
       state.quickCart = [...state.posCart];
@@ -1203,7 +1282,8 @@ function attachEventListeners() {
     });
   });
 
-  document.getElementById('clear-pos-cart-btn')?.addEventListener('click', () => {
+  document.getElementById('clear-pos-cart-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
     state.posCart = [];
     state.quickCart = [];
     saveState();
@@ -2533,12 +2613,16 @@ function attachEventListeners() {
   });
 
   // Dual-Unit Weighing Mode Toggle (kg vs g)
-  document.getElementById('unit-toggle-kg')?.addEventListener('click', () => {
+  document.getElementById('unit-toggle-kg')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     state.selectedWeightUnit = 'kg';
     saveState();
     renderApp();
   });
-  document.getElementById('unit-toggle-g')?.addEventListener('click', () => {
+  document.getElementById('unit-toggle-g')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     state.selectedWeightUnit = 'g';
     saveState();
     renderApp();
@@ -2546,7 +2630,9 @@ function attachEventListeners() {
 
   // Dual-Unit Quick Weight Chips (100g, 250g, 500g, 1kg)
   document.querySelectorAll('[data-add-weight]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const sweetId = btn.getAttribute('data-add-weight');
       const weightDelta = parseFloat(btn.getAttribute('data-weight')) || 0.5;
       const sweet = state.sweets.find(s => s.id === sweetId);

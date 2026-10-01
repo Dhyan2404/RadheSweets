@@ -189,10 +189,10 @@ export function renderMobileDrawer(state) {
             ${navItems.map(item => {
               const isActive = activeTab === item.id;
               return `
-                <a 
-                  href="#" 
+                <button 
+                  type="button" 
                   data-tab="${item.id}"
-                  class="flex items-center space-x-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                  class="w-full text-left flex items-center space-x-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all cursor-pointer ${
                     isActive 
                       ? 'bg-amber-50 text-[var(--brand-primary)] font-bold' 
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
@@ -202,7 +202,7 @@ export function renderMobileDrawer(state) {
                     <path d="${item.icon}" stroke-linecap="round" stroke-linejoin="round"></path>
                   </svg>
                   <span>${item.label}</span>
-                </a>
+                </button>
               `;
             }).join('')}
           </nav>
