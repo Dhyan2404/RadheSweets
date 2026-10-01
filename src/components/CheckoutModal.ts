@@ -3,11 +3,15 @@
 import { renderSlideCommit } from './SlideCommit.ts';
 
 export function renderCheckoutModal(state: any) {
-  const { selectedCustomer, posCart, discountPercent = 0, paymentMethod = 'Cash' } = state;
+  const { selectedCustomer, posCart, discountPercent = 0, paymentMethod = 'Cash', shopInfo = {} } = state;
 
   const cartSubtotal = posCart.reduce((sum: number, item: any) => sum + (item.rate * item.qty), 0);
   const discountAmount = Math.round((cartSubtotal * (discountPercent || 0)) / 100);
   const totalPayable = Math.max(0, cartSubtotal - discountAmount);
+
+  const storeUpiId = shopInfo.upiId || 'radhesweets@oksbi';
+  const storeUpiName = shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
+  const upiQrUri = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=${storeUpiId}&pn=${encodeURIComponent(storeUpiName)}&am=${totalPayable}&cu=INR`)}`;
 
   return `
     <div class="modal-backdrop" id="checkout-modal">
@@ -296,7 +300,7 @@ export function renderCheckoutModal(state: any) {
               <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs">
                 <div class="w-24 h-24 bg-stone-100 rounded-xl p-1 border border-stone-200 flex items-center justify-center shrink-0">
                   <img 
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`upi://pay?pa=radhesweets@okhdfcbank&pn=Radhe%20Sweets&am=${totalPayable}&cu=INR`)}"
+                    src="${upiQrUri}"
                     alt="UPI QR Code" 
                     class="w-full h-full object-contain"
                     onerror="this.onerror=null; this.src='/favicon.svg';"
@@ -304,7 +308,7 @@ export function renderCheckoutModal(state: any) {
                 </div>
                 <div class="min-w-0 space-y-1">
                   <p class="font-extrabold text-[var(--text-main)] text-xs">Scan via GPay / PhonePe / Paytm</p>
-                  <p class="text-[11px] font-mono text-stone-500">VPA: radhesweets@okhdfcbank</p>
+                  <p class="text-[11px] font-mono text-stone-500">VPA: ${storeUpiId}</p>
                   <p class="text-[10px] text-emerald-700 font-bold">✓ Amount locked to ₹${totalPayable}</p>
                   <div class="pt-1">
                     <input 

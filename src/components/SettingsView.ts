@@ -1,204 +1,331 @@
-// Profile, Settings, RBAC & Cash Drawer Z-Report Reconciliation Component
+// Profile, Settings, Branch Configuration & UPI Payment Hub Component
+// Tailored for Radhe Sweets Ahmedabad with full mobile and desktop responsiveness
 
-export function renderSettingsView(state) {
-  const { shopInfo, currentTheme, isDarkMode, userRole = 'SUPER_ADMIN', zReports = [], auditLogs = [], branches = [], currentBranchId = 'br-1' } = state;
+export function renderSettingsView(state: any) {
+  const { 
+    shopInfo = {}, 
+    userRole = 'SUPER_ADMIN', 
+    auditLogs = [], 
+    branches = [], 
+    currentBranchId = 'br-1' 
+  } = state;
+
+  const currentUpiId = shopInfo.upiId || 'radhesweets@oksbi';
+  const currentUpiName = shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
+  const testQrData = `upi://pay?pa=${encodeURIComponent(currentUpiId)}&pn=${encodeURIComponent(currentUpiName)}&am=100&cu=INR`;
+  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(testQrData)}`;
 
   return `
-    <div class="space-y-6 max-w-4xl">
-      <!-- Header -->
-      <section>
-        <div class="flex items-center gap-2">
-          <h2 class="text-2xl font-bold text-[var(--text-main)] tracking-tight">Settings & Branch Configuration</h2>
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-            Security & Administration
+    <div class="space-y-6 max-w-4xl mx-auto pb-12" data-purpose="settings-view">
+      
+      <!-- 1. Header -->
+      <section class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="text-2xl sm:text-3xl font-black text-[var(--text-main)] tracking-tight">Settings &amp; Store Profile</h2>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
+            Admin Console
           </span>
         </div>
-        <p class="text-xs text-[var(--text-muted)] mt-0.5">Switch active store branch, RBAC permissions, cash drawer Z-reports & tax localization</p>
+        <p class="text-xs sm:text-sm text-[var(--text-muted)]">
+          Configure shop details, custom UPI ID, dynamic counter QR code, branch locations, and system preferences.
+        </p>
       </section>
 
-      <!-- Active Branch Location Selector (Changeable Only in Settings) -->
-      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-3">
-        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+      <!-- 2. Active Branch Location Selector -->
+      <section class="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
           <div>
-            <h3 class="text-sm font-bold text-[var(--text-main)]">🏢 Active Branch Location</h3>
-            <p class="text-[11px] text-[var(--text-light)]">Select which store branch to manage. Active branch is displayed on the top navigation bar.</p>
+            <h3 class="text-sm sm:text-base font-extrabold text-[var(--text-main)] flex items-center gap-2">
+              <span>🏢</span>
+              <span>Active Branch Location</span>
+            </h3>
+            <p class="text-xs text-[var(--text-light)]">Switch between Ahmedabad confectionery branches. Real-time sales and inventory will reflect this branch.</p>
           </div>
-          <span class="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-            Owner Only
+          <span class="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 self-start sm:self-auto">
+            Multi-Branch Mode
           </span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          ${branches.map(b => `
+          ${branches.map((b: any) => `
             <div 
               data-setting-select-branch="${b.id}"
-              class="p-4 rounded-xl border cursor-pointer transition-all ${
+              class="p-4 rounded-2xl border cursor-pointer transition-all ${
                 b.id === currentBranchId 
                   ? 'border-[var(--brand-primary)] bg-[var(--bg-highlight)] ring-2 ring-[var(--brand-primary)]/20 shadow-xs' 
                   : 'border-[var(--border-color)] bg-[var(--bg-subtle)] hover:border-[var(--brand-primary)]'
               }"
             >
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-mono font-bold text-[var(--brand-primary)]">${b.code}</span>
-                ${b.id === currentBranchId ? '<span class="text-xs text-emerald-600 font-bold">Active ✓</span>' : '<span class="text-xs text-[var(--brand-primary)] font-semibold">Switch →</span>'}
+                <span class="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-white px-2 py-0.5 rounded border border-[var(--border-color)]">${b.code}</span>
+                ${b.id === currentBranchId 
+                  ? '<span class="text-xs text-emerald-600 font-extrabold">Active ✓</span>' 
+                  : '<span class="text-xs text-[var(--brand-primary)] font-bold">Switch →</span>'}
               </div>
-              <h4 class="font-bold text-sm text-[var(--text-main)] mt-1">${b.name}</h4>
-              <p class="text-[11px] text-[var(--text-muted)]">${b.city}</p>
-              <p class="text-[10px] text-[var(--text-light)] mt-2">Revenue: ₹${b.revenue.toLocaleString()} • Margin: ${b.margin}</p>
+              <h4 class="font-extrabold text-sm text-[var(--text-main)] mt-2">${b.name}</h4>
+              <p class="text-xs text-[var(--text-muted)]">${b.city || 'Ahmedabad'}</p>
+              <p class="text-[11px] text-[var(--text-light)] mt-2 font-medium">Revenue: ₹${(b.revenue || 0).toLocaleString()} • Margin: ${b.margin || '34%'}</p>
             </div>
           `).join('')}
         </div>
       </section>
 
-      <!-- User Session Card -->
-      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
-        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-2xl bg-[var(--brand-primary)] text-white font-extrabold text-lg flex items-center justify-center shadow-xs">
-              AS
+      <!-- 3. Store Profile & UPI Configuration Form (Set Anything!) -->
+      <section class="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-6">
+        <div class="border-b border-[var(--border-color)] pb-3">
+          <h3 class="text-base sm:text-lg font-black text-[var(--text-main)] flex items-center gap-2">
+            <span>📱</span>
+            <span>Store Profile &amp; Custom UPI Payment Settings</span>
+          </h3>
+          <p class="text-xs text-[var(--text-light)] mt-0.5">
+            Set your shop's official UPI ID, merchant name, contact details, GST, and delivery terms. Changes instantly update the POS checkout QR code, storefront bag, and receipts.
+          </p>
+        </div>
+
+        <form id="store-profile-form" class="space-y-5">
+          
+          <!-- UPI Configuration Box with Live QR Preview -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-50/80 via-orange-50/60 to-purple-50/40 border border-amber-200/90 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-xl bg-[#C86D3B] text-white flex items-center justify-center font-black text-sm shadow-xs">
+                  ₹
+                </span>
+                <div>
+                  <h4 class="font-extrabold text-sm text-stone-900">Custom Counter UPI / QR Setup</h4>
+                  <p class="text-xs text-stone-600">All customer payments via GPay, PhonePe, Paytm or BHIM will route to this UPI ID</p>
+                </div>
+              </div>
+              <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                Live &amp; Active
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div class="md:col-span-2 space-y-3 text-xs">
+                <div>
+                  <label class="block font-bold text-stone-800 mb-1">
+                    Store UPI ID / VPA <span class="text-rose-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="upiId" 
+                    id="setting-upi-id-input"
+                    value="${currentUpiId}" 
+                    placeholder="e.g. radhesweets@okhdfcbank or 9876543210@paytm" 
+                    class="w-full px-3.5 py-2.5 bg-white border border-amber-300 rounded-xl font-mono text-sm font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/40 focus:border-[#C86D3B] shadow-2xs" 
+                    required
+                  />
+                  <p class="text-[11px] text-stone-500 mt-1">
+                    💡 You can enter any UPI ID here (e.g. HDFC, ICICI, SBI, Paytm, Google Pay, PhonePe).
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-stone-800 mb-1">UPI Payee / Merchant Display Name</label>
+                    <input 
+                      type="text" 
+                      name="upiName" 
+                      id="setting-upi-name-input"
+                      value="${currentUpiName}" 
+                      placeholder="e.g. Radhe Sweets Ahmedabad" 
+                      class="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-[#C86D3B]" 
+                    />
+                  </div>
+                  <div>
+                    <label class="block font-bold text-stone-800 mb-1">Currency Symbol</label>
+                    <input 
+                      type="text" 
+                      name="currency" 
+                      value="${shopInfo.currency || '₹'}" 
+                      class="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-[#C86D3B]" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live QR Preview Card -->
+              <div class="bg-white p-3.5 rounded-2xl border border-amber-200 text-center space-y-2 shadow-xs">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 block">Current Counter QR Preview</span>
+                <div class="w-28 h-28 mx-auto p-1.5 bg-stone-50 rounded-xl border border-stone-200 flex items-center justify-center">
+                  <img 
+                    src="${qrApiUrl}" 
+                    alt="Current UPI QR Code" 
+                    class="w-full h-full object-contain"
+                    onerror="this.src='/favicon.svg'"
+                  />
+                </div>
+                <div class="text-[11px] font-mono font-bold text-stone-700 truncate" title="${currentUpiId}">
+                  ${currentUpiId}
+                </div>
+                <span class="inline-block text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">
+                  ✓ Valid UPI Format
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Basic Shop Information -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Shop Name</label>
+              <input 
+                type="text" 
+                name="name" 
+                value="${shopInfo.name || 'Radhe Sweets'}" 
+                class="w-full px-3.5 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl font-extrabold text-sm text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+                required
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Brand Tagline / Subtitle</label>
+              <input 
+                type="text" 
+                name="subName" 
+                value="${shopInfo.subName || 'SWEETS & MORE'}" 
+                class="w-full px-3.5 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl font-bold text-xs text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+              />
+            </div>
+          </div>
+
+          <!-- Slogan & Devotional Motto -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Devotional Motto (Thermal Receipt Header/Footer)</label>
+              <input 
+                type="text" 
+                name="motto" 
+                value="${shopInfo.motto || 'Sweet Moments With Radhe Krishna'}" 
+                class="w-full px-3.5 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs font-semibold text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Owner / Primary Contact Person</label>
+              <input 
+                type="text" 
+                name="owner" 
+                value="${shopInfo.owner || 'Anand Shah'}" 
+                class="w-full px-3.5 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs font-semibold text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+              />
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="text-xs">
+            <label class="block font-bold text-[var(--text-muted)] mb-1">Store Address (Appears on Bills &amp; Storefront)</label>
+            <input 
+              type="text" 
+              name="address" 
+              value="${shopInfo.address || 'Shop No. 12-14, Shivalik Plaza, IIM Road, Ahmedabad, Gujarat 380015'}" 
+              class="w-full px-3.5 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+            />
+          </div>
+
+          <!-- Phone, Email, GSTIN, FSSAI -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Phone / WhatsApp Orders</label>
+              <input 
+                type="text" 
+                name="phone" 
+                value="${shopInfo.phone || '+91 98765 43210'}" 
+                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+              />
             </div>
             <div>
-              <h3 class="text-sm font-bold text-[var(--text-main)]">Active User Session</h3>
-              <p class="text-xs text-[var(--text-muted)]">Anand Shah • Shop Owner</p>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Store Email</label>
+              <input 
+                type="email" 
+                name="email" 
+                value="${shopInfo.email || 'contact@radhesweets.com'}" 
+                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">GSTIN Number</label>
+              <input 
+                type="text" 
+                name="gstin" 
+                value="${shopInfo.gstin || '24AAACR1234F1Z8'}" 
+                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs font-mono font-bold text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">FSSAI License No.</label>
+              <input 
+                type="text" 
+                name="fssai" 
+                value="${shopInfo.fssai || '10721026000452'}" 
+                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs font-mono font-bold text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
+              />
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-              Full System Access
-            </span>
+          <!-- Online Delivery Controls -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-2xl bg-stone-50 border border-stone-200 text-xs">
+            <div>
+              <label class="block font-bold text-stone-700 mb-1">Free Delivery Minimum Order (₹)</label>
+              <input 
+                type="number" 
+                name="freeDeliveryAbove" 
+                value="${shopInfo.freeDeliveryAbove || 500}" 
+                class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-[#C86D3B]" 
+              />
+              <p class="text-[10px] text-stone-500 mt-1">Orders above this amount get free doorstep delivery in Ahmedabad</p>
+            </div>
+            <div>
+              <label class="block font-bold text-stone-700 mb-1">Standard Delivery Fee (₹)</label>
+              <input 
+                type="number" 
+                name="deliveryFee" 
+                value="${shopInfo.deliveryFee || 40}" 
+                class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-[#C86D3B]" 
+              />
+              <p class="text-[10px] text-stone-500 mt-1">Fee applied when order is below free threshold</p>
+            </div>
           </div>
-        </div>
 
-        <!-- Role Permissions Matrix -->
-        <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">Granular Role-Based Access Control (RBAC)</h4>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr class="bg-[var(--bg-subtle)] text-[var(--text-muted)] text-[10px] font-bold uppercase">
-                  <th class="py-2 px-3">Role</th>
-                  <th class="py-2 px-2 text-center">POS Billing</th>
-                  <th class="py-2 px-2 text-center">Profit & Margins</th>
-                  <th class="py-2 px-2 text-center">Cost Ledgers</th>
-                  <th class="py-2 px-2 text-center">Price Overrides</th>
-                  <th class="py-2 px-2 text-center">Void / Refunds</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-[var(--border-subtle)] text-[11px]">
-                <tr class="${userRole === 'SUPER_ADMIN' ? 'bg-amber-50/50 font-bold' : ''}">
-                  <td class="py-2.5 px-3 font-semibold text-[var(--text-main)]">👑 Super Admin (Owner)</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Full</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Full</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Full</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Allowed</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Allowed</td>
-                </tr>
-                <tr class="${userRole === 'BRANCH_MANAGER' ? 'bg-amber-50/50 font-bold' : ''}">
-                  <td class="py-2.5 px-3 font-semibold text-[var(--text-main)]">🏬 Branch Manager</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Full</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Branch Only</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">View Only</td>
-                  <td class="py-2.5 px-2 text-center text-amber-600">Supervised</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Authorize</td>
-                </tr>
-                <tr class="${userRole === 'CASHIER' ? 'bg-amber-50/50 font-bold' : ''}">
-                  <td class="py-2.5 px-3 font-semibold text-[var(--text-main)]">🧾 Cashier (Counter)</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Speed POS</td>
-                  <td class="py-2.5 px-2 text-center text-rose-500">✗ Hidden</td>
-                  <td class="py-2.5 px-2 text-center text-rose-500">✗ Hidden</td>
-                  <td class="py-2.5 px-2 text-center text-rose-500">✗ Locked</td>
-                  <td class="py-2.5 px-2 text-center text-rose-500">✗ Manager Req.</td>
-                </tr>
-                <tr class="${userRole === 'HEAD_CHEF' ? 'bg-amber-50/50 font-bold' : ''}">
-                  <td class="py-2.5 px-3 font-semibold text-[var(--text-main)]">👨‍🍳 Head Chef / Halwai</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">✗ Hidden</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">✗ Hidden</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Batch Production</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">✗ Hidden</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">✗ Hidden</td>
-                </tr>
-                <tr class="${userRole === 'ACCOUNTANT' ? 'bg-amber-50/50 font-bold' : ''}">
-                  <td class="py-2.5 px-3 font-semibold text-[var(--text-main)]">📊 Accountant</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">Audit Only</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ P&L & GST</td>
-                  <td class="py-2.5 px-2 text-center text-emerald-600">✓ Cost Ledger</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">✗ Locked</td>
-                  <td class="py-2.5 px-2 text-center text-stone-400">✗ Locked</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+          <!-- Save Button -->
+          <div class="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-color)]">
+            <button 
+              type="submit" 
+              class="px-6 py-3.5 bg-gradient-to-r from-[#C86D3B] to-[#A84C1C] hover:from-[#B55C2C] hover:to-[#933F14] text-white font-black text-sm rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+            >
+              <span>💾</span>
+              <span>Save Settings &amp; Update UPI ID</span>
+            </button>
 
-      <!-- Cash Drawer Reconciliation (Z-Report Shift Handover) -->
-      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
-        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-          <div>
-            <h3 class="text-sm font-bold text-[var(--text-main)]">💵 Cash Drawer Reconciliation (Z-Report)</h3>
-            <p class="text-[11px] text-[var(--text-light)]">Register shift handover tracking comparing system expected cash with physical cash</p>
-          </div>
-          <span class="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-            Shift Register Active
-          </span>
-        </div>
-
-        <form id="z-report-reconcile-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-          <div>
-            <label class="block font-semibold text-[var(--text-muted)] mb-1">Opening Cash Float</label>
-            <input type="number" id="z-opening-float" value="5000" disabled class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl font-bold text-[var(--text-main)]" />
-          </div>
-          <div>
-            <label class="block font-semibold text-[var(--text-muted)] mb-1">System Expected Cash</label>
-            <input type="number" id="z-expected-cash" value="18450" disabled class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl font-bold text-emerald-600" />
-          </div>
-          <div>
-            <label class="block font-semibold text-[var(--text-muted)] mb-1">Physically Counted Cash *</label>
-            <input type="number" id="z-counted-cash" value="18450" class="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--brand-primary)] rounded-xl font-extrabold text-[var(--text-main)] focus:outline-none" />
-          </div>
-          <div class="flex items-end">
-            <button type="submit" class="w-full py-2.5 bg-[var(--brand-primary)] text-white font-bold rounded-xl hover:bg-[var(--brand-primary-hover)] transition-all">
-              ✓ Close Shift & Print Z-Report
+            <button 
+              id="reset-all-data-btn" 
+              type="button" 
+              class="px-4 py-2.5 rounded-xl border border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+            >
+              ⚠️ Reset Local Defaults
             </button>
           </div>
         </form>
-
-        <!-- Previous Shift Z-Report History -->
-        <div class="mt-3">
-          <p class="text-[11px] font-bold text-[var(--text-muted)] mb-2 uppercase">Recent Shift Closures</p>
-          <div class="space-y-2">
-            ${zReports.map(z => `
-              <div class="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex items-center justify-between text-xs">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-[var(--text-main)] font-mono">${z.id}</span>
-                    <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.2 rounded font-bold">${z.status}</span>
-                  </div>
-                  <p class="text-[10px] text-[var(--text-light)] mt-0.5">${z.shift} • Cashier: ${z.cashier}</p>
-                </div>
-                <div class="text-right">
-                  <p class="font-extrabold text-[var(--text-main)]">Expected: ₹${z.expectedCash.toLocaleString()} | Counted: ₹${z.countedCash.toLocaleString()}</p>
-                  <p class="text-[10px] ${z.variance === 0 ? 'text-emerald-600' : 'text-rose-600'} font-bold">Variance: ₹${z.variance}</p>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
       </section>
 
-      <!-- Audit Trail & Anti-Fraud Logs -->
-      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
+      <!-- 4. Security & Audit Trail Logs -->
+      <section class="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-4">
         <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
           <div>
-            <h3 class="text-sm font-bold text-[var(--text-main)]">🛡️ System Audit Trail & Anti-Fraud Logs</h3>
-            <p class="text-[11px] text-[var(--text-light)]">Immutable log of cashier voids, discount overrides, inventory updates & shift changes</p>
+            <h3 class="text-sm sm:text-base font-extrabold text-[var(--text-main)] flex items-center gap-2">
+              <span>🛡️</span>
+              <span>System Activity &amp; Audit Trail</span>
+            </h3>
+            <p class="text-xs text-[var(--text-light)]">Audit record of discounts, payments, bill parks, and catalog modifications</p>
           </div>
-          <span class="text-[10px] font-mono text-[var(--text-light)]">Encrypted Ledger</span>
+          <span class="text-[11px] font-mono text-[var(--text-light)]">Real-time log</span>
         </div>
 
         <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
-          ${auditLogs.map(log => `
+          ${auditLogs.length === 0 ? `
+            <p class="text-xs text-stone-400 py-4 text-center">No recent audit logs.</p>
+          ` : auditLogs.slice(0, 8).map((log: any) => `
             <div class="p-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] flex items-center justify-between text-xs">
               <div class="flex items-center space-x-3">
                 <span class="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-white px-2 py-0.5 rounded border border-[var(--border-color)]">${log.time}</span>
@@ -213,211 +340,6 @@ export function renderSettingsView(state) {
         </div>
       </section>
 
-      <!-- Google SEO, Search Console & Sitemap Management (Cleanly moved to Settings) -->
-      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
-        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-[#E6F4EA] border border-[#CDE9D3] text-[#1E7E34] flex items-center justify-center font-bold text-sm shadow-2xs">
-              <span class="w-3 h-3 rounded-full bg-[#34A853] animate-pulse"></span>
-            </div>
-            <div>
-              <h3 class="text-sm font-bold text-[var(--text-main)]">Google SEO, Sitemap &amp; Rich Schema Hub</h3>
-              <p class="text-[11px] text-[var(--text-light)]">Technical search engine indexation, dynamic meta tags &amp; canonical routing</p>
-            </div>
-          </div>
-          <button 
-            type="button"
-            id="settings-open-seo-modal-btn"
-            class="px-4 py-2 rounded-xl text-xs font-bold bg-[#E6F4EA] hover:bg-[#D5EEDC] text-[#1E7E34] border border-[#CDE9D3] transition-all cursor-pointer shadow-2xs interactive-scale flex items-center gap-1.5"
-          >
-            <span>Launch Audit Hub</span>
-            <span>→</span>
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-stone-700">XML Sitemap</span>
-              <span class="text-emerald-700 text-[10px] font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Active ✓</span>
-            </div>
-            <p class="text-[11px] text-stone-500 mt-1">public/sitemap.xml (8 tabs indexed)</p>
-            <a href="/sitemap.xml" target="_blank" class="text-[10px] text-[#C86D3B] font-semibold hover:underline mt-1 inline-block">View XML →</a>
-          </div>
-
-          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-stone-700">Robots.txt</span>
-              <span class="text-emerald-700 text-[10px] font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Crawling Allowed ✓</span>
-            </div>
-            <p class="text-[11px] text-stone-500 mt-1">public/robots.txt (Allow: /)</p>
-            <a href="/robots.txt" target="_blank" class="text-[10px] text-[#C86D3B] font-semibold hover:underline mt-1 inline-block">View File →</a>
-          </div>
-
-          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-stone-700">Schema.org JSON-LD</span>
-              <span class="text-emerald-700 text-[10px] font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Rich Snippets ✓</span>
-            </div>
-            <p class="text-[11px] text-stone-500 mt-1">Bakery / Confectionery Store Schema</p>
-            <span class="text-[10px] text-stone-400 mt-1 inline-block">Geo &amp; Opening Hours active</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Firebase Cloud Storage & Firestore Sync Center -->
-      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3">
-          <div>
-            <h3 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
-              <span>☁️ Firebase Cloud Storage &amp; Firestore Sync Center</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Storage Live &amp; Synced
-              </span>
-            </h3>
-            <p class="text-[11px] text-[var(--text-muted)]">Bucket: <code class="bg-stone-100 px-1.5 py-0.5 rounded font-mono font-bold text-[#C86D3B]">radhesweets0.firebasestorage.app</code> • Project: <code class="bg-stone-100 px-1.5 py-0.5 rounded font-mono">radhesweets0</code></p>
-          </div>
-
-          <button 
-            id="sync-firebase-now-btn"
-            type="button"
-            class="px-4 py-2 bg-gradient-to-r from-amber-600 to-[#C86D3B] hover:from-amber-700 hover:to-[#B25D2E] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0"
-          >
-            <span class="text-sm leading-none">🔄</span>
-            <span>Sync All Data to Firebase Now</span>
-          </button>
-        </div>
-
-        <!-- Sync Metrics Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
-            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Sweets in Cloud</span>
-            <span class="font-black text-[#2A1F1D] text-base">${state.sweets?.length || 100} / 100</span>
-            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Catalog &amp; 100 Files</span>
-          </div>
-
-          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
-            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Visual Assets</span>
-            <span class="font-black text-[#2A1F1D] text-base">18 Images</span>
-            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Sweet Photos Live</span>
-          </div>
-
-          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
-            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Orders Synced</span>
-            <span class="font-black text-[#2A1F1D] text-base">${state.orders?.length ?? 0} Orders</span>
-            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Stream Active</span>
-          </div>
-
-          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
-            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Performance KPIs</span>
-            <span class="font-black text-[#2A1F1D] text-base">₹${(state.kpis?.sales?.value ?? state.kpis?.revenue?.value ?? 0).toLocaleString()}</span>
-            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Financials Live</span>
-          </div>
-        </div>
-
-        <!-- Direct Cloud Links -->
-        <div class="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/70 text-xs space-y-2">
-          <p class="font-bold text-amber-900 flex items-center gap-1.5">
-            <span>🌐 Direct Public Cloud Endpoints:</span>
-          </p>
-          <div class="flex flex-wrap gap-2 text-[11px]">
-            <a 
-              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/sweets%2Fcatalog_100_sweets.json?alt=media" 
-              target="_blank" 
-              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
-            >
-              <span>🍬 100 Sweets Catalog JSON</span>
-              <span class="text-[10px] text-stone-400">↗</span>
-            </a>
-
-            <a 
-              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/performance%2Fanalytics_and_kpis.json?alt=media" 
-              target="_blank" 
-              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
-            >
-              <span>📊 Performance &amp; KPIs JSON</span>
-              <span class="text-[10px] text-stone-400">↗</span>
-            </a>
-
-            <a 
-              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/orders%2Fall_orders.json?alt=media" 
-              target="_blank" 
-              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
-            >
-              <span>📋 Orders Archive JSON</span>
-              <span class="text-[10px] text-stone-400">↗</span>
-            </a>
-
-            <a 
-              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/manifest%2Fradhe_sweets_global_backup.json?alt=media" 
-              target="_blank" 
-              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
-            >
-              <span>📦 Global Master ERP Backup</span>
-              <span class="text-[10px] text-stone-400">↗</span>
-            </a>
-
-            <a 
-              href="https://console.firebase.google.com/project/radhesweets0/firestore" 
-              target="_blank" 
-              class="px-2.5 py-1 bg-orange-100 border border-orange-300 rounded-lg font-bold text-[#C86D3B] hover:bg-orange-200 transition-all inline-flex items-center gap-1"
-            >
-              <span>🔥 Firebase Console</span>
-              <span class="text-[10px]">↗</span>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- Store Profile & Tax Localization Form -->
-      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
-        <h3 class="text-sm font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3">
-          🏬 Store Profile & Multi-Currency / Tax Localization
-        </h3>
-
-        <form id="store-profile-form" class="space-y-4 text-xs">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block font-semibold text-[var(--text-muted)] mb-1">Shop Name</label>
-              <input type="text" name="name" value="${shopInfo.name}" class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] font-bold" />
-            </div>
-            <div>
-              <label class="block font-semibold text-[var(--text-muted)] mb-1">Brand Tagline</label>
-              <input type="text" name="subName" value="${shopInfo.subName}" class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] font-bold" />
-            </div>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-[var(--text-muted)] mb-1">Address</label>
-            <input type="text" name="address" value="${shopInfo.address}" class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)]" />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block font-semibold text-[var(--text-muted)] mb-1">Phone</label>
-              <input type="text" name="phone" value="${shopInfo.phone}" class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)]" />
-            </div>
-            <div>
-              <label class="block font-semibold text-[var(--text-muted)] mb-1">GSTIN</label>
-              <input type="text" name="gstin" value="${shopInfo.gstin}" class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] font-mono" />
-            </div>
-            <div>
-              <label class="block font-semibold text-[var(--text-muted)] mb-1">FSSAI Lic. No.</label>
-              <input type="text" name="fssai" value="${shopInfo.fssai}" class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] font-mono" />
-            </div>
-          </div>
-
-          <div class="pt-2 flex items-center justify-between">
-            <button type="submit" class="px-5 py-2.5 bg-[var(--brand-primary)] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[var(--brand-primary-hover)] transition-all">
-              Save Configuration
-            </button>
-            <button id="reset-all-data-btn" type="button" class="text-xs font-semibold text-rose-500 hover:underline">
-              Factory Reset Data
-            </button>
-          </div>
-        </form>
-      </section>
     </div>
   `;
 }

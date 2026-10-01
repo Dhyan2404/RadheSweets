@@ -23,6 +23,7 @@ import {
   getBranchDefaultCatalog
 } from './firebase.js';
 import { initialData } from './data.js';
+import { renderStorefrontView } from './components/StorefrontView.ts';
 import { renderSidebar } from './components/Sidebar.ts';
 import { renderTopBar } from './components/TopBar.ts';
 import { renderMobileBottomNav, renderMobileDrawer } from './components/MobileNav.ts';
@@ -204,7 +205,19 @@ const state = {
   payingStaff: null,
   showRecordLeaveModal: false,
   showRecordAdvanceModal: false,
-  advanceStaffId: null
+  advanceStaffId: null,
+
+  // Customer Storefront State
+  userCart: stored?.userCart || [],
+  customerDietFilter: 'All',
+  customerSearchQuery: '',
+  customerDeliveryType: 'delivery',
+  customerName: stored?.customerName || '',
+  customerPhone: stored?.customerPhone || '',
+  customerAddress: stored?.customerAddress || '',
+  showCustomerBagModal: false,
+  showLoyaltyCheckModal: false,
+  loyaltyQueryResult: null
 };
 
 function saveState() {
@@ -235,7 +248,11 @@ function saveState() {
       selectedCustomer: state.selectedCustomer,
       posCart: state.posCart,
       quickCart: state.quickCart,
-      productsViewMode: state.productsViewMode
+      productsViewMode: state.productsViewMode,
+      userCart: state.userCart,
+      customerName: state.customerName,
+      customerPhone: state.customerPhone,
+      customerAddress: state.customerAddress
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     broadcastPeerSync('STATE_SAVED');
@@ -645,6 +662,10 @@ function setupGlobalFirestoreListeners() {
 // Dynamic SEO Metadata & URL Hash Synchronization for Google Crawling
 function updatePageSeoMetadata(activeTab: string) {
   const titles: Record<string, { title: string; desc: string }> = {
+    storefront: {
+      title: 'Online Sweets Store & Home Delivery | Radhe Sweets Ahmedabad',
+      desc: 'Order authentic Shuddh Desi Ghee sweets, Kaju Katli, Motichoor Ladoo, and festive wedding gift hampers online. Same-day express doorstep delivery in Ahmedabad.'
+    },
     dashboard: {
       title: 'Radhe Sweets Ahmedabad | Shop Management & Live Kitchen Console',
       desc: 'Radhe Sweets master confectionery dashboard in Ahmedabad. Track live sales, fast selling sweets, kitchen stock valuation and order fulfillment.'
@@ -745,7 +766,7 @@ export function renderApp() {
 
         <!-- Mobile Bottom Navigation -->
         <div id="mobile-nav-container" class="md:hidden">
-          ${renderMobileBottomNav(state.activeTab)}
+          ${renderMobileBottomNav(state.activeTab, state)}
         </div>
       </div>
 
@@ -771,7 +792,7 @@ export function renderApp() {
     if (isTabSwitch) {
       // Tab changed: Update navigation, run entry animation, and scroll to top
       if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
-      if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab);
+      if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab, state);
       if (topbarContainer) topbarContainer.innerHTML = renderTopBar(state);
 
       mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter";
@@ -783,7 +804,7 @@ export function renderApp() {
       // In-page click/action: DO NOT play animate-page-enter (prevents blank/flicker flash!)
       if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
       if (topbarContainer) topbarContainer.innerHTML = renderTopBar(state);
-      if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab);
+      if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab, state);
 
       mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8";
       mainTabContent.innerHTML = renderTabContent();
@@ -839,6 +860,8 @@ export function showToast(message, type = 'success') {
 
 function renderTabContent() {
   switch (state.activeTab) {
+    case 'storefront':
+      return renderStorefrontView(state);
     case 'dashboard':
       return renderDashboardView(state);
     case 'pos':
@@ -3728,19 +3751,54 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     }
   });
 
-  // Settings: Store profile form
-  document.getElementById('store-profile-form')?.addEventListener('submit', (e) => {
+  // Settings: Store profile form & UPI configuration
+  document.getElementById('store-profile-form')?.addEventListener('submit', (e: any) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    state.shopInfo.name = fd.get('name');
-    state.shopInfo.subName = fd.get('subName');
-    state.shopInfo.motto = fd.get('motto');
-    state.shopInfo.address = fd.get('address');
-    state.shopInfo.phone = fd.get('phone');
-    state.shopInfo.gstin = fd.get('gstin');
-    state.shopInfo.fssai = fd.get('fssai');
+    
+    const upiId = (fd.get('upiId') as string || '').trim();
+    const upiName = (fd.get('upiName') as string || '').trim();
+    const name = (fd.get('name') as string || '').trim();
+    const subName = (fd.get('subName') as string || '').trim();
+    const motto = (fd.get('motto') as string || '').trim();
+    const owner = (fd.get('owner') as string || '').trim();
+    const address = (fd.get('address') as string || '').trim();
+    const phone = (fd.get('phone') as string || '').trim();
+    const email = (fd.get('email') as string || '').trim();
+    const gstin = (fd.get('gstin') as string || '').trim();
+    const fssai = (fd.get('fssai') as string || '').trim();
+    const currency = (fd.get('currency') as string || '').trim() || '₹';
+    const freeDeliveryAbove = Number(fd.get('freeDeliveryAbove')) || 500;
+    const deliveryFee = Number(fd.get('deliveryFee')) || 40;
+
+    if (!state.shopInfo) state.shopInfo = {};
+
+    state.shopInfo.upiId = upiId || state.shopInfo.upiId || 'radhesweets@oksbi';
+    state.shopInfo.upiName = upiName || state.shopInfo.upiName || name || 'Radhe Sweets';
+    state.shopInfo.name = name || state.shopInfo.name || 'Radhe Sweets';
+    state.shopInfo.subName = subName || state.shopInfo.subName || 'SWEETS & MORE';
+    state.shopInfo.motto = motto || state.shopInfo.motto || 'Sweet Moments With Radhe Krishna';
+    state.shopInfo.owner = owner || state.shopInfo.owner || 'Anand Shah';
+    state.shopInfo.address = address || state.shopInfo.address;
+    state.shopInfo.phone = phone || state.shopInfo.phone;
+    state.shopInfo.email = email || state.shopInfo.email;
+    state.shopInfo.gstin = gstin || state.shopInfo.gstin;
+    state.shopInfo.fssai = fssai || state.shopInfo.fssai;
+    state.shopInfo.currency = currency;
+    state.shopInfo.freeDeliveryAbove = freeDeliveryAbove;
+    state.shopInfo.deliveryFee = deliveryFee;
+
+    // Log update in audit logs
+    if (!state.auditLogs) state.auditLogs = [];
+    state.auditLogs.unshift({
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      user: state.shopInfo.owner || 'Admin',
+      action: 'Store & UPI Settings Updated',
+      details: `VPA set to: ${state.shopInfo.upiId} (${state.shopInfo.name})`
+    });
+
     saveState();
-    showToast('✓ Store details updated successfully!', 'success');
+    showToast(`✓ Store details & UPI ID (${state.shopInfo.upiId}) saved!`, 'success');
     renderApp();
   });
 
@@ -3867,39 +3925,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     }
   });
 
-  // Cash Drawer Z-Report Reconciliation
-  document.getElementById('z-report-reconcile-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const counted = parseFloat(document.getElementById('z-counted-cash')?.value) || 18450;
-    const expected = parseFloat(document.getElementById('z-expected-cash')?.value) || 18450;
-    const variance = counted - expected;
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    state.zReports.unshift({
-      id: `ZR-${Date.now().toString().slice(-6)}`,
-      shift: `Counter Shift Handover (${timeStr})`,
-      cashier: state.shopInfo.owner,
-      openingFloat: 5000,
-      expectedCash: expected,
-      countedCash: counted,
-      variance: variance,
-      upiTotal: 14200,
-      cardTotal: 6200,
-      totalSales: 38850,
-      status: variance === 0 ? 'Balanced' : variance > 0 ? 'Cash Surplus' : 'Cash Shortage'
-    });
-
-    state.auditLogs.unshift({
-      time: timeStr,
-      user: state.shopInfo.owner,
-      action: 'Shift Reconciled',
-      details: `Z-Report closed. Counted ₹${counted}, Variance: ₹${variance}`
-    });
-
-    saveState();
-    alert(`Z-Report Reconciled! Status: ${variance === 0 ? 'Perfect Balance (₹0 variance)' : `Variance: ₹${variance}`}. Shift handover archived.`);
-    renderApp();
-  });
 
 
   // Raw Material PO Restock
@@ -4048,11 +4073,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     if (attachHeroBtn) {
       if (hasDigits) {
         attachHeroBtn.disabled = false;
-        attachHeroBtn.className = 'w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer';
+        attachHeroBtn.className = 'w-full py-4 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer';
         attachHeroBtn.innerHTML = `<span>⚡ Attach ${formattedPhone} to Order</span>`;
       } else {
         attachHeroBtn.disabled = true;
-        attachHeroBtn.className = 'w-full py-3.5 px-4 bg-stone-200 dark:bg-stone-800 text-stone-400 font-bold text-sm rounded-2xl cursor-not-allowed flex items-center justify-center gap-2';
+        attachHeroBtn.className = 'w-full py-4 px-4 bg-stone-200 dark:bg-stone-800 text-stone-400 font-bold text-sm rounded-2xl cursor-not-allowed flex items-center justify-center gap-2';
         attachHeroBtn.innerHTML = `<span>📞 Dial 10 digits to attach</span>`;
       }
     }
@@ -4066,6 +4091,32 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       bindDialerMatchPickers();
     }
   };
+
+  // Mobile Dialer View Tab Switcher (Keypad vs Directory)
+  const keypadCol = document.getElementById('dialer-keypad-column');
+  const directoryCol = document.getElementById('dialer-directory-column');
+  const keypadTabBtn = document.getElementById('dialer-tab-keypad-btn');
+  const directoryTabBtn = document.getElementById('dialer-tab-directory-btn');
+
+  keypadTabBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    keypadCol?.classList.remove('hidden');
+    directoryCol?.classList.add('hidden');
+    keypadTabBtn.className = 'flex-1 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-white dark:bg-stone-900 text-[#C86D3B] shadow-2xs font-extrabold';
+    if (directoryTabBtn) {
+      directoryTabBtn.className = 'flex-1 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer text-stone-600 dark:text-stone-300 hover:text-stone-900 font-bold';
+    }
+  });
+
+  directoryTabBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    directoryCol?.classList.remove('hidden');
+    keypadCol?.classList.add('hidden');
+    directoryTabBtn.className = 'flex-1 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-white dark:bg-stone-900 text-[#C86D3B] shadow-2xs font-extrabold';
+    if (keypadTabBtn) {
+      keypadTabBtn.className = 'flex-1 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer text-stone-600 dark:text-stone-300 hover:text-stone-900 font-bold';
+    }
+  });
 
   // Close Dialer
   document.getElementById('close-dialer-btn')?.addEventListener('click', (e) => {
@@ -4154,6 +4205,371 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
   // Initial attach of matching listeners inside modal
   bindDialerMatchPickers();
+
+  // Attach Storefront View Event Listeners (Online Customer Shopping)
+  bindStorefrontEvents();
+}
+
+// Interactive Storefront & Online Shopping Event Listeners
+function bindStorefrontEvents() {
+  // Category / Diet filter pill clicks
+  document.querySelectorAll('[data-customer-diet]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const diet = btn.getAttribute('data-customer-diet') || 'All';
+      state.customerDietFilter = diet;
+      saveState();
+      renderApp();
+    });
+  });
+
+  // Search input typing
+  const customerSearchInput = document.getElementById('customer-search-input') as HTMLInputElement | null;
+  if (customerSearchInput) {
+    customerSearchInput.addEventListener('input', (e) => {
+      state.customerSearchQuery = (e.target as HTMLInputElement).value;
+      renderApp();
+    });
+  }
+
+  // Pack size selector (250g, 500g, 1kg)
+  document.querySelectorAll('[data-user-pack]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const packVal = parseFloat(btn.getAttribute('data-user-pack') || '0.5');
+      const sweetId = btn.getAttribute('data-sweet-id');
+      if (!sweetId) return;
+
+      const sweet = (state.sweets || []).find((s: any) => s.id === sweetId);
+      if (!sweet) return;
+
+      const rateKg = sweet.pricePerKg || sweet.rate || 400;
+      const weightLabel = packVal === 0.25 ? '250g' : packVal === 0.5 ? '500g' : '1kg';
+      const price = Math.round(rateKg * packVal);
+
+      if (!state.userCart) state.userCart = [];
+      const existing = state.userCart.find((it: any) => it.id === sweetId);
+      if (existing) {
+        existing.qty = packVal;
+        existing.weightLabel = weightLabel;
+        existing.price = price;
+      } else {
+        state.userCart.push({
+          id: sweet.id,
+          name: sweet.name,
+          qty: packVal,
+          price: price,
+          rateKg: rateKg,
+          weightLabel: weightLabel,
+          image: sweet.image || `/assets/sweets/${sweet.id}.png`
+        });
+      }
+      saveState();
+      renderApp();
+      showToast(`${sweet.name} (${weightLabel}) updated in bag!`, 'success');
+    });
+  });
+
+  // Direct add / Add to bag
+  const handleAddSweetToBag = (sweetId: string, defaultPack = 0.5) => {
+    const sweet = (state.sweets || []).find((s: any) => s.id === sweetId);
+    if (!sweet) return;
+
+    if (!state.userCart) state.userCart = [];
+    const existing = state.userCart.find((it: any) => it.id === sweetId);
+    if (existing) {
+      existing.qty = (existing.qty || 1) + 1;
+    } else {
+      const rateKg = sweet.pricePerKg || sweet.rate || 400;
+      const weightLabel = defaultPack === 0.25 ? '250g' : defaultPack === 0.5 ? '500g' : '1kg';
+      const price = Math.round(rateKg * defaultPack);
+      state.userCart.push({
+        id: sweet.id,
+        name: sweet.name,
+        qty: defaultPack,
+        price: price,
+        rateKg: rateKg,
+        weightLabel: weightLabel,
+        image: sweet.image || `/assets/sweets/${sweet.id}.png`
+      });
+    }
+    saveState();
+    renderApp();
+    showToast(`Added ${sweet.name} to Sweet Bag!`, 'success');
+  };
+
+  document.querySelectorAll('[data-user-add-direct]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-user-add-direct');
+      if (id) handleAddSweetToBag(id, 0.5);
+    });
+  });
+
+  document.querySelectorAll('[data-storefront-add]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-storefront-add');
+      if (id) handleAddSweetToBag(id, 0.5);
+    });
+  });
+
+  // Helper: get clean store WhatsApp phone number from settings
+  const getStoreWhatsAppPhone = () => {
+    const raw = (state.shopInfo?.phone || '9876543210').replace(/\D/g, '');
+    return raw.length === 10 ? `91${raw}` : raw;
+  };
+
+  // Instant WhatsApp quick buy for a single sweet
+  document.querySelectorAll('[data-storefront-whatsapp-buy]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-storefront-whatsapp-buy');
+      const sweet = (state.sweets || []).find((s: any) => s.id === id);
+      if (!sweet) return;
+
+      const phone = getStoreWhatsAppPhone();
+      const text = encodeURIComponent(
+        `Hello ${state.shopInfo?.name || 'Radhe Sweets'} Ahmedabad! 🪔\n\nI would like to order fresh ${sweet.name} (500g / 1kg) for home delivery/pickup.\nBranch: ${state.branches?.find((b: any) => b.id === state.currentBranchId)?.name || 'Navrangpura'}\n\nPlease share availability and delivery estimate!`
+      );
+      window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+    });
+  });
+
+  // Wedding Inquiry button
+  document.getElementById('storefront-wedding-inquiry-btn')?.addEventListener('click', () => {
+    const phone = getStoreWhatsAppPhone();
+    const text = encodeURIComponent(
+      `Hello ${state.shopInfo?.name || 'Radhe Sweets'} Team! 🎁\n\nI am planning a Wedding / Corporate event in Ahmedabad and would like to inquire about customized Sweet Gift Hampers, Dry Fruit Boxes, and bulk confectionery rates.\n\nPlease share your corporate catalog and sample box options!`
+    );
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  });
+
+  // Bag Drawer Open & Close
+  const openBag = () => {
+    state.showCustomerBagModal = true;
+    renderApp();
+  };
+  const closeBag = () => {
+    state.showCustomerBagModal = false;
+    renderApp();
+  };
+
+  document.getElementById('storefront-open-bag-btn')?.addEventListener('click', openBag);
+  document.getElementById('mobile-bottom-open-bag-btn')?.addEventListener('click', openBag);
+  document.getElementById('close-customer-bag-btn')?.addEventListener('click', closeBag);
+  document.getElementById('bag-empty-browse-btn')?.addEventListener('click', closeBag);
+  document.getElementById('customer-bag-backdrop')?.addEventListener('click', (e) => {
+    if (e.target && (e.target as HTMLElement).id === 'customer-bag-backdrop') {
+      closeBag();
+    }
+  });
+
+  // Remove from bag
+  document.querySelectorAll('[data-user-remove-cart]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-user-remove-cart');
+      if (id && state.userCart) {
+        state.userCart = state.userCart.filter((it: any) => it.id !== id);
+        saveState();
+        renderApp();
+      }
+    });
+  });
+
+  // Delivery vs Pickup Switch
+  document.getElementById('bag-set-delivery-btn')?.addEventListener('click', () => {
+    state.customerDeliveryType = 'delivery';
+    saveState();
+    renderApp();
+  });
+  document.getElementById('bag-set-pickup-btn')?.addEventListener('click', () => {
+    state.customerDeliveryType = 'pickup';
+    saveState();
+    renderApp();
+  });
+
+  // Sync Customer Input fields in Bag
+  const bagName = document.getElementById('bag-customer-name') as HTMLInputElement | null;
+  const bagPhone = document.getElementById('bag-customer-phone') as HTMLInputElement | null;
+  const bagAddr = document.getElementById('bag-customer-address') as HTMLTextAreaElement | null;
+
+  bagName?.addEventListener('input', (e) => {
+    state.customerName = (e.target as HTMLInputElement).value;
+  });
+  bagPhone?.addEventListener('input', (e) => {
+    state.customerPhone = (e.target as HTMLInputElement).value;
+  });
+  bagAddr?.addEventListener('input', (e) => {
+    state.customerAddress = (e.target as HTMLTextAreaElement).value;
+  });
+
+  // Order via WhatsApp (Complete Bag)
+  document.getElementById('bag-submit-whatsapp-btn')?.addEventListener('click', () => {
+    if (!state.userCart || state.userCart.length === 0) {
+      showToast('Your sweet bag is empty!', 'info');
+      return;
+    }
+    const name = bagName?.value?.trim() || state.customerName || 'Customer';
+    const phone = bagPhone?.value?.trim() || state.customerPhone || '';
+    const address = bagAddr?.value?.trim() || state.customerAddress || '';
+    const isDelivery = (state.customerDeliveryType || 'delivery') === 'delivery';
+
+    if (isDelivery && !address) {
+      showToast('Please enter your Ahmedabad delivery address', 'info');
+      bagAddr?.focus();
+      return;
+    }
+
+    const subtotal = state.userCart.reduce((sum: number, it: any) => sum + (it.price * it.qty), 0);
+    const freeThreshold = Number(state.shopInfo?.freeDeliveryAbove) || 500;
+    const stdDeliveryFee = Number(state.shopInfo?.deliveryFee) || 40;
+    const delCharge = subtotal >= freeThreshold ? 0 : stdDeliveryFee;
+    const total = subtotal + delCharge;
+    const branch = state.branches?.find((b: any) => b.id === state.currentBranchId)?.name || 'Navrangpura Flagship';
+
+    const itemsSummary = state.userCart.map((it: any, idx: number) => 
+      `${idx + 1}. ${it.name} (${it.weightLabel || `${it.qty}kg`}) - ₹${it.price * it.qty}`
+    ).join('\n');
+
+    const shopName = state.shopInfo?.name || 'RADHE SWEETS AHMEDABAD';
+    const msg = `🪔 *${shopName.toUpperCase()} - ONLINE ORDER* 🪔\n\n` +
+      `*Branch:* ${branch}\n` +
+      `*Customer:* ${name} (${phone || 'WhatsApp'})\n` +
+      `*Order Type:* ${isDelivery ? `🚚 Home Delivery to:\n${address}` : `🏪 Store Self-Pickup`}\n\n` +
+      `*Selected Sweets:*\n${itemsSummary}\n\n` +
+      `*Sweets Total:* ₹${subtotal}\n` +
+      `*Delivery Charge:* ${delCharge === 0 ? 'FREE' : `₹${delCharge}`}\n` +
+      `*Net Payable:* ₹${total}\n\n` +
+      `Please confirm order preparation and dispatch time! 🙏`;
+
+    const targetPhone = getStoreWhatsAppPhone();
+    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    showToast('Opening WhatsApp order draft...', 'success');
+  });
+
+  // Place Online Order (Direct System Order)
+  document.getElementById('bag-submit-online-btn')?.addEventListener('click', () => {
+    if (!state.userCart || state.userCart.length === 0) {
+      showToast('Your sweet bag is empty!', 'info');
+      return;
+    }
+    const name = bagName?.value?.trim() || state.customerName || 'Ahmedabad Patron';
+    const phone = bagPhone?.value?.trim() || state.customerPhone || '9876543210';
+    const address = bagAddr?.value?.trim() || state.customerAddress || 'Navrangpura, Ahmedabad';
+    const isDelivery = (state.customerDeliveryType || 'delivery') === 'delivery';
+
+    const subtotal = state.userCart.reduce((sum: number, it: any) => sum + (it.price * it.qty), 0);
+    const delCharge = subtotal >= 500 ? 0 : 40;
+    const total = subtotal + delCharge;
+
+    const newOrder = {
+      id: `ord-${Date.now()}`,
+      orderNumber: `RS-WEB-${Math.floor(1000 + Math.random() * 9000)}`,
+      customer: {
+        id: `cust-online-${Date.now()}`,
+        name: name,
+        phone: phone,
+        address: isDelivery ? address : 'Store Pickup Counter',
+        type: 'Online Customer',
+        loyaltyPoints: Math.floor(total / 100)
+      },
+      items: state.userCart.map((it: any) => ({
+        id: it.id,
+        name: it.name,
+        qty: it.qty,
+        rate: it.rateKg || it.price,
+        total: it.price * it.qty,
+        unit: 'kg'
+      })),
+      subtotal: subtotal,
+      discount: 0,
+      tax: 0,
+      deliveryCharge: delCharge,
+      total: total,
+      paymentMethod: 'Pay on Delivery / UPI',
+      paymentStatus: 'Pending',
+      orderStatus: 'Kitchen Packing',
+      deliveryType: isDelivery ? 'delivery' : 'pickup',
+      deliveryAddress: isDelivery ? address : '',
+      branchId: state.currentBranchId || 'br-1',
+      source: 'Online Storefront',
+      createdAt: new Date().toISOString()
+    };
+
+    if (!state.orders) state.orders = [];
+    state.orders.unshift(newOrder);
+
+    // Increment KPIs
+    if (state.kpis?.ordersToday) {
+      state.kpis.ordersToday.value = (state.kpis.ordersToday.value || 0) + 1;
+      state.kpis.ordersToday.formatted = String(state.kpis.ordersToday.value);
+    }
+    if (state.kpis?.dailyRevenue) {
+      state.kpis.dailyRevenue.value = (state.kpis.dailyRevenue.value || 0) + total;
+      state.kpis.dailyRevenue.formatted = `₹${state.kpis.dailyRevenue.value.toLocaleString()}`;
+    }
+
+    saveBranchSnapshot(state.currentBranchId);
+    saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers);
+    uploadOrderToStorage(newOrder);
+    saveBranchKpisToCloud(state.currentBranchId, state.kpis);
+
+    // Clear cart and close modal
+    state.userCart = [];
+    state.showCustomerBagModal = false;
+    state.lastPlacedOrder = newOrder;
+    state.activeOrder = newOrder;
+    state.showSuccessModal = true;
+    saveState();
+    renderApp();
+    showToast(`Order #${newOrder.orderNumber} successfully placed!`, 'success');
+  });
+
+  // Loyalty Points Lookup Modal
+  const openLoyalty = () => {
+    state.showLoyaltyCheckModal = true;
+    renderApp();
+  };
+  const closeLoyalty = () => {
+    state.showLoyaltyCheckModal = false;
+    state.loyaltyQueryResult = null;
+    renderApp();
+  };
+
+  document.getElementById('storefront-check-loyalty-btn')?.addEventListener('click', openLoyalty);
+  document.getElementById('mobile-bottom-loyalty-btn')?.addEventListener('click', openLoyalty);
+  document.getElementById('close-loyalty-modal-btn')?.addEventListener('click', closeLoyalty);
+  document.getElementById('loyalty-modal-backdrop')?.addEventListener('click', (e) => {
+    if (e.target && (e.target as HTMLElement).id === 'loyalty-modal-backdrop') {
+      closeLoyalty();
+    }
+  });
+
+  // Loyalty lookup button
+  document.getElementById('loyalty-lookup-submit-btn')?.addEventListener('click', () => {
+    const input = document.getElementById('loyalty-search-phone') as HTMLInputElement | null;
+    const phone = input?.value?.trim().replace(/\D/g, '') || '';
+    if (!phone) {
+      showToast('Please enter your 10-digit mobile number', 'info');
+      return;
+    }
+
+    const found = (state.customers || []).find((c: any) => {
+      const cDigits = (c.phone || '').replace(/\D/g, '');
+      return (cDigits.length >= 6 && cDigits.endsWith(phone)) || c.phone === phone;
+    });
+
+    if (found) {
+      state.loyaltyQueryResult = found;
+      showToast(`Welcome back, ${found.name}!`, 'success');
+    } else {
+      state.loyaltyQueryResult = { notFound: true, phone: phone };
+    }
+    renderApp();
+  });
 }
 
 // Physical Keyboard Numpad listener for Dialer - ZERO REFRESH!

@@ -113,7 +113,7 @@ export function renderThermalReceiptModal(order, shopInfo) {
             <!-- Devotional Footer Motto & Barcode -->
             <div class="text-center pt-1 space-y-1">
               <p class="text-[10px] font-bold">🙏 JAI RADHE KRISHNA 🙏</p>
-              <p class="text-[9px] italic text-stone-600">"Sweet Moments With Radhe Krishna"</p>
+              <p class="text-[9px] italic text-stone-600">"${shopInfo.motto || 'Sweet Moments With Radhe Krishna'}"</p>
               <p class="text-[9px] text-stone-500">Thank you! Please visit again!</p>
               <!-- Barcode Mock -->
               <div class="pt-2 flex justify-center">

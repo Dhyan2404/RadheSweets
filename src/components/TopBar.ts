@@ -102,10 +102,39 @@ export function renderTopBar(state: any) {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </span>
-          </div>
         </div>
 
-
+        <!-- Mode Switcher: Customer Storefront vs Counter ERP -->
+        <div class="flex items-center bg-stone-100 dark:bg-stone-800 p-1 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
+          <button 
+            type="button" 
+            id="topbar-storefront-btn"
+            data-tab="storefront"
+            class="px-2.5 sm:px-3.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+              state.activeTab === 'storefront' 
+                ? 'bg-[#C86D3B] text-white shadow-xs' 
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+            }"
+            title="Switch to Customer Storefront (Public Menu)"
+          >
+            <span>🛍️</span>
+            <span class="hidden sm:inline">Storefront</span>
+          </button>
+          <button 
+            type="button" 
+            id="topbar-erp-btn"
+            data-tab="pos"
+            class="px-2.5 sm:px-3.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+              state.activeTab !== 'storefront' 
+                ? 'bg-[#2A1F1D] text-amber-200 shadow-xs' 
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900'
+            }"
+            title="Switch to Counter POS & Staff ERP"
+          >
+            <span>🔐</span>
+            <span class="hidden sm:inline">POS ERP</span>
+          </button>
+        </div>
 
         <!-- Current Date Indicator -->
         <div class="hidden lg:flex items-center space-x-2 bg-stone-50 border border-[#F0ECE4] px-3 py-1.5 rounded-xl text-xs text-stone-600 shadow-2xs">
