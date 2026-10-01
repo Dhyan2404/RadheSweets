@@ -238,10 +238,90 @@ function saveState() {
       productsViewMode: state.productsViewMode
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    broadcastPeerSync('STATE_SAVED');
   } catch (e) {
     console.error('Failed to save state:', e);
   }
 }
+
+// Real-time Peer Bus for Multi-Tab & Device Viewport Synchronization
+const peerSyncBus = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('radhe_sweets_peer_bus') : null;
+
+function broadcastPeerSync(type = 'STATE_SAVED') {
+  try {
+    peerSyncBus?.postMessage({
+      type,
+      branchId: state.currentBranchId,
+      timestamp: Date.now()
+    });
+  } catch (_) {}
+}
+
+function handleIncomingPeerSync() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const fresh = JSON.parse(raw);
+    if (!fresh) return;
+
+    let hasSignificantUpdate = false;
+
+    // Synchronize orders if changed
+    if (Array.isArray(fresh.orders) && fresh.orders.length !== state.orders.length) {
+      state.orders = fresh.orders;
+      state.orderStatusCounts = fresh.orderStatusCounts || state.orderStatusCounts;
+      hasSignificantUpdate = true;
+    }
+
+    // Synchronize sweets stock
+    if (Array.isArray(fresh.sweets) && fresh.sweets.length >= 50) {
+      state.sweets = fresh.sweets;
+      hasSignificantUpdate = true;
+    }
+
+    // Synchronize customers
+    if (Array.isArray(fresh.customers) && fresh.customers.length !== state.customers.length) {
+      state.customers = fresh.customers;
+      hasSignificantUpdate = true;
+    }
+
+    // Synchronize KPIs
+    if (fresh.kpis) {
+      state.kpis = fresh.kpis;
+      hasSignificantUpdate = true;
+    }
+
+    // Synchronize audit logs
+    if (Array.isArray(fresh.auditLogs)) {
+      state.auditLogs = fresh.auditLogs;
+    }
+
+    // Synchronize parked bills
+    if (Array.isArray(fresh.parkedBills)) {
+      state.parkedBills = fresh.parkedBills;
+    }
+
+    if (hasSignificantUpdate && shouldBackgroundSyncRender()) {
+      renderApp();
+    }
+  } catch (err) {
+    console.warn('Cross-tab peer sync error:', err);
+  }
+}
+
+if (peerSyncBus) {
+  peerSyncBus.onmessage = (event) => {
+    if (event.data?.type === 'STATE_SAVED') {
+      handleIncomingPeerSync();
+    }
+  };
+}
+
+window.addEventListener('storage', (e) => {
+  if (e.key === STORAGE_KEY && e.newValue) {
+    handleIncomingPeerSync();
+  }
+});
 
 // Real-time Cloud Active Checkout Draft Synchronization
 function syncActiveCheckoutDraft() {

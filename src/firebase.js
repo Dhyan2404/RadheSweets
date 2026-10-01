@@ -163,7 +163,7 @@ export async function loadBranchDataFromCloud(branchId) {
     const branchDocRef = doc(db, "branches", branchId);
     const snap = await Promise.race([
       getDoc(branchDocRef),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
     ]);
     if (snap && snap.exists && snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
       const data = snap.data();
@@ -179,6 +179,13 @@ export async function loadBranchDataFromCloud(branchId) {
   } catch (error) {
     handleFirestoreError(`Load branch ${branchId}`, error);
   }
+  // Fallback to local branch snapshot first so mobile does not revert to hardcoded seed defaults!
+  try {
+    const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
+    if (localSnap && localSnap.sweets && localSnap.sweets.length >= 50) {
+      return { sweets: localSnap.sweets, kpis: localSnap.kpis || seed.kpis };
+    }
+  } catch(e) {}
   return { sweets: seed.sweets, kpis: seed.kpis };
 }
 
@@ -212,22 +219,20 @@ export async function saveBranchSweetsToCloud(branchId, sweets) {
 export function subscribeToBranchSweets(branchId, callback) {
   try {
     const branchDocRef = doc(db, "branches", branchId);
-    let unsub = null;
-    unsub = onSnapshot(branchDocRef, (snap) => {
+    return onSnapshot(branchDocRef, (snap) => {
       if (snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
         callback(snap.data().sweets);
       }
     }, (err) => {
       handleFirestoreError('Sweets listener', err);
-      if (unsub) { try { unsub(); } catch(_) {} }
-      const seed = getBranchDefaultCatalog(branchId);
-      callback(seed.sweets);
+      // Keep listener alive and resilient without wiping out current state
+      try {
+        const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
+        if (localSnap?.sweets) callback(localSnap.sweets);
+      } catch(_) {}
     });
-    return unsub;
   } catch (e) {
     handleFirestoreError('Failed to subscribe to sweets', e);
-    const seed = getBranchDefaultCatalog(branchId);
-    callback(seed.sweets);
     return () => {};
   }
 }
@@ -319,8 +324,7 @@ export function subscribeToBranchOrders(branchId, callback) {
   try {
     const ordersCol = collection(db, "branches", branchId, "orders");
     const q = query(ordersCol, limit(100));
-    let unsub = null;
-    unsub = onSnapshot(q, (snapshot) => {
+    return onSnapshot(q, (snapshot) => {
       const orders = [];
       snapshot.forEach(docSnap => {
         orders.push(docSnap.data());
@@ -329,15 +333,11 @@ export function subscribeToBranchOrders(branchId, callback) {
       callback(orders);
     }, (err) => {
       handleFirestoreError('Orders listener', err);
-      if (unsub) { try { unsub(); } catch(_) {} }
       try {
         const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
-        callback(localSnap?.orders || (branchId === 'br-1' ? initialData.orders : []));
-      } catch(e) {
-        callback(branchId === 'br-1' ? initialData.orders : []);
-      }
+        if (localSnap?.orders) callback(localSnap.orders);
+      } catch(e) {}
     });
-    return unsub;
   } catch (e) {
     handleFirestoreError('Failed to subscribe to orders', e);
     callback(branchId === 'br-1' ? initialData.orders : []);
