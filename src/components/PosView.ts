@@ -212,22 +212,15 @@ export function renderPosView(state) {
 
                 return `
                   <div class="sweet-card flex flex-col justify-between group bg-white border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all">
-                    <!-- Image Thumbnail with exact crop from 100-mithais image -->
+                    <!-- Image Thumbnail cropped to exact size for each sweet -->
                     <div class="relative h-28 sm:h-32 overflow-hidden bg-stone-100">
-                      ${hasSprite ? `
-                        <div 
-                          class="w-full h-full transform group-hover:scale-105 transition-transform duration-300"
-                          style="background-image: url('./assets/100_mithais_grid.png'); background-position: ${sweet.gridPosX}% ${sweet.gridPosY}%; background-size: 1000% 1000%; background-repeat: no-repeat;"
-                          title="${sweet.name}"
-                        ></div>
-                      ` : `
-                        <img 
-                          src="${sweet.image}" 
-                          alt="${sweet.name}" 
-                          class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                          onerror="this.src='${sweet.fallbackImage || './assets/100_mithais_grid.png'}'"
-                        />
-                      `}
+                      <img 
+                        src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" 
+                        alt="${sweet.name}" 
+                        class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        onerror="this.src='/assets/sweets/${sweet.id}.png'"
+                      />
 
                       <!-- Number & Stock Badge -->
                       <div class="absolute top-2 left-2 flex items-center gap-1">
@@ -352,10 +345,10 @@ export function renderPosView(state) {
                 <div class="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] text-xs">
                   <div class="flex items-center space-x-2.5">
                     <img 
-                      src="${item.image}" 
+                      src="${item.image || `/assets/sweets/${item.id}.png`}" 
                       alt="${item.name}" 
                       class="w-10 h-10 rounded-lg object-cover border border-[var(--border-color)] shadow-2xs"
-                      onerror="this.src='${item.fallbackImage || './assets/100_mithais_grid.png'}'"
+                      onerror="this.src='/assets/sweets/${item.id}.png'"
                     />
                     <div>
                       <p class="font-bold text-[var(--text-main)] leading-snug">${item.name}</p>
@@ -497,10 +490,10 @@ export function renderPosView(state) {
                 <div class="flex items-center justify-between py-2 border-b border-stone-100 text-xs">
                   <div class="flex items-center space-x-2.5">
                     <img 
-                      src="${item.image}" 
+                      src="${item.image || `/assets/sweets/${item.id}.png`}" 
                       alt="${item.name}" 
                       class="w-10 h-10 rounded-lg object-cover border border-stone-200 shadow-2xs"
-                      onerror="this.src='${item.fallbackImage || './assets/100_mithais_grid.png'}'"
+                      onerror="this.src='/assets/sweets/${item.id}.png'"
                     />
                     <div>
                       <p class="font-bold text-[#2A1F1D]">${item.name}</p>

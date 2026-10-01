@@ -395,8 +395,14 @@ export function renderProductsView(state: any) {
                 <div class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] hover:shadow-card hover:border-[#FED7AA] transition-all flex flex-col justify-between group">
                   <div>
                     <div class="flex items-start justify-between">
-                      <div class="w-12 h-12 rounded-2xl ${badgeClass} border flex items-center justify-center font-extrabold text-sm shadow-xs shrink-0">
-                        ${item.code || item.name.substring(0, 2).toUpperCase()}
+                      <div class="relative w-14 h-14 rounded-2xl overflow-hidden border border-amber-200/80 shadow-xs shrink-0 bg-stone-100">
+                        <img 
+                          src="${item.image || `/assets/sweets/${item.id}.png`}" 
+                          alt="${item.name}" 
+                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          loading="lazy"
+                          onerror="this.src='/assets/sweets/${item.id}.png'"
+                        />
                       </div>
                       <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         isZero 
@@ -528,8 +534,17 @@ export function renderProductsView(state: any) {
                         <!-- Sweet Name & Details with Avatar -->
                         <td class="py-4 px-5">
                           <div class="flex items-center space-x-3.5">
-                            <div class="w-10 h-10 rounded-2xl ${badgeClass} border flex items-center justify-center font-extrabold text-xs shadow-2xs shrink-0">
-                              ${item.code || item.name.substring(0, 2).toUpperCase()}
+                            <div class="w-11 h-11 rounded-xl overflow-hidden border border-[#EFE7DE] bg-stone-100 shadow-2xs shrink-0 relative flex items-center justify-center">
+                              <img 
+                                src="${item.image || `/assets/sweets/${item.id}.png`}" 
+                                alt="${item.name}" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                loading="lazy"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                              />
+                              <div class="w-full h-full ${badgeClass} hidden items-center justify-center font-extrabold text-xs">
+                                ${item.code || item.name.substring(0, 2).toUpperCase()}
+                              </div>
                             </div>
                             <div class="min-w-0">
                               <p class="font-bold text-[#2A1F1D] text-sm group-hover:text-[#C86D3B] transition-colors truncate">${item.name}</p>

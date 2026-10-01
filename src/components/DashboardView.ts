@@ -434,8 +434,8 @@ export function renderDashboardView(state) {
                   <!-- Item 1: Kaju Katli -->
                   <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg bg-amber-100/70 border border-amber-200 flex items-center justify-center font-bold text-amber-800 text-xs shadow-2xs">
-                        KK
+                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-amber-50 shrink-0 shadow-2xs">
+                        <img src="/assets/sweets/sw-1.png" alt="Kaju Katli" class="w-full h-full object-cover" loading="lazy" />
                       </div>
                       <span class="font-semibold text-[#2A1F1D]">Kaju Katli</span>
                     </td>
@@ -461,8 +461,8 @@ export function renderDashboardView(state) {
                   <!-- Item 2: Rasgulla -->
                   <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg bg-orange-100/70 border border-orange-200 flex items-center justify-center font-bold text-orange-800 text-xs shadow-2xs">
-                        RG
+                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-orange-200 bg-orange-50 shrink-0 shadow-2xs">
+                        <img src="/assets/sweets/sw-3.png" alt="Rasgulla" class="w-full h-full object-cover" loading="lazy" />
                       </div>
                       <span class="font-semibold text-[#2A1F1D]">Rasgulla</span>
                     </td>
@@ -476,7 +476,7 @@ export function renderDashboardView(state) {
                     <td class="py-3 px-4 text-right">
                       <button 
                         class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-2" 
+                        data-id="sw-3" 
                         data-name="Rasgulla" 
                         data-price="320"
                       >
@@ -488,8 +488,8 @@ export function renderDashboardView(state) {
                   <!-- Item 3: Gulab Jamun -->
                   <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg bg-amber-900/10 border border-amber-900/20 flex items-center justify-center font-bold text-amber-900 text-xs shadow-2xs">
-                        GJ
+                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-900/20 bg-amber-50 shrink-0 shadow-2xs">
+                        <img src="/assets/sweets/sw-2.png" alt="Gulab Jamun" class="w-full h-full object-cover" loading="lazy" />
                       </div>
                       <span class="font-semibold text-[#2A1F1D]">Gulab Jamun</span>
                     </td>
@@ -503,7 +503,7 @@ export function renderDashboardView(state) {
                     <td class="py-3 px-4 text-right">
                       <button 
                         class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-3" 
+                        data-id="sw-2" 
                         data-name="Gulab Jamun" 
                         data-price="180"
                       >
@@ -515,8 +515,8 @@ export function renderDashboardView(state) {
                   <!-- Item 4: Motichoor Ladoo (Low Stock) -->
                   <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg bg-yellow-100 border border-yellow-200 flex items-center justify-center font-bold text-amber-800 text-xs shadow-2xs">
-                        ML
+                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-yellow-200 bg-yellow-50 shrink-0 shadow-2xs">
+                        <img src="/assets/sweets/sw-6.png" alt="Motichoor Ladoo" class="w-full h-full object-cover" loading="lazy" />
                       </div>
                       <span class="font-semibold text-[#2A1F1D]">Motichoor Ladoo</span>
                     </td>
@@ -530,7 +530,7 @@ export function renderDashboardView(state) {
                     <td class="py-3 px-4 text-right">
                       <button 
                         class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-4" 
+                        data-id="sw-6" 
                         data-name="Motichoor Ladoo" 
                         data-price="160"
                       >
@@ -542,8 +542,8 @@ export function renderDashboardView(state) {
                   <!-- Item 5: Kesar Peda -->
                   <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center font-bold text-amber-900 text-xs shadow-2xs">
-                        KP
+                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-300 bg-amber-50 shrink-0 shadow-2xs">
+                        <img src="/assets/sweets/sw-9.png" alt="Kesar Peda" class="w-full h-full object-cover" loading="lazy" />
                       </div>
                       <span class="font-semibold text-[#2A1F1D]">Kesar Peda</span>
                     </td>
@@ -557,7 +557,7 @@ export function renderDashboardView(state) {
                     <td class="py-3 px-4 text-right">
                       <button 
                         class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-5" 
+                        data-id="sw-9" 
                         data-name="Kesar Peda" 
                         data-price="380"
                       >
@@ -569,8 +569,8 @@ export function renderDashboardView(state) {
                   <!-- Item 6: Milk Cake -->
                   <tr class="table-row-hover transition-all cursor-pointer">
                     <td class="py-3 px-5 flex items-center space-x-3">
-                      <div class="w-8 h-8 rounded-lg bg-orange-100/60 border border-orange-200 flex items-center justify-center font-bold text-orange-900 text-xs shadow-2xs">
-                        MC
+                      <div class="w-8 h-8 rounded-lg overflow-hidden border border-orange-200 bg-orange-50 shrink-0 shadow-2xs">
+                        <img src="/assets/sweets/sw-10.png" alt="Milk Cake" class="w-full h-full object-cover" loading="lazy" />
                       </div>
                       <span class="font-semibold text-[#2A1F1D]">Milk Cake</span>
                     </td>
@@ -584,7 +584,7 @@ export function renderDashboardView(state) {
                     <td class="py-3 px-4 text-right">
                       <button 
                         class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                        data-id="sw-7" 
+                        data-id="sw-10" 
                         data-name="Milk Cake" 
                         data-price="300"
                       >

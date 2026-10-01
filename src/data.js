@@ -366,7 +366,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "0.00",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-1.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -388,7 +388,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "11.11",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-2.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -410,7 +410,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "22.22",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-3.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -432,7 +432,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "33.33",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-4.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -454,7 +454,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "44.44",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-5.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -476,7 +476,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "55.56",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-6.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -498,7 +498,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "66.67",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-7.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -520,7 +520,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "77.78",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-8.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -542,7 +542,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "88.89",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-9.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -564,7 +564,7 @@ export const initialData = {
         "gridRow": 0,
         "gridPosX": "100.00",
         "gridPosY": "0.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-10.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -586,7 +586,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "0.00",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-11.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -608,7 +608,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "11.11",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-12.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -630,7 +630,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "22.22",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-13.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -652,7 +652,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "33.33",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-14.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -674,7 +674,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "44.44",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-15.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -696,7 +696,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "55.56",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-16.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -718,7 +718,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "66.67",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-17.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -740,7 +740,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "77.78",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-18.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -762,7 +762,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "88.89",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-19.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -784,7 +784,7 @@ export const initialData = {
         "gridRow": 1,
         "gridPosX": "100.00",
         "gridPosY": "11.11",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-20.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -806,7 +806,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "0.00",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-21.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -828,7 +828,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "11.11",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-22.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -850,7 +850,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "22.22",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-23.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -872,7 +872,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "33.33",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-24.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -894,7 +894,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "44.44",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-25.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -916,7 +916,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "55.56",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-26.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -938,7 +938,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "66.67",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-27.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -960,7 +960,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "77.78",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-28.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -982,7 +982,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "88.89",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-29.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1004,7 +1004,7 @@ export const initialData = {
         "gridRow": 2,
         "gridPosX": "100.00",
         "gridPosY": "22.22",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-30.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1026,7 +1026,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "0.00",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-31.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1048,7 +1048,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "11.11",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-32.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1070,7 +1070,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "22.22",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-33.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1092,7 +1092,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "33.33",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-34.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1114,7 +1114,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "44.44",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-35.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1136,7 +1136,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "55.56",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-36.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1158,7 +1158,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "66.67",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-37.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1180,7 +1180,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "77.78",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-38.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1202,7 +1202,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "88.89",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-39.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1224,7 +1224,7 @@ export const initialData = {
         "gridRow": 3,
         "gridPosX": "100.00",
         "gridPosY": "33.33",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-40.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1246,7 +1246,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "0.00",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-41.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1268,7 +1268,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "11.11",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-42.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1290,7 +1290,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "22.22",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-43.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1312,7 +1312,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "33.33",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-44.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1334,7 +1334,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "44.44",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-45.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1356,7 +1356,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "55.56",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-46.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1378,7 +1378,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "66.67",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-47.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1400,7 +1400,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "77.78",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-48.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1422,7 +1422,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "88.89",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-49.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1444,7 +1444,7 @@ export const initialData = {
         "gridRow": 4,
         "gridPosX": "100.00",
         "gridPosY": "44.44",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-50.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1466,7 +1466,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "0.00",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-51.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1488,7 +1488,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "11.11",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-52.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1510,7 +1510,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "22.22",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-53.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1532,7 +1532,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "33.33",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-54.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1554,7 +1554,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "44.44",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-55.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1576,7 +1576,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "55.56",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-56.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1598,7 +1598,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "66.67",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-57.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1620,7 +1620,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "77.78",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-58.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1642,7 +1642,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "88.89",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-59.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1664,7 +1664,7 @@ export const initialData = {
         "gridRow": 5,
         "gridPosX": "100.00",
         "gridPosY": "55.56",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-60.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1686,7 +1686,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "0.00",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-61.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1708,7 +1708,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "11.11",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-62.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1730,7 +1730,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "22.22",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-63.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1752,7 +1752,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "33.33",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-64.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1774,7 +1774,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "44.44",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-65.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1796,7 +1796,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "55.56",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-66.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1818,7 +1818,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "66.67",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-67.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1840,7 +1840,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "77.78",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-68.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1862,7 +1862,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "88.89",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-69.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1884,7 +1884,7 @@ export const initialData = {
         "gridRow": 6,
         "gridPosX": "100.00",
         "gridPosY": "66.67",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-70.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1906,7 +1906,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "0.00",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-71.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1928,7 +1928,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "11.11",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-72.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1950,7 +1950,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "22.22",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-73.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1972,7 +1972,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "33.33",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-74.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -1994,7 +1994,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "44.44",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-75.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2016,7 +2016,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "55.56",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-76.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2038,7 +2038,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "66.67",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-77.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2060,7 +2060,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "77.78",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-78.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2082,7 +2082,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "88.89",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-79.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2104,7 +2104,7 @@ export const initialData = {
         "gridRow": 7,
         "gridPosX": "100.00",
         "gridPosY": "77.78",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-80.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2126,7 +2126,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "0.00",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-81.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2148,7 +2148,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "11.11",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-82.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2170,7 +2170,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "22.22",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-83.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2192,7 +2192,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "33.33",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-84.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2214,7 +2214,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "44.44",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-85.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2236,7 +2236,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "55.56",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-86.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2258,7 +2258,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "66.67",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-87.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2280,7 +2280,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "77.78",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-88.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2302,7 +2302,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "88.89",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-89.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2324,7 +2324,7 @@ export const initialData = {
         "gridRow": 8,
         "gridPosX": "100.00",
         "gridPosY": "88.89",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-90.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2346,7 +2346,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "0.00",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-91.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2368,7 +2368,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "11.11",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-92.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2390,7 +2390,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "22.22",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-93.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2412,7 +2412,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "33.33",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-94.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2434,7 +2434,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "44.44",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-95.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2456,7 +2456,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "55.56",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-96.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2478,7 +2478,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "66.67",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-97.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2500,7 +2500,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "77.78",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-98.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2522,7 +2522,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "88.89",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-99.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     },
     {
@@ -2544,7 +2544,7 @@ export const initialData = {
         "gridRow": 9,
         "gridPosX": "100.00",
         "gridPosY": "100.00",
-        "image": "./assets/100_mithais_grid.png",
+        "image": "/assets/sweets/sw-100.png",
         "fallbackImage": "./assets/100_mithais_grid.png"
     }
 ],

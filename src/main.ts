@@ -73,7 +73,14 @@ const state = {
   shopInfo: stored?.shopInfo || { ...initialData.shopInfo },
   kpis: stored?.kpis || { ...initialData.kpis },
   orderStatusCounts: stored?.orderStatusCounts || { ...initialData.orderStatusCounts },
-  sweets: (stored?.sweets && stored.sweets.length >= 100) ? stored.sweets : [...initialData.sweets],
+  sweets: ((stored?.sweets && stored.sweets.length >= 100) ? stored.sweets : [...initialData.sweets]).map((s: any) => {
+    const initMatch = initialData.sweets.find((is: any) => is.id === s.id);
+    return {
+      ...s,
+      image: (s.image && s.image.startsWith('/assets/sweets/')) ? s.image : (initMatch?.image || `/assets/sweets/${s.id}.png`),
+      fallbackImage: `/assets/sweets/${s.id}.png`
+    };
+  }),
   showMobileCartSheet: false,
   customers: (stored?.customers && stored.customers.length > 0)
     ? stored.customers.map((c: any) => {
@@ -1140,8 +1147,8 @@ function attachEventListeners() {
             rate: sweet.pricePerKg,
             unit: sweet.unit,
             total: sweet.pricePerKg,
-            image: sweet.image,
-            fallbackImage: sweet.fallbackImage
+            image: sweet.image || `/assets/sweets/${sweet.id}.png`,
+            fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
           });
         }
         // Also update quickCart on dashboard
@@ -2556,8 +2563,8 @@ function attachEventListeners() {
             rate: sweet.pricePerKg,
             unit: sweet.unit,
             total: Math.round(weightDelta * sweet.pricePerKg),
-            image: sweet.image,
-            fallbackImage: sweet.fallbackImage
+            image: sweet.image || `/assets/sweets/${sweet.id}.png`,
+            fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
           });
         }
         state.quickCart = [...state.posCart];
