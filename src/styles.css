@@ -404,27 +404,39 @@ body {
 #kpi-tiles-container {
   display: grid;
   transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.25s ease,
-              padding 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              gap 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.25s ease,
-              box-shadow 0.3s ease,
-              border-radius 0.3s ease;
+  -webkit-backface-visibility: hidden;
+  will-change: grid-template-columns, gap, padding, box-shadow, transform, max-height;
   transform-origin: top center;
   position: relative;
   z-index: 25;
+  max-height: 520px;
+  overflow: visible;
+  transition: grid-template-columns 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              gap 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              padding 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              max-height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              border-radius 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Base 2x3 Grid (Desktop) / 3x2 Grid (Mobile) */
 #kpi-tiles-container.kpi-grid-2x3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 0;
+  max-height: 520px;
+  border: 1px solid transparent;
 }
 
 @media (min-width: 768px) {
   #kpi-tiles-container.kpi-grid-2x3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
   }
 }
 
@@ -433,22 +445,23 @@ body {
   position: sticky;
   top: 72px; /* Sticks flush beneath the sticky TopBar */
   z-index: 25;
-  background: rgba(250, 247, 242, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 0.5rem 0.65rem;
+  background: rgba(250, 247, 242, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 0.45rem 0.65rem;
   border-radius: 1.25rem;
-  box-shadow: 0 10px 28px -4px rgba(74, 58, 47, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(220, 210, 200, 0.65);
+  box-shadow: 0 12px 32px -4px rgba(74, 58, 47, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(220, 210, 200, 0.75);
   gap: 0.5rem !important;
+  max-height: 88px;
 }
 
 /* Dark Mode 1x6 Dock */
 .dark #kpi-tiles-container.kpi-grid-1x6,
 .dark-mode #kpi-tiles-container.kpi-grid-1x6 {
-  background: rgba(28, 22, 20, 0.94) !important;
-  border-color: rgba(60, 50, 48, 0.7) !important;
-  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(28, 22, 20, 0.95) !important;
+  border-color: rgba(60, 50, 48, 0.75) !important;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.45) !important;
 }
 
 /* Desktop & Tablet: Exactly 6 columns in 1 single horizontal row (1x6 Grid) */
@@ -461,15 +474,15 @@ body {
 /* Mobile: Horizontal swipeable 1x6 row so all 6 cards dock without cramping */
 @media (max-width: 767px) {
   #kpi-tiles-container.kpi-grid-1x6 {
-    display: flex !important;
+    grid-template-columns: repeat(6, minmax(130px, 1fr)) !important;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     gap: 0.4rem !important;
-    padding: 0.4rem 0.5rem !important;
+    padding: 0.4rem 0.55rem !important;
   }
   #kpi-tiles-container.kpi-grid-1x6 .kpi-card {
-    flex: 0 0 130px;
+    min-width: 130px;
     scroll-snap-align: start;
   }
   #kpi-tiles-container.kpi-grid-1x6::-webkit-scrollbar {
@@ -480,57 +493,88 @@ body {
 /* Transitions for KPI Cards and Elements during morphing - GPU Accelerated */
 #kpi-tiles-container .kpi-card {
   transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
-  will-change: padding, border-radius, box-shadow;
-  transition: padding 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-              border-radius 0.28s ease,
-              box-shadow 0.28s ease,
-              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-backface-visibility: hidden;
+  will-change: padding, border-radius, box-shadow, min-height, max-height, transform;
+  transition: padding 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              border-radius 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              min-height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              max-height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              background 0.65s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 #kpi-tiles-container .kpi-icon-badge {
-  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              border-radius 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #kpi-tiles-container .kpi-icon-badge svg {
-  transition: width 0.35s ease, height 0.35s ease;
+  transition: width 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #kpi-tiles-container .kpi-middle-row {
-  transition: margin-top 0.35s ease;
+  transition: margin-top 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #kpi-tiles-container .kpi-stat-label {
-  transition: font-size 0.35s ease, line-height 0.35s ease;
+  transition: font-size 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              line-height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              color 0.5s ease;
 }
 
 #kpi-tiles-container .kpi-stat-value {
-  transition: font-size 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              line-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              margin-top 0.35s ease;
+  transition: font-size 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              line-height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              margin-top 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #kpi-tiles-container .kpi-trend-row {
-  transition: margin-top 0.35s ease;
+  transition: margin-top 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #kpi-tiles-container .kpi-trend-badge {
-  transition: font-size 0.35s ease;
+  transition: font-size 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              line-height 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#kpi-tiles-container .kpi-trend-badge svg {
+  transition: width 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #kpi-tiles-container .kpi-sparkline-wrap {
-  transition: opacity 0.3s ease, transform 0.35s ease;
+  opacity: 0.85;
+  transform: translateY(0) scale(1);
+  max-height: 50px;
+  overflow: hidden;
+  transition: opacity 0.5s ease,
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              max-height 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #kpi-tiles-container .kpi-card-more-btn {
-  transition: opacity 0.2s ease;
+  opacity: 1;
+  transform: scale(1);
+  max-width: 32px;
+  max-height: 32px;
+  overflow: hidden;
+  transition: opacity 0.45s ease,
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              max-width 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              max-height 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              margin 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Compact styles when 1x6 Grid is active */
+/* Compact styles when 1x6 Grid is active - Buttery smooth transition without display:none jolt */
 #kpi-tiles-container.kpi-grid-1x6 .kpi-card {
   padding: 0.45rem 0.65rem !important;
-  min-height: unset !important;
+  min-height: 0 !important;
+  max-height: 72px !important;
   height: auto !important;
   border-radius: 0.85rem !important;
   box-shadow: 0 1px 4px rgba(74, 58, 47, 0.04) !important;
@@ -547,8 +591,12 @@ body {
 }
 
 #kpi-tiles-container.kpi-grid-1x6 .kpi-card-more-btn {
-  display: none !important;
   opacity: 0 !important;
+  transform: scale(0.4) !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   pointer-events: none !important;
 }
 
@@ -586,10 +634,9 @@ body {
 }
 
 #kpi-tiles-container.kpi-grid-1x6 .kpi-sparkline-wrap {
-  display: none !important;
   opacity: 0 !important;
   max-height: 0 !important;
-  transform: scale(0.6) !important;
+  transform: translateY(8px) scale(0.6) !important;
   pointer-events: none !important;
 }
 

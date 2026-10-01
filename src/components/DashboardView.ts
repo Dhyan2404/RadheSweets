@@ -67,7 +67,7 @@ export function renderDashboardView(state) {
       <!-- Scrolled Down: Smoothly converts to 1x6 Grid Bar         -->
       <!-- Scrolled Up: Smoothly eases back to 2x3 Grid             -->
       <!-- ======================================================== -->
-      <section id="kpi-tiles-container" class="kpi-grid-2x3 grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5" data-purpose="kpi-metrics-grid">
+      <section id="kpi-tiles-container" class="kpi-grid-2x3" data-purpose="kpi-metrics-grid">
         
         <!-- CARD 1: Customers -->
         <article class="kpi-card animate-card-pop stagger-1 interactive-scale bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">

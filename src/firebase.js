@@ -9,6 +9,7 @@ import {
   doc, 
   setDoc, 
   getDoc, 
+  deleteDoc,
   collection, 
   onSnapshot,
   query,
@@ -270,6 +271,25 @@ export async function saveBranchOrderToCloud(branchId, order, currentSweets = []
     return true;
   } catch (error) {
     console.warn(`[Firebase Firestore] Order ${order.id} sync fallback:`, error.message);
+    updateStatus('synced');
+    return false;
+  }
+}
+
+/**
+ * Delete order from Cloud Firestore (both branch orders and global orders)
+ */
+export async function deleteBranchOrderFromCloud(branchId, orderId) {
+  updateStatus('syncing');
+  try {
+    const branchOrderRef = doc(db, "branches", branchId, "orders", orderId);
+    await deleteDoc(branchOrderRef);
+    const globalOrderRef = doc(db, "orders", orderId);
+    await deleteDoc(globalOrderRef);
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    console.warn(`[Firebase Firestore] Delete order ${orderId} fallback:`, error.message);
     updateStatus('synced');
     return false;
   }

@@ -3,6 +3,7 @@ import './styles.css';
 import { 
   saveBranchSweetsToCloud, 
   saveBranchOrderToCloud, 
+  deleteBranchOrderFromCloud,
   saveBranchKpisToCloud, 
   saveCustomerToCloud, 
   loadBranchDataFromCloud,
@@ -26,6 +27,7 @@ import { renderDashboardView } from './components/DashboardView.ts';
 import { renderPosView } from './components/PosView.ts';
 import { renderCheckoutModal } from './components/CheckoutModal.ts';
 import { initSlideCommit } from './components/SlideCommit.ts';
+import { initAllSwipeRows } from './components/SwipeRow.ts';
 import { renderOrderSuccessModal } from './components/OrderSuccessModal.ts';
 import { renderThermalReceiptModal } from './components/ThermalReceiptModal.ts';
 import { renderOrdersView } from './components/OrdersView.ts';
@@ -136,6 +138,7 @@ const state = {
   productsViewMode: stored?.productsViewMode || 'table',
   activeCategory: 'All',
   ordersFilterTab: 'all',
+  ordersViewMode: stored?.ordersViewMode || 'swipe',
   customersFilterTab: 'all',
   productsFilterCategory: 'All',
   timeFilter: 'month',
@@ -1146,18 +1149,23 @@ function attachEventListeners() {
     const kpiContainer = document.getElementById('kpi-tiles-container');
     const scrollContainer = document.getElementById('main-content-scroll-container');
 
+    // Clean up any previously attached scroll handler
+    if ((window as any)._dashboardScrollCleanUp) {
+      (window as any)._dashboardScrollCleanUp();
+    }
+
     const handleDashboardScroll = () => {
       const scrollY = (scrollContainer ? scrollContainer.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
       
       // Hysteresis threshold to prevent jitter:
-      // When scrolled down > 65px, smoothly morph into docked 1x6 Grid
-      // When scrolled back up < 30px, smoothly ease back into full 2x3 Grid
-      if (scrollY > 65) {
+      // When scrolled down > 140px, smoothly morph into docked 1x6 Grid Bar
+      // When scrolled back up < 45px, smoothly ease back into full 2x3 Grid
+      if (scrollY > 140) {
         if (!kpiContainer?.classList.contains('kpi-grid-1x6')) {
           kpiContainer?.classList.remove('kpi-grid-2x3');
           kpiContainer?.classList.add('kpi-grid-1x6');
         }
-      } else if (scrollY < 30) {
+      } else if (scrollY < 45) {
         if (!kpiContainer?.classList.contains('kpi-grid-2x3')) {
           kpiContainer?.classList.remove('kpi-grid-1x6');
           kpiContainer?.classList.add('kpi-grid-2x3');
@@ -1176,6 +1184,11 @@ function attachEventListeners() {
 
     window.addEventListener('scroll', throttledScrollHandler, { passive: true });
     scrollContainer?.addEventListener('scroll', throttledScrollHandler, { passive: true });
+    (window as any)._dashboardScrollCleanUp = () => {
+      window.removeEventListener('scroll', throttledScrollHandler);
+      scrollContainer?.removeEventListener('scroll', throttledScrollHandler);
+    };
+
     // Initialize scroll state on render
     handleDashboardScroll();
 
@@ -1767,6 +1780,112 @@ function attachEventListeners() {
     renderApp();
   });
 
+  // Helper: Send Order Invoice on WhatsApp
+  const sendOrderInvoiceWhatsApp = (order: any) => {
+    const rawPhone = (order.customerPhone || '').replace(/\D/g, '');
+    const targetPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+
+    const itemsText = (order.items || []).map((it: any) => 
+      `• ${it.name} (${it.quantity || it.qty || 1} ${it.unit || 'kg'}) - ₹${it.total || it.price || 0}`
+    ).join('\n');
+
+    const text = 
+`*${state.shopInfo?.name || 'Radhe Sweets & Farsan'}* 🍬
+Namaste ${order.customerName || 'Valued Customer'}!
+Here is your sweet invoice details:
+
+📄 *Bill No:* #${order.id}
+📅 *Date:* ${order.date}
+🛒 *Items:*
+${itemsText || '• Fresh Artisan Sweets'}
+
+💰 *Total Payable:* ₹${(order.total || 0).toLocaleString()}
+💳 *Payment Mode:* ${order.paymentMethod || 'Counter Sale / Cash'}
+Status: ${order.status || 'Completed'}
+
+Thank you for visiting Radhe Sweets! 🙏
+Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
+
+    const url = targetPhone 
+      ? `https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`
+      : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+    window.open(url, '_blank');
+  };
+
+  // Orders View Mode Toggle (Swipe Rows vs Table)
+  document.getElementById('orders-toggle-swipe-view')?.addEventListener('click', () => {
+    state.ordersViewMode = 'swipe';
+    saveState();
+    renderApp();
+  });
+
+  document.getElementById('orders-toggle-table-view')?.addEventListener('click', () => {
+    state.ordersViewMode = 'table';
+    saveState();
+    renderApp();
+  });
+
+  // Initialize Interactive SwipeRow Controllers
+  initAllSwipeRows(document, {
+    onAction: (actionId, rowId) => {
+      const found = state.orders.find((o: any) => o.id === rowId);
+      if (!found) return;
+
+      if (actionId === 'whatsapp') {
+        sendOrderInvoiceWhatsApp(found);
+        showToast(`Opening WhatsApp invoice for #${rowId}`, 'info');
+      } else if (actionId === 'view') {
+        state.activeOrder = found;
+        state.showOrderDetailsModal = true;
+        renderApp();
+      }
+    },
+    onCommit: (actionId, rowId) => {
+      if (actionId === 'delete') {
+        const idx = state.orders.findIndex((o: any) => o.id === rowId);
+        if (idx !== -1) {
+          state.orders.splice(idx, 1);
+          deleteBranchOrderFromCloud(state.currentBranchId, rowId);
+          saveState();
+          showToast(`Invoice #${rowId} deleted successfully`, 'success');
+          renderApp();
+        }
+      }
+    }
+  });
+
+  // Direct WhatsApp Button Clicks
+  document.querySelectorAll('[data-quick-whatsapp]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-quick-whatsapp');
+      const found = state.orders.find((o: any) => o.id === id);
+      if (found) {
+        sendOrderInvoiceWhatsApp(found);
+        showToast(`Opening WhatsApp invoice for #${id}`, 'info');
+      }
+    });
+  });
+
+  // Direct Delete Button Clicks (Table Mode)
+  document.querySelectorAll('[data-delete-order]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-delete-order');
+      if (id && confirm(`Are you sure you want to delete invoice #${id}?`)) {
+        const idx = state.orders.findIndex((o: any) => o.id === id);
+        if (idx !== -1) {
+          state.orders.splice(idx, 1);
+          deleteBranchOrderFromCloud(state.currentBranchId, id);
+          saveState();
+          showToast(`Invoice #${id} deleted`, 'info');
+          renderApp();
+        }
+      }
+    });
+  });
+
   document.getElementById('orders-new-sale-btn')?.addEventListener('click', () => {
     state.activeTab = 'pos';
     renderApp();
@@ -1776,7 +1895,7 @@ function attachEventListeners() {
   document.querySelectorAll('[data-view-order]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-view-order');
-      const found = state.orders.find(o => o.id === id);
+      const found = state.orders.find((o: any) => o.id === id);
       if (found) {
         state.activeOrder = found;
         state.showOrderDetailsModal = true;
@@ -1788,7 +1907,7 @@ function attachEventListeners() {
   document.querySelectorAll('[data-print-order]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-print-order');
-      const found = state.orders.find(o => o.id === id);
+      const found = state.orders.find((o: any) => o.id === id);
       if (found) {
         state.activeOrder = found;
         state.showThermalModal = true;
@@ -1810,10 +1929,10 @@ function attachEventListeners() {
   });
 
   // Update Order Status
-  document.getElementById('update-order-status-select')?.addEventListener('change', (e) => {
+  document.getElementById('update-order-status-select')?.addEventListener('change', (e: any) => {
     const orderId = e.target.getAttribute('data-order-id');
     const newStatus = e.target.value;
-    const order = state.orders.find(o => o.id === orderId);
+    const order = state.orders.find((o: any) => o.id === orderId);
     if (order) {
       order.status = newStatus;
       saveState();
