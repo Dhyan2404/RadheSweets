@@ -931,67 +931,49 @@ function attachEventListeners() {
     showToast('Redirected to POS Counter', 'info');
   });
 
-  // Dashboard Scroll-Driven Tiles Animation & Current Section Reveal (Desktop only)
-  if (state.activeTab === 'dashboard' && window.innerWidth >= 768) {
+  // Dashboard Scroll-Driven KPI Grid Morphing (2x3 Grid <--> 1x6 Grid) with Smooth Ease-In Animation
+  if (state.activeTab === 'dashboard') {
     const kpiContainer = document.getElementById('kpi-tiles-container');
-    const stickyBar = document.getElementById('sticky-kpi-bar');
-    const currentViewLabel = document.getElementById('current-view-label');
     const scrollContainer = document.getElementById('main-content-scroll-container');
+    let hasScrolledBefore = false;
 
     const handleDashboardScroll = () => {
-      if (window.innerWidth < 768) return; // Prevent mobile glitch
       const scrollY = (scrollContainer ? scrollContainer.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
       
-      // When scrolled down, tiles slide/scale up and sticky KPI bar smoothly slides into view
-      if (scrollY > 75) {
-        kpiContainer?.classList.add('tiles-scrolled-up');
-        stickyBar?.classList.add('is-sticky-active');
-      } else {
-        kpiContainer?.classList.remove('tiles-scrolled-up');
-        stickyBar?.classList.remove('is-sticky-active');
+      // Hysteresis threshold to prevent jitter:
+      // When scrolled down > 55px, smoothly morph into docked 1x6 Grid
+      // When scrolled back up < 35px, smoothly ease back into full 2x3 Grid with smooth ease-in animation
+      if (scrollY > 55) {
+        hasScrolledBefore = true;
+        if (!kpiContainer?.classList.contains('kpi-grid-1x6')) {
+          kpiContainer?.classList.remove('kpi-grid-2x3');
+          kpiContainer?.classList.add('kpi-grid-1x6');
+        }
+      } else if (scrollY < 35) {
+        if (!kpiContainer?.classList.contains('kpi-grid-2x3')) {
+          kpiContainer?.classList.remove('kpi-grid-1x6');
+          kpiContainer?.classList.add('kpi-grid-2x3');
+          if (hasScrolledBefore) {
+            kpiContainer?.classList.add('has-scrolled');
+          }
+        }
       }
     };
 
     window.addEventListener('scroll', handleDashboardScroll, { passive: true });
     scrollContainer?.addEventListener('scroll', handleDashboardScroll, { passive: true });
+    // Initialize scroll state on render
+    handleDashboardScroll();
 
-    // Scroll to Top Button on Sticky Ribbon
-    document.getElementById('scroll-to-top-btn')?.addEventListener('click', () => {
-      if (scrollContainer && scrollContainer.scrollTop > 0) {
-        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    // Sticky Ribbon POS Shortcut
-    document.getElementById('sticky-pos-shortcut')?.addEventListener('click', () => {
-      state.activeTab = 'pos';
-      saveState();
-      renderApp();
-    });
-
-    // IntersectionObserver for Staggered Section Reveal & Current View Focus
-    const sectionLabels: Record<string, string> = {
-      'section-sales-overview': '✦ Sales Trajectory & Revenue',
-      'section-fast-selling': '✦ Fresh Batch Stock Ledger',
-      'section-order-status': '✦ Live Order Fulfillment',
-      'section-quick-billing': '✦ Express POS Billing'
-    };
-
+    // IntersectionObserver for Staggered Section Reveal
     const revealItems = document.querySelectorAll('.scroll-reveal-item');
     if ('IntersectionObserver' in window && revealItems.length > 0) {
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             entry.target.classList.add('is-visible');
-            const targetId = entry.target.id;
-            if (sectionLabels[targetId]) {
-              revealItems.forEach(el => el.classList.remove('is-current-focused'));
-              entry.target.classList.add('is-current-focused');
-              if (currentViewLabel) {
-                currentViewLabel.textContent = sectionLabels[targetId];
-              }
-            }
+            revealItems.forEach(el => el.classList.remove('is-current-focused'));
+            entry.target.classList.add('is-current-focused');
           }
         });
       }, {
@@ -1003,9 +985,6 @@ function attachEventListeners() {
     } else {
       revealItems.forEach(item => item.classList.add('is-visible'));
     }
-  } else if (state.activeTab === 'dashboard') {
-    // On mobile screens, immediately ensure all sections are visible without transform delay
-    document.querySelectorAll('.scroll-reveal-item').forEach(item => item.classList.add('is-visible'));
   }
 
   // Dashboard Time Filter Dropdown

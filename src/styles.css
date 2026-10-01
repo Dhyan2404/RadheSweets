@@ -395,52 +395,230 @@ body {
 }
 
 /* ==========================================================================
-   Dashboard Tiles Scroll-Up & Current Section Reveal Animations (screen.png)
-   Restricted to Desktop (@media min-width: 768px) to guarantee zero jitter/glitch on mobile touchscreens
+   Dashboard KPI Tiles: 2x3 Grid <--> 1x6 Grid Smooth Morphing Suite
+   - Initial State: Full 2x3 Grid (Desktop) / 3x2 (Mobile)
+   - Scroll Down: Smoothly morphs into docked 1x6 Grid Bar at top
+   - Scroll Up: Smoothly eases back to 2x3 Grid with cubic-bezier ease-in
    ========================================================================== */
+
+#kpi-tiles-container {
+  display: grid;
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top center;
+  position: relative;
+  z-index: 25;
+}
+
+/* Base 2x3 Grid (Desktop) / 3x2 Grid (Mobile) */
+#kpi-tiles-container.kpi-grid-2x3 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 @media (min-width: 768px) {
-  #kpi-tiles-container {
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                opacity 0.35s ease;
-    transform-origin: top center;
-  }
-  #kpi-tiles-container.tiles-scrolled-up {
-    transform: translateY(-8px) scale(0.985);
-    opacity: 0.9;
-  }
-
-  #sticky-kpi-bar {
-    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), 
-                opacity 0.26s ease, 
-                box-shadow 0.26s ease;
-    will-change: transform, opacity;
-  }
-  #sticky-kpi-bar.is-sticky-active {
-    transform: translateY(0) !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-  }
-
-  .scroll-reveal-item {
-    transition: border-color 0.25s ease, 
-                box-shadow 0.35s ease;
-  }
-  .scroll-reveal-item.is-current-focused {
-    border-color: rgba(200, 109, 59, 0.4) !important;
-    box-shadow: 0 16px 36px -4px rgba(200, 109, 59, 0.1), 0 4px 14px rgba(74, 58, 47, 0.04) !important;
+  #kpi-tiles-container.kpi-grid-2x3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* Mobile Smooth Scroll Safety */
+/* Smooth Ease-In Animation when converting back to 2x3 on scroll up */
+@keyframes kpiMorphEaseIn2x3 {
+  0% {
+    opacity: 0.88;
+    transform: translateY(-4px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#kpi-tiles-container.kpi-grid-2x3.has-scrolled {
+  animation: kpiMorphEaseIn2x3 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scrolled Down: 1x6 Grid Docked State */
+@keyframes kpiMorphEaseIn1x6 {
+  0% {
+    opacity: 0.88;
+    transform: translateY(-4px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#kpi-tiles-container.kpi-grid-1x6 {
+  position: sticky;
+  top: 72px; /* Sticks flush beneath the sticky TopBar */
+  z-index: 25;
+  background: rgba(250, 247, 242, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 0.5rem 0.65rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 28px -4px rgba(74, 58, 47, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(220, 210, 200, 0.65);
+  gap: 0.5rem !important;
+  animation: kpiMorphEaseIn1x6 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Dark Mode 1x6 Dock */
+.dark #kpi-tiles-container.kpi-grid-1x6,
+.dark-mode #kpi-tiles-container.kpi-grid-1x6 {
+  background: rgba(28, 22, 20, 0.94) !important;
+  border-color: rgba(60, 50, 48, 0.7) !important;
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Desktop & Tablet: Exactly 6 columns in 1 single horizontal row (1x6 Grid) */
+@media (min-width: 768px) {
+  #kpi-tiles-container.kpi-grid-1x6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Mobile: Horizontal swipeable 1x6 row so all 6 cards dock without cramping */
 @media (max-width: 767px) {
-  #kpi-tiles-container {
-    transform: none !important;
-    opacity: 1 !important;
+  #kpi-tiles-container.kpi-grid-1x6 {
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.4rem !important;
+    padding: 0.4rem 0.5rem !important;
   }
-  .scroll-reveal-item {
-    transform: none !important;
-    opacity: 1 !important;
+  #kpi-tiles-container.kpi-grid-1x6 .kpi-card {
+    flex: 0 0 130px;
+    scroll-snap-align: start;
   }
+  #kpi-tiles-container.kpi-grid-1x6::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Transitions for KPI Cards and Elements during morphing */
+#kpi-tiles-container .kpi-card {
+  transition: padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              min-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.35s ease,
+              box-shadow 0.35s ease,
+              transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#kpi-tiles-container .kpi-icon-badge {
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#kpi-tiles-container .kpi-icon-badge svg {
+  transition: width 0.35s ease, height 0.35s ease;
+}
+
+#kpi-tiles-container .kpi-middle-row {
+  transition: margin-top 0.35s ease;
+}
+
+#kpi-tiles-container .kpi-stat-label {
+  transition: font-size 0.35s ease, line-height 0.35s ease;
+}
+
+#kpi-tiles-container .kpi-stat-value {
+  transition: font-size 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              line-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              margin-top 0.35s ease;
+}
+
+#kpi-tiles-container .kpi-trend-row {
+  transition: margin-top 0.35s ease;
+}
+
+#kpi-tiles-container .kpi-trend-badge {
+  transition: font-size 0.35s ease;
+}
+
+#kpi-tiles-container .kpi-sparkline-wrap {
+  transition: opacity 0.3s ease, transform 0.35s ease;
+}
+
+#kpi-tiles-container .kpi-card-more-btn {
+  transition: opacity 0.2s ease;
+}
+
+/* Compact styles when 1x6 Grid is active */
+#kpi-tiles-container.kpi-grid-1x6 .kpi-card {
+  padding: 0.45rem 0.65rem !important;
+  min-height: unset !important;
+  height: auto !important;
+  border-radius: 0.85rem !important;
+  box-shadow: 0 1px 4px rgba(74, 58, 47, 0.04) !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-icon-badge {
+  width: 1.65rem !important;
+  height: 1.65rem !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-icon-badge svg {
+  width: 0.95rem !important;
+  height: 0.95rem !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-card-more-btn {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-middle-row {
+  margin-top: 0.15rem !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-stat-label {
+  font-size: 0.68rem !important;
+  line-height: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #5A4E4D !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-stat-value {
+  font-size: 1.05rem !important;
+  line-height: 1.25rem !important;
+  font-weight: 800 !important;
+  margin-top: 0.05rem !important;
+  letter-spacing: -0.02em !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-trend-row {
+  margin-top: 0.12rem !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-trend-badge {
+  font-size: 0.62rem !important;
+  line-height: 0.75rem !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-trend-badge svg {
+  width: 0.7rem !important;
+  height: 0.7rem !important;
+}
+
+#kpi-tiles-container.kpi-grid-1x6 .kpi-sparkline-wrap {
+  display: none !important;
+  opacity: 0 !important;
+  max-height: 0 !important;
+  transform: scale(0.6) !important;
+  pointer-events: none !important;
+}
+
+/* Scroll Reveal Item for Dashboard Sections */
+.scroll-reveal-item {
+  transition: border-color 0.25s ease, 
+              box-shadow 0.35s ease;
+}
+.scroll-reveal-item.is-current-focused {
+  border-color: rgba(200, 109, 59, 0.4) !important;
+  box-shadow: 0 16px 36px -4px rgba(200, 109, 59, 0.1), 0 4px 14px rgba(74, 58, 47, 0.04) !important;
 }
 
 /* ==========================================================================

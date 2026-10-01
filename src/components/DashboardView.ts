@@ -61,82 +61,43 @@ export function renderDashboardView(state) {
         </button>
       </div>
 
-      <!-- Sticky Floating Quick-KPI Ribbon (Desktop only - smoothly slides in when scrolling past tiles) -->
-      <div 
-        id="sticky-kpi-bar" 
-        class="sticky top-2 z-30 mb-2 backdrop-blur-md bg-white/95 border border-[#F0ECE4] shadow-[0_8px_30px_rgba(74,58,47,0.08)] rounded-2xl px-4 py-2.5 hidden md:flex items-center justify-between transition-all duration-300 transform -translate-y-8 opacity-0 pointer-events-none"
-        data-purpose="sticky-kpi-dock"
-      >
-        <div class="flex items-center space-x-3 overflow-hidden">
-          <div class="flex items-center space-x-2 text-xs font-bold text-[#C86D3B] bg-orange-50/90 px-3 py-1 rounded-full border border-orange-200/60 shadow-2xs shrink-0">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="current-view-label">Dashboard Overview</span>
-          </div>
-          <div class="hidden sm:flex items-center space-x-4 text-xs font-semibold text-[#2A1F1D] truncate">
-            <span class="flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Customers:</span> <b class="text-stone-900 font-bold">184</b></span>
-            <span class="text-stone-300">•</span>
-            <span class="flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Sales:</span> <b class="text-emerald-700 font-bold">₹42,850</b></span>
-            <span class="text-stone-300">•</span>
-            <span class="flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Orders:</span> <b class="text-purple-700 font-bold">126</b></span>
-            <span class="text-stone-300 hidden md:inline">•</span>
-            <span class="hidden md:flex items-center text-stone-600"><span class="text-stone-400 mr-1.5 font-normal">Profit:</span> <b class="text-teal-700 font-bold">₹14,620</b> <span class="text-[10px] text-teal-600 ml-1 font-semibold">(34.1%)</span></span>
-          </div>
-        </div>
-
-        <div class="flex items-center space-x-2 shrink-0">
-          <button 
-            id="sticky-pos-shortcut" 
-            data-tab="pos" 
-            class="px-3 py-1.5 rounded-xl bg-[#C86D3B] hover:bg-[#B25D2E] active:scale-95 text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
-          >
-            <span>+ Sell POS</span>
-          </button>
-          <button 
-            id="scroll-to-top-btn" 
-            class="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-semibold transition-all flex items-center space-x-1 cursor-pointer"
-            title="Scroll to top of tiles"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
-            <span class="hidden sm:inline">Top</span>
-          </button>
-        </div>
-      </div>
-
       <!-- ======================================================== -->
-      <!-- 6 KPI Stat Cards Grid (Mobile 2-Cols / Desktop 3-Cols)   -->
-      <!-- 1:1 with Stitch screen.png with Pastel Tinted Gradients   -->
+      <!-- 6 KPI Stat Cards Grid                                    -->
+      <!-- Default: 2x3 Grid (Desktop) / 3x2 (Mobile)                -->
+      <!-- Scrolled Down: Smoothly converts to 1x6 Grid Bar         -->
+      <!-- Scrolled Up: Smoothly eases back to 2x3 Grid             -->
       <!-- ======================================================== -->
-      <section id="kpi-tiles-container" class="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5" data-purpose="kpi-metrics-grid">
+      <section id="kpi-tiles-container" class="kpi-grid-2x3 grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5" data-purpose="kpi-metrics-grid">
         
         <!-- CARD 1: Customers -->
-        <article class="animate-card-pop stagger-1 interactive-scale bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
+        <article class="kpi-card animate-card-pop stagger-1 interactive-scale bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
-          <div class="flex items-center justify-between">
-            <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FCEEE3] text-[#C86D3B] flex items-center justify-center shadow-2xs">
+          <div class="kpi-top-row flex items-center justify-between">
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FCEEE3] text-[#C86D3B] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
               </svg>
             </span>
-            <button class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
             </button>
           </div>
 
           <!-- Middle: Label & Stat -->
-          <div class="mt-2.5 sm:mt-4 z-10">
-            <p class="text-xs sm:text-sm font-semibold text-[#5A4E4D]">Customers</p>
-            <p class="text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">184</p>
+          <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Customers</p>
+            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">${kpis.customers?.value || 184}</p>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
-          <div class="mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
+          <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
+            <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
               <span>+12%</span>
             </div>
 
-            <!-- Soft Bezier Sparkline (1:1 with screen.png) -->
-            <div class="w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+            <!-- Soft Bezier Sparkline -->
+            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
               <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
                 <path d="M 5 35 Q 35 32, 60 22 T 95 18 T 135 6" stroke="#E07A5F" stroke-width="2.5" stroke-linecap="round"></path>
                 <path d="M 5 35 Q 35 32, 60 22 T 95 18 T 135 6 L 135 45 L 5 45 Z" fill="url(#peachSparkFill)" opacity="0.25"></path>
@@ -152,34 +113,34 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 2: Sales -->
-        <article class="animate-card-pop stagger-2 interactive-scale bg-gradient-to-br from-[#F4FAF6] via-[#EAF5EE] to-[#E2F2E7] border border-[#E0EFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
+        <article class="kpi-card animate-card-pop stagger-2 interactive-scale bg-gradient-to-br from-[#F4FAF6] via-[#EAF5EE] to-[#E2F2E7] border border-[#E0EFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
-          <div class="flex items-center justify-between">
-            <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF7EE] text-[#16A34A] flex items-center justify-center shadow-2xs">
+          <div class="kpi-top-row flex items-center justify-between">
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF7EE] text-[#16A34A] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C9.5 2 7.8 3.5 7.4 5.5L4 7.2v1.5l1.6.8C5.2 11.2 5 13 5 15c0 4.4 3.1 7 7 7s7-2.6 7-7c0-2-.2-3.8-.6-5.5l1.6-.8V7.2l-3.4-1.7C16.2 3.5 14.5 2 12 2zm0 6c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm0 8c1.7 0 3 .9 3 2H9c0-1.1 1.3-2 3-2z"></path>
               </svg>
             </span>
-            <button class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
             </button>
           </div>
 
           <!-- Middle: Label & Stat -->
-          <div class="mt-2.5 sm:mt-4 z-10">
-            <p class="text-xs sm:text-sm font-semibold text-[#5A4E4D]">Sales</p>
-            <p class="text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">₹42,850</p>
+          <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Sales</p>
+            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">${kpis.sales?.formatted || (kpis.revenue ? '₹' + kpis.revenue.value.toLocaleString() : '₹42,850')}</p>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
-          <div class="mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
+          <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
+            <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
               <span>+8.4%</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
-            <div class="w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
               <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
                 <path d="M 5 32 Q 35 28, 65 18 T 100 14 T 135 5" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"></path>
                 <path d="M 5 32 Q 35 28, 65 18 T 100 14 T 135 5 L 135 45 L 5 45 Z" fill="url(#mintSparkFill)" opacity="0.25"></path>
@@ -195,34 +156,34 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 3: Orders -->
-        <article class="animate-card-pop stagger-3 interactive-scale bg-gradient-to-br from-[#F8F5FD] via-[#EFEBF9] to-[#E8E0F7] border border-[#E9E2F5] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="orders">
+        <article class="kpi-card animate-card-pop stagger-3 interactive-scale bg-gradient-to-br from-[#F8F5FD] via-[#EFEBF9] to-[#E8E0F7] border border-[#E9E2F5] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="orders">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
-          <div class="flex items-center justify-between">
-            <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#F3EEFC] text-[#7C3AED] flex items-center justify-center shadow-2xs">
+          <div class="kpi-top-row flex items-center justify-between">
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#F3EEFC] text-[#7C3AED] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
-            <button class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
             </button>
           </div>
 
           <!-- Middle: Label & Stat -->
-          <div class="mt-2.5 sm:mt-4 z-10">
-            <p class="text-xs sm:text-sm font-semibold text-[#5A4E4D]">Orders</p>
-            <p class="text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">126</p>
+          <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Orders</p>
+            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">${kpis.orders?.formatted || String(kpis.orders?.value || 126)}</p>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
-          <div class="mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
+          <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
+            <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
               <span>+9.2%</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
-            <div class="w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
               <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
                 <path d="M 5 34 Q 35 24, 70 26 T 105 14 T 135 4" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round"></path>
                 <path d="M 5 34 Q 35 24, 70 26 T 105 14 T 135 4 L 135 45 L 5 45 Z" fill="url(#lavSparkFill)" opacity="0.25"></path>
@@ -238,33 +199,33 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 4: Profit -->
-        <article class="animate-card-pop stagger-4 interactive-scale bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="analytics">
+        <article class="kpi-card animate-card-pop stagger-4 interactive-scale bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="analytics">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
-          <div class="flex items-center justify-between">
-            <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E8F6EF] text-[#0D9488] flex items-center justify-center shadow-2xs">
+          <div class="kpi-top-row flex items-center justify-between">
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E8F6EF] text-[#0D9488] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"></path>
               </svg>
             </span>
-            <button class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
             </button>
           </div>
 
           <!-- Middle: Label & Stat -->
-          <div class="mt-2.5 sm:mt-4 z-10">
-            <p class="text-xs sm:text-sm font-semibold text-[#5A4E4D]">Profit</p>
-            <p class="text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">₹14,620</p>
+          <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Profit</p>
+            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">₹14,620</p>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
-          <div class="mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="text-[#0D9488] font-bold text-[10px] sm:text-xs z-10">
+          <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
+            <div class="kpi-trend-badge text-[#0D9488] font-bold text-[10px] sm:text-xs z-10">
               <span>34.1% margin</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
-            <div class="w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
               <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
                 <path d="M 5 31 Q 40 30, 75 22 T 115 14 T 135 7" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round"></path>
                 <path d="M 5 31 Q 40 30, 75 22 T 115 14 T 135 7 L 135 45 L 5 45 Z" fill="url(#tealSparkFill)" opacity="0.25"></path>
@@ -280,33 +241,33 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 5: Cost -->
-        <article class="animate-card-pop stagger-5 interactive-scale bg-gradient-to-br from-[#FDF5F4] via-[#FCECEB] to-[#FADEDB] border border-[#F7DDDC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="expenses">
+        <article class="kpi-card animate-card-pop stagger-5 interactive-scale bg-gradient-to-br from-[#FDF5F4] via-[#FCECEB] to-[#FADEDB] border border-[#F7DDDC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="expenses">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
-          <div class="flex items-center justify-between">
-            <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FEECEB] text-[#E11D48] flex items-center justify-center shadow-2xs">
+          <div class="kpi-top-row flex items-center justify-between">
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FEECEB] text-[#E11D48] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"></path>
               </svg>
             </span>
-            <button class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
             </button>
           </div>
 
           <!-- Middle: Label & Stat -->
-          <div class="mt-2.5 sm:mt-4 z-10">
-            <p class="text-xs sm:text-sm font-semibold text-[#5A4E4D]">Cost</p>
-            <p class="text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">₹28,230</p>
+          <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Cost</p>
+            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">₹28,230</p>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
-          <div class="mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="text-rose-500 font-bold text-[10px] sm:text-xs z-10">
+          <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
+            <div class="kpi-trend-badge text-rose-500 font-bold text-[10px] sm:text-xs z-10">
               <span>65.9%</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
-            <div class="w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
               <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
                 <path d="M 5 18 Q 35 22, 68 28 T 105 22 T 135 32" stroke="#F43F5E" stroke-width="2.5" stroke-linecap="round"></path>
                 <path d="M 5 18 Q 35 22, 68 28 T 105 22 T 135 32 L 135 45 L 5 45 Z" fill="url(#roseSparkFill)" opacity="0.25"></path>
@@ -322,34 +283,34 @@ export function renderDashboardView(state) {
         </article>
 
         <!-- CARD 6: Returning -->
-        <article class="animate-card-pop stagger-6 interactive-scale bg-gradient-to-br from-[#F2F7FD] via-[#ECF3FC] to-[#E0EDFA] border border-[#DBE7F6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
+        <article class="kpi-card animate-card-pop stagger-6 interactive-scale bg-gradient-to-br from-[#F2F7FD] via-[#ECF3FC] to-[#E0EDFA] border border-[#DBE7F6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
-          <div class="flex items-center justify-between">
-            <span class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF4FD] text-[#0284C7] flex items-center justify-center shadow-2xs">
+          <div class="kpi-top-row flex items-center justify-between">
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF4FD] text-[#0284C7] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
-            <button class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
+            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
             </button>
           </div>
 
           <!-- Middle: Label & Stat -->
-          <div class="mt-2.5 sm:mt-4 z-10">
-            <p class="text-xs sm:text-sm font-semibold text-[#5A4E4D]">Returning</p>
-            <p class="text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">76 <span class="text-xs sm:text-sm font-medium text-stone-500">cust</span></p>
+          <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Returning</p>
+            <p class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">76 <span class="text-xs sm:text-sm font-medium text-stone-500">cust</span></p>
           </div>
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
-          <div class="mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="flex items-center text-sky-600 font-bold text-[10px] sm:text-xs z-10">
+          <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
+            <div class="kpi-trend-badge flex items-center text-sky-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
               <span>41.3%</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->
-            <div class="w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
               <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
                 <path d="M 5 33 Q 40 32, 75 22 T 115 14 T 135 5" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round"></path>
                 <path d="M 5 33 Q 40 32, 75 22 T 115 14 T 135 5 L 135 45 L 5 45 Z" fill="url(#skySparkFill)" opacity="0.25"></path>
@@ -363,7 +324,6 @@ export function renderDashboardView(state) {
             </div>
           </div>
         </article>
-
       </section>
 
       <!-- ======================================================== -->
