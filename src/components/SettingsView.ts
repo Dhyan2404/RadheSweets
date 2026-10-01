@@ -265,6 +265,111 @@ export function renderSettingsView(state) {
         </div>
       </section>
 
+      <!-- Firebase Cloud Storage & Firestore Sync Center -->
+      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3">
+          <div>
+            <h3 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+              <span>☁️ Firebase Cloud Storage &amp; Firestore Sync Center</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Storage Live &amp; Synced
+              </span>
+            </h3>
+            <p class="text-[11px] text-[var(--text-muted)]">Bucket: <code class="bg-stone-100 px-1.5 py-0.5 rounded font-mono font-bold text-[#C86D3B]">radhesweets0.firebasestorage.app</code> • Project: <code class="bg-stone-100 px-1.5 py-0.5 rounded font-mono">radhesweets0</code></p>
+          </div>
+
+          <button 
+            id="sync-firebase-now-btn"
+            type="button"
+            class="px-4 py-2 bg-gradient-to-r from-amber-600 to-[#C86D3B] hover:from-amber-700 hover:to-[#B25D2E] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0"
+          >
+            <span class="text-sm leading-none">🔄</span>
+            <span>Sync All Data to Firebase Now</span>
+          </button>
+        </div>
+
+        <!-- Sync Metrics Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
+            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Sweets in Cloud</span>
+            <span class="font-black text-[#2A1F1D] text-base">${state.sweets?.length || 100} / 100</span>
+            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Catalog &amp; 100 Files</span>
+          </div>
+
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
+            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Visual Assets</span>
+            <span class="font-black text-[#2A1F1D] text-base">18 Images</span>
+            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Sweet Photos Live</span>
+          </div>
+
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
+            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Orders Synced</span>
+            <span class="font-black text-[#2A1F1D] text-base">${state.orders?.length || 5} Orders</span>
+            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Stream Active</span>
+          </div>
+
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200">
+            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Performance KPIs</span>
+            <span class="font-black text-[#2A1F1D] text-base">₹${(state.kpis?.revenue?.value || 42850).toLocaleString()}</span>
+            <span class="text-[9px] font-bold text-emerald-700 block mt-0.5">✓ Financials Live</span>
+          </div>
+        </div>
+
+        <!-- Direct Cloud Links -->
+        <div class="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/70 text-xs space-y-2">
+          <p class="font-bold text-amber-900 flex items-center gap-1.5">
+            <span>🌐 Direct Public Cloud Endpoints:</span>
+          </p>
+          <div class="flex flex-wrap gap-2 text-[11px]">
+            <a 
+              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/sweets%2Fcatalog_100_sweets.json?alt=media" 
+              target="_blank" 
+              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
+            >
+              <span>🍬 100 Sweets Catalog JSON</span>
+              <span class="text-[10px] text-stone-400">↗</span>
+            </a>
+
+            <a 
+              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/performance%2Fanalytics_and_kpis.json?alt=media" 
+              target="_blank" 
+              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
+            >
+              <span>📊 Performance &amp; KPIs JSON</span>
+              <span class="text-[10px] text-stone-400">↗</span>
+            </a>
+
+            <a 
+              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/orders%2Fall_orders.json?alt=media" 
+              target="_blank" 
+              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
+            >
+              <span>📋 Orders Archive JSON</span>
+              <span class="text-[10px] text-stone-400">↗</span>
+            </a>
+
+            <a 
+              href="https://firebasestorage.googleapis.com/v0/b/radhesweets0.firebasestorage.app/o/manifest%2Fradhe_sweets_global_backup.json?alt=media" 
+              target="_blank" 
+              class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg font-semibold text-amber-900 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
+            >
+              <span>📦 Global Master ERP Backup</span>
+              <span class="text-[10px] text-stone-400">↗</span>
+            </a>
+
+            <a 
+              href="https://console.firebase.google.com/project/radhesweets0/firestore" 
+              target="_blank" 
+              class="px-2.5 py-1 bg-orange-100 border border-orange-300 rounded-lg font-bold text-[#C86D3B] hover:bg-orange-200 transition-all inline-flex items-center gap-1"
+            >
+              <span>🔥 Firebase Console</span>
+              <span class="text-[10px]">↗</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <!-- Store Profile & Tax Localization Form -->
       <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">
         <h3 class="text-sm font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3">

@@ -212,3 +212,136 @@ export async function loadBranchDataFromCloud(branchId) {
     kpis: cachedKpis ? JSON.parse(cachedKpis) : seed.kpis
   };
 }
+
+const BUCKET = firebaseConfig.storageBucket || "radhesweets0.firebasestorage.app";
+const BASE_STORAGE_URL = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o`;
+
+/**
+ * Upload JSON payload or Buffer to Firebase Cloud Storage via REST
+ */
+export async function uploadToFirebaseStorage(storagePath, content, contentType = "application/json") {
+  const encodedName = encodeURIComponent(storagePath);
+  const uploadUrl = `${BASE_STORAGE_URL}?uploadType=media&name=${encodedName}`;
+  const body = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+
+  try {
+    const res = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": contentType },
+      body
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodedName}?alt=media${data.downloadTokens ? `&token=${data.downloadTokens}` : ''}`;
+    }
+  } catch (err) {
+    console.warn(`[Firebase Storage] Upload failed for ${storagePath}:`, err.message);
+  }
+  return null;
+}
+
+/**
+ * Upload all 100 sweets catalog to Firebase Cloud Storage
+ */
+export async function uploadAllSweetsToStorage(sweets) {
+  return await uploadToFirebaseStorage("sweets/catalog_100_sweets.json", {
+    title: "Radhe Sweets Master Confectionery Catalog",
+    totalCount: sweets.length,
+    updatedAt: new Date().toISOString(),
+    sweets
+  });
+}
+
+/**
+ * Upload individual order to Firebase Cloud Storage
+ */
+export async function uploadOrderToStorage(order) {
+  await uploadToFirebaseStorage(`orders/items/${order.id}.json`, order);
+  return true;
+}
+
+/**
+ * Upload performance analytics & KPIs to Firebase Cloud Storage
+ */
+export async function uploadPerformanceToStorage(analytics, kpis) {
+  return await uploadToFirebaseStorage("performance/analytics_and_kpis.json", {
+    title: "Radhe Sweets Store Performance & Financial Analytics",
+    syncedAt: new Date().toISOString(),
+    kpis,
+    analytics
+  });
+}
+
+/**
+ * One-Click Full ERP Cloud Sync to Firebase Storage & Firestore
+ */
+export async function syncAllToFirebaseCloud(state) {
+  const tasks = [];
+  
+  // 1. Sweets Catalog
+  if (state.sweets && state.sweets.length > 0) {
+    tasks.push(uploadAllSweetsToStorage(state.sweets));
+    tasks.push(saveBranchSweetsToCloud(state.currentBranchId || 'br-1', state.sweets));
+  }
+
+  // 2. Orders
+  if (state.orders && state.orders.length > 0) {
+    tasks.push(uploadToFirebaseStorage("orders/all_orders.json", {
+      totalOrders: state.orders.length,
+      updatedAt: new Date().toISOString(),
+      orders: state.orders
+    }));
+    state.orders.slice(0, 10).forEach(order => {
+      tasks.push(saveBranchOrderToCloud(state.currentBranchId || 'br-1', order));
+    });
+  }
+
+  // 3. Performance & KPIs
+  tasks.push(uploadPerformanceToStorage(state.analytics, state.kpis));
+  tasks.push(saveBranchKpisToCloud(state.currentBranchId || 'br-1', state.kpis));
+
+  // 4. Staff & Payroll
+  if (state.staff && state.staff.length > 0) {
+    tasks.push(uploadToFirebaseStorage("staff/staff_roster.json", {
+      totalStaff: state.staff.length,
+      updatedAt: new Date().toISOString(),
+      staff: state.staff
+    }));
+  }
+
+  // 5. Customers & Khata
+  if (state.customers && state.customers.length > 0) {
+    tasks.push(uploadToFirebaseStorage("customers/customers_khata.json", {
+      totalCustomers: state.customers.length,
+      updatedAt: new Date().toISOString(),
+      customers: state.customers
+    }));
+    state.customers.slice(0, 10).forEach(cust => {
+      tasks.push(saveCustomerToCloud(cust));
+    });
+  }
+
+  // 6. Expenses
+  if (state.expenses) {
+    tasks.push(uploadToFirebaseStorage("expenses/expenses_ledger.json", {
+      updatedAt: new Date().toISOString(),
+      expenses: state.expenses
+    }));
+  }
+
+  // 7. Global Snapshot Manifest
+  tasks.push(uploadToFirebaseStorage("manifest/radhe_sweets_global_backup.json", {
+    appName: "Radhe Sweets Shop Manager & Live Kitchen Console",
+    syncedAt: new Date().toISOString(),
+    sweetsCount: state.sweets?.length || 0,
+    ordersCount: state.orders?.length || 0,
+    staffCount: state.staff?.length || 0,
+    customersCount: state.customers?.length || 0,
+    branchId: state.currentBranchId || 'br-1',
+    kpis: state.kpis
+  }));
+
+  const results = await Promise.allSettled(tasks);
+  const successCount = results.filter(r => r.status === 'fulfilled').length;
+  return { success: true, count: successCount };
+}

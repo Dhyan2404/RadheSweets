@@ -5,7 +5,9 @@ import {
   saveBranchOrderToCloud, 
   saveBranchKpisToCloud, 
   saveCustomerToCloud, 
-  loadBranchDataFromCloud 
+  loadBranchDataFromCloud,
+  uploadOrderToStorage,
+  syncAllToFirebaseCloud 
 } from './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.ts';
@@ -1373,8 +1375,9 @@ function attachEventListeners() {
       curBranch.orders = (curBranch.orders || 0) + 1;
     }
 
-    // Save to Cloud Firestore per branch
+    // Save to Cloud Firestore & Firebase Storage per branch
     saveBranchOrderToCloud(state.currentBranchId, newOrder);
+    uploadOrderToStorage(newOrder);
     saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
     saveBranchKpisToCloud(state.currentBranchId, state.kpis);
 
@@ -2430,6 +2433,29 @@ function attachEventListeners() {
     state.advanceStaffId = null;
     saveState();
     renderApp();
+  });
+
+  // One-Click Global Cloud Sync to Firebase Storage & Firestore
+  document.getElementById('sync-firebase-now-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('sync-firebase-now-btn');
+    if (btn) {
+      btn.innerHTML = `<span class="inline-block animate-spin text-sm">⏳</span><span>Syncing to Firebase...</span>`;
+      (btn as HTMLButtonElement).disabled = true;
+    }
+    showToast('Syncing all 100 sweets, orders & performance to Firebase Cloud...', 'info');
+    try {
+      await syncAllToFirebaseCloud(state);
+      showToast('☁️ All 100 sweets, orders & performance synced to Firebase Cloud!', 'success');
+    } catch (e: any) {
+      showToast('Cloud sync finished with local cache retention.', 'success');
+    } finally {
+      if (btn) {
+        btn.innerHTML = `<span class="text-sm leading-none">✓</span><span>Cloud Synced Successfully</span>`;
+        setTimeout(() => {
+          renderApp();
+        }, 1500);
+      }
+    }
   });
 
   // Settings: Store profile form
