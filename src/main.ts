@@ -43,6 +43,13 @@ import {
 } from './components/CustomerDialerModal.ts';
 import { renderSeoModal } from './components/SeoModal.ts';
 import { renderSearchModal, renderSearchResultsBody } from './components/SearchModal.ts';
+import { 
+  renderStaffView, 
+  renderAddStaffModal, 
+  renderPaySalaryModal, 
+  renderRecordLeaveModal, 
+  renderRecordAdvanceModal 
+} from './components/StaffView.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 
@@ -78,6 +85,10 @@ const state = {
   orders: stored?.orders || [...initialData.orders],
   expenses: stored?.expenses || { ...initialData.expenses },
   analytics: stored?.analytics || { ...initialData.analytics },
+  staff: (stored?.staff && stored.staff.length > 0) ? stored.staff : [...initialData.staff],
+  staffFilterTab: 'all',
+  staffSearchQuery: '',
+  staffDeptFilter: 'all',
 
   // Enterprise Multi-Branch & Store Inventory State
   branches: stored?.branches || [...initialData.branches],
@@ -150,7 +161,16 @@ const state = {
   dialerInput: '',
   activeOrder: null,
   lastPlacedOrder: null,
-  unreadNotifications: 2
+  unreadNotifications: 2,
+
+  // Staff Modals
+  showAddStaffModal: false,
+  editingStaff: null,
+  showPaySalaryModal: false,
+  payingStaff: null,
+  showRecordLeaveModal: false,
+  showRecordAdvanceModal: false,
+  advanceStaffId: null
 };
 
 function saveState() {
@@ -164,6 +184,7 @@ function saveState() {
       orders: state.orders,
       expenses: state.expenses,
       analytics: state.analytics,
+      staff: state.staff,
       branches: state.branches,
       currentBranchId: state.currentBranchId,
       userRole: state.userRole,
@@ -218,6 +239,10 @@ function updatePageSeoMetadata(activeTab: string) {
     analytics: {
       title: 'Business Analytics & Confectionery Reports | Radhe Sweets',
       desc: 'Detailed gross profit margins, inventory asset valuations, peak rush hour analytics, and daily shift Z-reports.'
+    },
+    staff: {
+      title: 'Staff, Halwai Kitchen Payroll & Attendance Ledger | Radhe Sweets',
+      desc: 'Manage sweet shop master halwais, counter cashiers, daily shift attendance, salary disbursements, and leave requests at Radhe Sweets.'
     },
     settings: {
       title: 'Store Configuration & Multi-Branch Management | Radhe Sweets',
@@ -321,6 +346,8 @@ function renderTabContent() {
       return renderExpensesView(state);
     case 'analytics':
       return renderAnalyticsView(state);
+    case 'staff':
+      return renderStaffView(state);
     case 'settings':
       return renderSettingsView(state);
     default:
@@ -347,6 +374,10 @@ function renderModals() {
     ${state.showMobileDrawer ? renderMobileDrawer(state) : ''}
     ${state.showSeoModal ? renderSeoModal(state) : ''}
     ${state.showSearchModal ? renderSearchModal(state) : ''}
+    ${state.showAddStaffModal ? renderAddStaffModal(state) : ''}
+    ${state.showPaySalaryModal ? renderPaySalaryModal(state) : ''}
+    ${state.showRecordLeaveModal ? renderRecordLeaveModal(state) : ''}
+    ${state.showRecordAdvanceModal ? renderRecordAdvanceModal(state) : ''}
   `;
 }
 
@@ -2067,14 +2098,338 @@ function attachEventListeners() {
   document.querySelectorAll('[data-delete-expense]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-delete-expense');
-      const item = state.expenses.items.find(i => i.id === id);
+      const item = state.expenses.items.find((i: any) => i.id === id);
       if (item) {
         state.expenses.total = Math.max(0, state.expenses.total - item.amount);
-        state.expenses.items = state.expenses.items.filter(i => i.id !== id);
+        state.expenses.items = state.expenses.items.filter((i: any) => i.id !== id);
         saveState();
         renderApp();
       }
     });
+  });
+
+  // ==========================================
+  // STAFF, PAYROLL & ATTENDANCE EVENT HANDLERS
+  // ==========================================
+
+  // 1. Staff Filter Tabs (All, Attendance Today, Payroll, Leaves Ledger, Advances)
+  document.querySelectorAll('[data-staff-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-staff-tab');
+      if (tab) {
+        state.staffFilterTab = tab;
+        renderApp();
+      }
+    });
+  });
+
+  // 2. Department Filter Pills
+  document.querySelectorAll('[data-staff-dept]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const dept = btn.getAttribute('data-staff-dept');
+      if (dept) {
+        state.staffDeptFilter = (dept === 'All' ? 'all' : dept);
+        renderApp();
+      }
+    });
+  });
+
+  // 3. Realtime Staff Search Input with Cursor Retention
+  const staffSearchInput = document.getElementById('staff-search-input') as HTMLInputElement;
+  if (staffSearchInput) {
+    staffSearchInput.addEventListener('input', (e: any) => {
+      state.staffSearchQuery = e.target.value;
+      const cursor = e.target.selectionStart;
+      renderApp();
+      const updated = document.getElementById('staff-search-input') as HTMLInputElement;
+      if (updated) {
+        updated.focus();
+        updated.setSelectionRange(cursor, cursor);
+      }
+    });
+  }
+
+  // 4. KPI Quick Action: View Pending Payroll
+  document.getElementById('kpi-view-payroll-btn')?.addEventListener('click', () => {
+    state.staffFilterTab = 'payroll';
+    renderApp();
+  });
+
+  // 5. Open Add Staff Modal
+  document.getElementById('open-add-staff-modal-btn')?.addEventListener('click', () => {
+    state.editingStaff = null;
+    state.showAddStaffModal = true;
+    renderApp();
+  });
+
+  // 6. Open Edit Staff Modal
+  document.querySelectorAll('[data-edit-staff]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-edit-staff');
+      state.editingStaff = state.staff.find((s: any) => s.id === id) || null;
+      state.showAddStaffModal = true;
+      renderApp();
+    });
+  });
+
+  // 7. Close / Cancel Staff Modal
+  const closeStaffModal = () => {
+    state.showAddStaffModal = false;
+    state.editingStaff = null;
+    renderApp();
+  };
+  document.getElementById('close-staff-modal-btn')?.addEventListener('click', closeStaffModal);
+  document.getElementById('cancel-staff-modal-btn')?.addEventListener('click', closeStaffModal);
+  document.getElementById('staff-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'staff-modal-backdrop') closeStaffModal();
+  });
+
+  // 8. Save Staff Form (Add or Edit)
+  document.getElementById('save-staff-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const idInput = (document.getElementById('staff-form-id') as HTMLInputElement)?.value;
+    const name = ((document.getElementById('staff-form-name') as HTMLInputElement)?.value || '').trim();
+    const phone = ((document.getElementById('staff-form-phone') as HTMLInputElement)?.value || '').trim();
+    const role = ((document.getElementById('staff-form-role') as HTMLInputElement)?.value || '').trim();
+    const dept = (document.getElementById('staff-form-dept') as HTMLSelectElement)?.value || 'Kitchen / Halwai';
+    const salary = Number((document.getElementById('staff-form-salary') as HTMLInputElement)?.value) || 20000;
+    const branch = ((document.getElementById('staff-form-branch') as HTMLInputElement)?.value || 'Navrangpura Flagship').trim();
+    const emergency = ((document.getElementById('staff-form-emergency') as HTMLInputElement)?.value || '').trim();
+    const aadhar = ((document.getElementById('staff-form-aadhar') as HTMLInputElement)?.value || '').trim();
+
+    if (!name) return;
+
+    if (idInput) {
+      // Editing existing staff
+      const member = state.staff.find((s: any) => s.id === idInput);
+      if (member) {
+        member.name = name;
+        member.phone = phone;
+        member.role = role;
+        member.department = dept;
+        member.baseSalary = salary;
+        member.branchName = branch;
+        member.emergencyContact = emergency;
+        member.aadharNumber = aadhar;
+        showToast(`Updated record for ${name}`, 'success');
+      }
+    } else {
+      // Add new staff
+      const newStaff = {
+        id: `st-${Date.now()}`,
+        name,
+        phone: phone || '+91 98000 00000',
+        role,
+        department: dept,
+        branchId: 'br-1',
+        branchName: branch,
+        joiningDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        baseSalary: salary,
+        salaryType: 'Monthly',
+        advancesTaken: 0,
+        salaryStatus: 'Pending',
+        lastPaidDate: null,
+        attendanceToday: 'Present',
+        leavesTakenThisMonth: 0,
+        leavesAllowedPerMonth: 2,
+        totalLeavesBalance: 12,
+        aadharNumber: aadhar,
+        emergencyContact: emergency,
+        status: 'Active',
+        leaveHistory: [],
+        salaryHistory: []
+      };
+      state.staff.unshift(newStaff);
+      showToast(`Added new staff member: ${name}`, 'success');
+    }
+
+    state.showAddStaffModal = false;
+    state.editingStaff = null;
+    saveState();
+    renderApp();
+  });
+
+  // 9. Quick 1-Click Attendance Toggle (Present, Half Day, On Leave)
+  document.querySelectorAll('[data-mark-attendance]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-mark-attendance');
+      const status = btn.getAttribute('data-status');
+      const member = state.staff.find((s: any) => s.id === id);
+      if (member && status) {
+        member.attendanceToday = status;
+        saveState();
+        showToast(`Marked ${member.name} as ${status}`, 'success');
+        renderApp();
+      }
+    });
+  });
+
+  // 10. Pay Staff Salary Modal Handlers
+  document.querySelectorAll('[data-pay-staff-salary]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-pay-staff-salary');
+      state.payingStaff = state.staff.find((s: any) => s.id === id) || null;
+      if (state.payingStaff) {
+        state.showPaySalaryModal = true;
+        renderApp();
+      }
+    });
+  });
+
+  const closePaySalaryModal = () => {
+    state.showPaySalaryModal = false;
+    state.payingStaff = null;
+    renderApp();
+  };
+  document.getElementById('close-pay-salary-modal-btn')?.addEventListener('click', closePaySalaryModal);
+  document.getElementById('cancel-pay-salary-modal-btn')?.addEventListener('click', closePaySalaryModal);
+  document.getElementById('pay-salary-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'pay-salary-modal-backdrop') closePaySalaryModal();
+  });
+
+  document.getElementById('confirm-pay-salary-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!state.payingStaff) return;
+    const mode = (document.getElementById('salary-payment-mode') as HTMLSelectElement)?.value || 'Bank Transfer';
+    const month = (document.getElementById('salary-month-label') as HTMLInputElement)?.value || 'September 2026';
+    const adv = state.payingStaff.advancesTaken || 0;
+    const net = Math.max(0, (state.payingStaff.baseSalary || 0) - adv);
+
+    state.payingStaff.salaryStatus = 'Paid';
+    state.payingStaff.advancesTaken = 0;
+    state.payingStaff.lastPaidDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (!state.payingStaff.salaryHistory) state.payingStaff.salaryHistory = [];
+    state.payingStaff.salaryHistory.unshift({
+      month,
+      base: state.payingStaff.baseSalary,
+      advanceDeduction: adv,
+      netPaid: net,
+      date: state.payingStaff.lastPaidDate,
+      mode,
+      status: 'Paid'
+    });
+
+    // Automatically record Store Expense under Staff Salary
+    if (!state.expenses) state.expenses = { total: 0, items: [] };
+    if (!state.expenses.items) state.expenses.items = [];
+    state.expenses.items.unshift({
+      id: `exp-${Date.now()}`,
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+      description: `Staff Salary: ${state.payingStaff.name} (${month})`,
+      category: 'Staff Salary',
+      amount: net,
+      status: 'Paid',
+      paymentMode: mode
+    });
+    state.expenses.total = (state.expenses.total || 0) + net;
+
+    showToast(`Disbursed ₹${net.toLocaleString()} salary to ${state.payingStaff.name}`, 'success');
+    state.showPaySalaryModal = false;
+    state.payingStaff = null;
+    saveState();
+    renderApp();
+  });
+
+  // 11. Staff Leave Modal Handlers
+  document.getElementById('open-record-leave-btn')?.addEventListener('click', () => {
+    state.showRecordLeaveModal = true;
+    renderApp();
+  });
+
+  const closeLeaveModal = () => {
+    state.showRecordLeaveModal = false;
+    renderApp();
+  };
+  document.getElementById('close-leave-modal-btn')?.addEventListener('click', closeLeaveModal);
+  document.getElementById('cancel-leave-modal-btn')?.addEventListener('click', closeLeaveModal);
+  document.getElementById('record-leave-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'record-leave-modal-backdrop') closeLeaveModal();
+  });
+
+  document.getElementById('save-leave-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const staffId = (document.getElementById('leave-staff-id') as HTMLSelectElement)?.value;
+    const leaveType = (document.getElementById('leave-type-select') as HTMLSelectElement)?.value || 'Casual Leave';
+    const days = parseFloat((document.getElementById('leave-days-count') as HTMLInputElement)?.value) || 1;
+    const reason = ((document.getElementById('leave-reason-input') as HTMLInputElement)?.value || '').trim() || 'Leave applied';
+
+    const member = state.staff.find((s: any) => s.id === staffId);
+    if (member) {
+      member.leavesTakenThisMonth = (member.leavesTakenThisMonth || 0) + days;
+      member.attendanceToday = 'On Leave';
+      if (!member.leaveHistory) member.leaveHistory = [];
+      member.leaveHistory.unshift({
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        type: leaveType,
+        days,
+        reason,
+        status: 'Approved'
+      });
+      showToast(`Recorded ${days} day(s) ${leaveType} for ${member.name}`, 'success');
+    }
+
+    state.showRecordLeaveModal = false;
+    saveState();
+    renderApp();
+  });
+
+  // 12. Staff Salary Advance Modal Handlers
+  const openAdvanceModal = (preselectedId?: string) => {
+    if (preselectedId) state.advanceStaffId = preselectedId;
+    else state.advanceStaffId = state.staff[0]?.id || null;
+    state.showRecordAdvanceModal = true;
+    renderApp();
+  };
+  document.getElementById('open-record-advance-btn')?.addEventListener('click', () => openAdvanceModal());
+  document.querySelectorAll('[data-staff-give-advance]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-staff-give-advance');
+      if (id) openAdvanceModal(id);
+    });
+  });
+
+  const closeAdvanceModal = () => {
+    state.showRecordAdvanceModal = false;
+    state.advanceStaffId = null;
+    renderApp();
+  };
+  document.getElementById('close-advance-modal-btn')?.addEventListener('click', closeAdvanceModal);
+  document.getElementById('cancel-advance-modal-btn')?.addEventListener('click', closeAdvanceModal);
+  document.getElementById('advance-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'advance-modal-backdrop') closeAdvanceModal();
+  });
+
+  document.getElementById('save-advance-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const staffId = (document.getElementById('advance-staff-id') as HTMLSelectElement)?.value;
+    const amount = Number((document.getElementById('advance-amount-input') as HTMLInputElement)?.value) || 0;
+    const reason = ((document.getElementById('advance-reason-input') as HTMLInputElement)?.value || '').trim() || 'Festival advance';
+
+    const member = state.staff.find((s: any) => s.id === staffId);
+    if (member && amount > 0) {
+      member.advancesTaken = (member.advancesTaken || 0) + amount;
+      
+      // Auto-record Store Expense
+      if (!state.expenses) state.expenses = { total: 0, items: [] };
+      if (!state.expenses.items) state.expenses.items = [];
+      state.expenses.items.unshift({
+        id: `exp-${Date.now()}`,
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        description: `Staff Advance: ${member.name} (${reason})`,
+        category: 'Staff Salary',
+        amount: amount,
+        status: 'Paid',
+        paymentMode: 'Cash'
+      });
+      state.expenses.total = (state.expenses.total || 0) + amount;
+
+      showToast(`Disbursed ₹${amount.toLocaleString()} advance to ${member.name}`, 'success');
+    }
+
+    state.showRecordAdvanceModal = false;
+    state.advanceStaffId = null;
+    saveState();
+    renderApp();
   });
 
   // Settings: Store profile form
@@ -2576,7 +2931,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 // Initialize when DOM is ready with Google Deep Linking & Cloud Sync
 window.addEventListener('DOMContentLoaded', () => {
   const initialHash = window.location.hash.replace('#/', '').replace('#', '');
-  if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'settings'].includes(initialHash)) {
+  if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(initialHash)) {
     state.activeTab = initialHash;
   }
   renderApp();
@@ -2596,7 +2951,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // Google Sitemap Deep Linking - Listen for browser URL hash changes
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#/', '').replace('#', '');
-  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'settings'].includes(hash) && state.activeTab !== hash) {
+  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(hash) && state.activeTab !== hash) {
     state.activeTab = hash;
     saveState();
     renderApp();

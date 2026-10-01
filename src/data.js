@@ -101,6 +101,223 @@ export const initialData = {
     { time: "08:00 AM", user: "Admin (AS)", action: "Drawer Opened", details: "Opening cash float verified: ₹5,000" }
   ],
 
+  staff: [
+    {
+      id: "st-1",
+      name: "Rameshwar Sharma",
+      phone: "+91 98765 11223",
+      role: "Head Halwai & Master Chef",
+      department: "Kitchen / Halwai",
+      branchId: "br-1",
+      branchName: "Navrangpura Flagship",
+      joiningDate: "15 Jan 2022",
+      baseSalary: 35000,
+      salaryType: "Monthly",
+      advancesTaken: 3000,
+      salaryStatus: "Pending",
+      lastPaidDate: "31 Aug 2026",
+      attendanceToday: "Present",
+      leavesTakenThisMonth: 1,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 11,
+      aadharNumber: "XXXX-XXXX-4812",
+      emergencyContact: "+91 98765 99887 (Wife)",
+      status: "Active",
+      leaveHistory: [
+        { date: "10 Sep 2026", type: "Casual Leave", days: 1, reason: "Family ritual in native village", status: "Approved" }
+      ],
+      salaryHistory: [
+        { month: "August 2026", base: 35000, advanceDeduction: 2000, netPaid: 33000, date: "31 Aug 2026", mode: "Bank Transfer", status: "Paid" }
+      ]
+    },
+    {
+      id: "st-2",
+      name: "Mukesh Prajapati",
+      phone: "+91 98765 22334",
+      role: "Kaju Katli & Mawa Craftsman",
+      department: "Kitchen / Halwai",
+      branchId: "br-1",
+      branchName: "Navrangpura Flagship",
+      joiningDate: "10 Mar 2023",
+      baseSalary: 26000,
+      salaryType: "Monthly",
+      advancesTaken: 1500,
+      salaryStatus: "Pending",
+      lastPaidDate: "31 Aug 2026",
+      attendanceToday: "Present",
+      leavesTakenThisMonth: 0,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 14,
+      aadharNumber: "XXXX-XXXX-6721",
+      emergencyContact: "+91 98765 88776 (Brother)",
+      status: "Active",
+      leaveHistory: [],
+      salaryHistory: [
+        { month: "August 2026", base: 26000, advanceDeduction: 0, netPaid: 26000, date: "31 Aug 2026", mode: "Cash", status: "Paid" }
+      ]
+    },
+    {
+      id: "st-3",
+      name: "Hitesh Vaghela",
+      phone: "+91 98765 33445",
+      role: "Bengali Chhena Specialist",
+      department: "Kitchen / Halwai",
+      branchId: "br-3",
+      branchName: "SG Highway Central Kitchen",
+      joiningDate: "05 Jun 2022",
+      baseSalary: 28000,
+      salaryType: "Monthly",
+      advancesTaken: 2000,
+      salaryStatus: "Pending",
+      lastPaidDate: "31 Aug 2026",
+      attendanceToday: "Present",
+      leavesTakenThisMonth: 0,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 12,
+      aadharNumber: "XXXX-XXXX-9102",
+      emergencyContact: "+91 98765 77665 (Father)",
+      status: "Active",
+      leaveHistory: [],
+      salaryHistory: [
+        { month: "August 2026", base: 28000, advanceDeduction: 1000, netPaid: 27000, date: "31 Aug 2026", mode: "Bank Transfer", status: "Paid" }
+      ]
+    },
+    {
+      id: "st-4",
+      name: "Bhavik Patel",
+      phone: "+91 98765 44556",
+      role: "Senior Counter Cashier",
+      department: "Sales Counter",
+      branchId: "br-1",
+      branchName: "Navrangpura Flagship",
+      joiningDate: "01 Nov 2023",
+      baseSalary: 22000,
+      salaryType: "Monthly",
+      advancesTaken: 0,
+      salaryStatus: "Paid",
+      lastPaidDate: "25 Sep 2026",
+      attendanceToday: "Present",
+      leavesTakenThisMonth: 1,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 10,
+      aadharNumber: "XXXX-XXXX-1143",
+      emergencyContact: "+91 98765 66554 (Brother)",
+      status: "Active",
+      leaveHistory: [
+        { date: "08 Sep 2026", type: "Sick Leave", days: 1, reason: "Dental treatment", status: "Approved" }
+      ],
+      salaryHistory: [
+        { month: "September 2026", base: 22000, advanceDeduction: 0, netPaid: 22000, date: "25 Sep 2026", mode: "UPI", status: "Paid" }
+      ]
+    },
+    {
+      id: "st-5",
+      name: "Priya Panchal",
+      phone: "+91 98765 55667",
+      role: "Express Billing & Customer POS",
+      department: "Sales Counter",
+      branchId: "br-2",
+      branchName: "Satellite Luxury Boutique",
+      joiningDate: "15 Feb 2024",
+      baseSalary: 19000,
+      salaryType: "Monthly",
+      advancesTaken: 1000,
+      salaryStatus: "Pending",
+      lastPaidDate: "31 Aug 2026",
+      attendanceToday: "On Leave",
+      leavesTakenThisMonth: 2,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 8,
+      aadharNumber: "XXXX-XXXX-8821",
+      emergencyContact: "+91 98765 55443 (Mother)",
+      status: "Active",
+      leaveHistory: [
+        { date: "24 Sep 2026", type: "Festival Leave", days: 2, reason: "Sister marriage celebration", status: "Approved" }
+      ],
+      salaryHistory: [
+        { month: "August 2026", base: 19000, advanceDeduction: 500, netPaid: 18500, date: "31 Aug 2026", mode: "Bank Transfer", status: "Paid" }
+      ]
+    },
+    {
+      id: "st-6",
+      name: "Arvind Solanki",
+      phone: "+91 98765 66778",
+      role: "Packaging & Dispatch Lead",
+      department: "Store Ops",
+      branchId: "br-1",
+      branchName: "Navrangpura Flagship",
+      joiningDate: "20 Aug 2023",
+      baseSalary: 18000,
+      salaryType: "Monthly",
+      advancesTaken: 1000,
+      salaryStatus: "Pending",
+      lastPaidDate: "31 Aug 2026",
+      attendanceToday: "Present",
+      leavesTakenThisMonth: 0,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 13,
+      aadharNumber: "XXXX-XXXX-3345",
+      emergencyContact: "+91 98765 44332 (Cousin)",
+      status: "Active",
+      leaveHistory: [],
+      salaryHistory: [
+        { month: "August 2026", base: 18000, advanceDeduction: 0, netPaid: 18000, date: "31 Aug 2026", mode: "Cash", status: "Paid" }
+      ]
+    },
+    {
+      id: "st-7",
+      name: "Suresh Makwana",
+      phone: "+91 98765 77889",
+      role: "Logistics & Bulk Catering Delivery",
+      department: "Logistics",
+      branchId: "br-3",
+      branchName: "SG Highway Central Kitchen",
+      joiningDate: "12 May 2023",
+      baseSalary: 17500,
+      salaryType: "Monthly",
+      advancesTaken: 1000,
+      salaryStatus: "Pending",
+      lastPaidDate: "31 Aug 2026",
+      attendanceToday: "Present",
+      leavesTakenThisMonth: 0,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 11,
+      aadharNumber: "XXXX-XXXX-5567",
+      emergencyContact: "+91 98765 33221 (Father)",
+      status: "Active",
+      leaveHistory: [],
+      salaryHistory: [
+        { month: "August 2026", base: 17500, advanceDeduction: 1000, netPaid: 16500, date: "31 Aug 2026", mode: "Cash", status: "Paid" }
+      ]
+    },
+    {
+      id: "st-8",
+      name: "Jayesh Parmar",
+      phone: "+91 98765 88990",
+      role: "Store Supervisor & Stock Auditor",
+      department: "Store Ops",
+      branchId: "br-1",
+      branchName: "Navrangpura Flagship",
+      joiningDate: "05 Jan 2023",
+      baseSalary: 25000,
+      salaryType: "Monthly",
+      advancesTaken: 0,
+      salaryStatus: "Paid",
+      lastPaidDate: "25 Sep 2026",
+      attendanceToday: "Present",
+      leavesTakenThisMonth: 0,
+      leavesAllowedPerMonth: 2,
+      totalLeavesBalance: 15,
+      aadharNumber: "XXXX-XXXX-7789",
+      emergencyContact: "+91 98765 22110 (Wife)",
+      status: "Active",
+      leaveHistory: [],
+      salaryHistory: [
+        { month: "September 2026", base: 25000, advanceDeduction: 0, netPaid: 25000, date: "25 Sep 2026", mode: "Bank Transfer", status: "Paid" }
+      ]
+    }
+  ],
+
   kpis: {
     customers: { value: 184, change: "+12% today", isUp: true, sub: "today" },
     sales: { value: 42850, change: "+8.4%", isUp: true, formatted: "₹42,850" },
