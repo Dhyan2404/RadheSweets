@@ -299,7 +299,7 @@ export function renderPosView(state: any) {
                 <!-- Dual-Unit Selector Toggle (g vs kg) -->
                 <div class="flex items-center bg-[var(--bg-subtle)] p-0.5 rounded-xl border border-[var(--border-color)] text-xs font-bold">
                   <button 
-                    type="button"
+                    type="button" 
                     id="unit-toggle-kg"
                     class="px-2.5 py-1 rounded-lg transition-all cursor-pointer ${selectedWeightUnit === 'kg' ? 'bg-[var(--brand-primary)] text-white shadow-xs' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}"
                     title="Weigh in Kilograms"
@@ -307,12 +307,41 @@ export function renderPosView(state: any) {
                     kg
                   </button>
                   <button 
-                    type="button"
+                    type="button" 
                     id="unit-toggle-g"
                     class="px-2.5 py-1 rounded-lg transition-all cursor-pointer ${selectedWeightUnit === 'g' ? 'bg-[var(--brand-primary)] text-white shadow-xs' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}"
                     title="Weigh in Grams"
                   >
                     grams (g)
+                  </button>
+                </div>
+
+                <!-- Box Tare Weight Deduction (Legal Metrology Compliance) -->
+                <div class="hidden sm:flex items-center bg-[var(--bg-subtle)] p-0.5 rounded-xl border border-[var(--border-color)] text-[11px] font-bold">
+                  <span class="text-[10px] text-stone-500 font-bold px-1.5">Tare:</span>
+                  <button 
+                    type="button" 
+                    data-set-tare="0"
+                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer ${(!state.boxTareGrams || state.boxTareGrams === 0) ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'text-stone-500 hover:text-stone-800'}"
+                    title="No Box Tare (0g)"
+                  >
+                    0g
+                  </button>
+                  <button 
+                    type="button" 
+                    data-set-tare="50"
+                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer ${state.boxTareGrams === 50 ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'text-stone-500 hover:text-stone-800'}"
+                    title="Standard Sweet Box (-50g)"
+                  >
+                    -50g Box
+                  </button>
+                  <button 
+                    type="button" 
+                    data-set-tare="100"
+                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer ${state.boxTareGrams === 100 ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'text-stone-500 hover:text-stone-800'}"
+                    title="Heavy Tin Box (-100g)"
+                  >
+                    -100g Box
                   </button>
                 </div>
 

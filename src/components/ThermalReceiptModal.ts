@@ -75,18 +75,37 @@ export function renderThermalReceiptModal(order, shopInfo) {
                 <span>Subtotal:</span>
                 <span>₹${order.subtotal || order.total}</span>
               </div>
-              <div class="flex justify-between">
-                <span>Discount:</span>
-                <span>- ₹${order.discount || 0}</span>
+              ${order.discount ? `
+                <div class="flex justify-between text-emerald-700 font-semibold">
+                  <span>Discount:</span>
+                  <span>- ₹${order.discount}</span>
+                </div>
+              ` : ''}
+              <div class="flex justify-between text-[10px] text-stone-600">
+                <span>CGST (2.5% HSN 2106):</span>
+                <span>₹${Math.round(((order.total || 0) * 0.025) / 1.05)}</span>
               </div>
-              <div class="flex justify-between">
-                <span>GST (0%):</span>
-                <span>₹0.00</span>
+              <div class="flex justify-between text-[10px] text-stone-600">
+                <span>SGST (2.5% HSN 2106):</span>
+                <span>₹${Math.round(((order.total || 0) * 0.025) / 1.05)}</span>
               </div>
               <div class="flex justify-between text-sm font-black pt-1 border-t border-dashed border-stone-400">
-                <span>NET TOTAL:</span>
+                <span>NET PAYABLE:</span>
                 <span>₹${order.total}</span>
               </div>
+
+              ${order.cashTendered ? `
+                <div class="pt-1 border-t border-dashed border-stone-300 text-[10px] space-y-0.5">
+                  <div class="flex justify-between">
+                    <span>Cash Tendered:</span>
+                    <span class="font-bold">₹${order.cashTendered}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Change Returned:</span>
+                    <span class="font-bold">₹${order.changeDue || 0}</span>
+                  </div>
+                </div>
+              ` : ''}
             </div>
 
             <hr/>

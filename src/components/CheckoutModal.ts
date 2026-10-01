@@ -233,36 +233,154 @@ export function renderCheckoutModal(state: any) {
             `).join('')}
           </div>
 
-          <!-- Customer Khata info when Khata selected -->
+          <!-- Payment Tender Specific Panels -->
+
+          <!-- 1. Cash Tender: Cash Tendered & Change Return Calculator -->
+          ${paymentMethod === 'Cash' ? `
+            <div class="mt-3 p-3.5 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs space-y-2.5 animate-fadeIn">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-amber-950 flex items-center gap-1.5">
+                  <span>💵</span> Cash Calculator &amp; Change Due
+                </span>
+                <span class="text-[10px] font-bold text-amber-800">RBI ₹1 Rounding</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 items-center">
+                <div>
+                  <label class="block text-[10px] font-bold text-stone-600 mb-1">Cash Received (₹)</label>
+                  <input 
+                    type="number" 
+                    id="checkout-cash-received-input" 
+                    min="${totalPayable}" 
+                    step="1"
+                    value="${state.cashTendered || totalPayable}"
+                    class="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-xl font-mono font-black text-sm text-[var(--text-main)] focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div class="p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-center">
+                  <span class="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Change to Return</span>
+                  <span class="font-mono font-black text-base sm:text-lg text-emerald-700" id="checkout-change-due-val">
+                    ₹${Math.max(0, (state.cashTendered || totalPayable) - totalPayable)}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Quick Tender Cash Chips -->
+              <div class="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
+                <span class="text-[10px] font-bold text-stone-500 shrink-0">Quick:</span>
+                <button type="button" data-cash-quick="${totalPayable}" class="px-2 py-1 rounded-lg bg-white border border-stone-200 text-[11px] font-bold text-stone-700 hover:border-amber-400 hover:bg-amber-50 transition-all cursor-pointer">
+                  Exact (₹${totalPayable})
+                </button>
+                ${[100, 200, 500, 1000, 2000].filter(d => d >= totalPayable).map(denom => `
+                  <button type="button" data-cash-quick="${denom}" class="px-2 py-1 rounded-lg bg-white border border-stone-200 text-[11px] font-bold text-stone-700 hover:border-amber-400 hover:bg-amber-50 transition-all cursor-pointer">
+                    ₹${denom}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- 2. UPI Tender: Dynamic QR Code with Exact Amount -->
+          ${paymentMethod === 'UPI' ? `
+            <div class="mt-3 p-3.5 bg-gradient-to-br from-indigo-50/90 to-purple-50/80 border border-indigo-200 rounded-2xl text-xs space-y-3 animate-fadeIn">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-indigo-950 flex items-center gap-1.5">
+                  <span>📱</span> Dynamic Counter UPI QR
+                </span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                  Exact ₹${totalPayable}
+                </span>
+              </div>
+
+              <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs">
+                <div class="w-24 h-24 bg-stone-100 rounded-xl p-1 border border-stone-200 flex items-center justify-center shrink-0">
+                  <img 
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`upi://pay?pa=radhesweets@okhdfcbank&pn=Radhe%20Sweets&am=${totalPayable}&cu=INR`)}"
+                    alt="UPI QR Code" 
+                    class="w-full h-full object-contain"
+                    onerror="this.onerror=null; this.src='/favicon.svg';"
+                  />
+                </div>
+                <div class="min-w-0 space-y-1">
+                  <p class="font-extrabold text-[var(--text-main)] text-xs">Scan via GPay / PhonePe / Paytm</p>
+                  <p class="text-[11px] font-mono text-stone-500">VPA: radhesweets@okhdfcbank</p>
+                  <p class="text-[10px] text-emerald-700 font-bold">✓ Amount locked to ₹${totalPayable}</p>
+                  <div class="pt-1">
+                    <input 
+                      type="text" 
+                      id="checkout-upi-utr-input"
+                      placeholder="Optional: UTR / Last 4 digits" 
+                      class="w-full px-2.5 py-1 bg-stone-50 border border-stone-200 rounded-lg text-[11px] font-mono font-semibold focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- 3. Customer Khata Credit Guard & Limit Check -->
           ${paymentMethod === 'Khata' ? `
-            <div class="mt-3 p-3 bg-amber-50/70 border border-amber-300 rounded-xl text-xs space-y-1 animate-fadeIn">
-              <p class="font-bold text-amber-900">📒 Customer Credit Ledger (Khata)</p>
-              <p class="text-[11px] text-amber-800">
-                ₹${totalPayable} will be added to ${selectedCustomer?.name || 'Customer'}'s Khata account.
-              </p>
-              <p class="text-[10px] text-amber-700">
-                Allowed Credit Limit: ₹${selectedCustomer?.creditLimit || 5000} (Available: ₹${(selectedCustomer?.creditLimit || 5000) - (selectedCustomer?.khataBalance || 0)})
-              </p>
+            <div class="mt-3 p-3.5 ${
+              !selectedCustomer 
+                ? 'bg-rose-50 border-rose-300 text-rose-900' 
+                : ((selectedCustomer.khataBalance || 0) + totalPayable > (selectedCustomer.creditLimit || 5000))
+                ? 'bg-amber-50 border-amber-300 text-amber-950'
+                : 'bg-emerald-50 border-emerald-300 text-emerald-950'
+            } border rounded-2xl text-xs space-y-2 animate-fadeIn">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold flex items-center gap-1.5">
+                  <span>📒</span> Khata Credit Ledger
+                </span>
+                <span class="text-[10px] font-bold">
+                  Limit: ₹${selectedCustomer?.creditLimit || 5000}
+                </span>
+              </div>
+
+              ${!selectedCustomer ? `
+                <div class="p-2 bg-white/90 rounded-xl border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>Khata credit requires an attached customer! Please attach customer phone number above before continuing.</span>
+                </div>
+              ` : `
+                <div class="space-y-1 text-[11px]">
+                  <p>Customer: <strong>${selectedCustomer.name}</strong> (${selectedCustomer.phone})</p>
+                  <p>Current Outstanding Due: <strong class="text-rose-600">₹${selectedCustomer.khataBalance || 0}</strong></p>
+                  <p>New Balance After Bill: <strong class="${(selectedCustomer.khataBalance || 0) + totalPayable > (selectedCustomer.creditLimit || 5000) ? 'text-rose-600' : 'text-emerald-700'}">₹${(selectedCustomer.khataBalance || 0) + totalPayable}</strong></p>
+                </div>
+
+                ${(selectedCustomer.khataBalance || 0) + totalPayable > (selectedCustomer.creditLimit || 5000) ? `
+                  <div class="p-2.5 bg-rose-100/80 border border-rose-300 rounded-xl text-rose-900 text-[11px] space-y-1.5">
+                    <p class="font-extrabold">⚠️ Warning: Bill exceeds allowed credit limit by ₹${((selectedCustomer.khataBalance || 0) + totalPayable) - (selectedCustomer.creditLimit || 5000)}!</p>
+                    <label class="flex items-center gap-2 cursor-pointer font-bold select-none text-[10px]">
+                      <input type="checkbox" id="khata-override-checkbox" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-rose-300" />
+                      <span>Manager / Supervisor Override Authorization</span>
+                    </label>
+                  </div>
+                ` : ''}
+              `}
             </div>
           ` : ''}
         </div>
 
-        <!-- Payment Breakdown Summary -->
-        <div class="bg-[var(--bg-subtle)] p-3.5 rounded-xl space-y-1.5 text-xs">
+        <!-- Payment Breakdown Summary with Official GST HSN 2106 Breakdown -->
+        <div class="bg-[var(--bg-subtle)] p-3.5 rounded-2xl space-y-1.5 text-xs border border-[var(--border-color)]">
           <div class="flex justify-between text-[var(--text-muted)]">
-            <span>Subtotal</span>
+            <span>Subtotal (Gross Item Total)</span>
             <span class="font-bold text-[var(--text-main)]" id="checkout-subtotal-val">₹${cartSubtotal}</span>
           </div>
-          <div class="flex justify-between text-[var(--text-muted)]">
-            <span>Discount (${discountPercent}%)</span>
-            <span class="font-bold text-emerald-600" id="checkout-discount-val">- ₹${discountAmount}</span>
+          ${discountAmount > 0 ? `
+            <div class="flex justify-between text-[var(--text-muted)]">
+              <span>Discount (${discountPercent}%)</span>
+              <span class="font-bold text-emerald-600" id="checkout-discount-val">- ₹${discountAmount}</span>
+            </div>
+          ` : ''}
+          <div class="flex justify-between text-[var(--text-muted)] text-[11px]">
+            <span>GST (5% HSN 2106 Mithai • 2.5% CGST + 2.5% SGST)</span>
+            <span class="text-stone-600 font-medium">Included (₹${Math.round((totalPayable * 0.05) / 1.05)})</span>
           </div>
-          <div class="flex justify-between text-[var(--text-muted)]">
-            <span>GST (0% Fresh Sweets)</span>
-            <span class="text-[var(--text-main)]">₹0</span>
-          </div>
-          <div class="border-t border-[var(--border-color)] pt-1.5 flex justify-between font-extrabold text-sm sm:text-base text-[var(--text-main)]">
-            <span>Total Payable</span>
+          <div class="border-t border-[var(--border-color)] pt-2 flex justify-between font-extrabold text-sm sm:text-base text-[var(--text-main)]">
+            <span>Net Total Payable</span>
             <span class="text-[var(--brand-primary)]" id="checkout-total-val">₹${totalPayable}</span>
           </div>
         </div>
@@ -281,7 +399,7 @@ export function renderCheckoutModal(state: any) {
             height: 56,
             radius: 28,
             totalPayable,
-            disabled: posCart.length === 0
+            disabled: posCart.length === 0 || (paymentMethod === 'Khata' && !selectedCustomer) || (paymentMethod === 'Khata' && selectedCustomer && (((selectedCustomer.khataBalance || 0) + totalPayable) > (selectedCustomer.creditLimit || 5000)) && !state.khataOverrideApproved)
           })}
 
           <div class="flex items-center justify-between px-1 text-[11px] text-stone-500">

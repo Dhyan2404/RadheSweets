@@ -164,6 +164,9 @@ const state = {
   discountPercent: 0,
   paymentMethod: 'Cash',
   orderNote: '',
+  cashTendered: 0,
+  khataOverrideApproved: false,
+  boxTareGrams: 0,
 
   // Modals & Drawers
   showCheckoutModal: false,
@@ -256,6 +259,52 @@ function shouldBackgroundSyncRender(): boolean {
     return false;
   }
   return true;
+}
+
+// Hardware Audio Beeper Synthesizer (Zero Dependency Web Audio API)
+export function playBeep(type: 'add' | 'success' | 'warning' | 'click' = 'click') {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'add') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // High pleasant A5 counter beep
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } else if (type === 'success') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // E5
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.28);
+    } else if (type === 'warning') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, ctx.currentTime);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.04);
+    }
+  } catch (err) {
+    // Audio context may require user gesture on some browsers
+  }
 }
 
 // Enterprise Branch Snapshot & Isolation System
@@ -1668,6 +1717,7 @@ function attachEventListeners() {
           }
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
+          playBeep('add');
           showToast(`Added ${sweet.name} to counter cart!`, 'success');
         }
         return;
@@ -1685,6 +1735,7 @@ function attachEventListeners() {
           item.total = Math.round(item.qty * item.rate);
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
+          playBeep('click');
         }
         return;
       }
@@ -1705,6 +1756,7 @@ function attachEventListeners() {
           }
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
+          playBeep('click');
         }
         return;
       }
@@ -1718,6 +1770,7 @@ function attachEventListeners() {
         state.posCart = state.posCart.filter((i: any) => i.id !== id);
         state.quickCart = [...state.posCart];
         updatePosCartDOM();
+        playBeep('click');
         return;
       }
 
@@ -1748,6 +1801,7 @@ function attachEventListeners() {
           }
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
+          playBeep('add');
           const displayLabel = weight >= 1 ? `${weight}kg` : `${Math.round(weight * 1000)}g`;
           showToast(`${sweet.name} set to ${displayLabel} (₹${Math.round(weight * sweet.pricePerKg)})`, 'success');
         }
@@ -1761,6 +1815,7 @@ function attachEventListeners() {
         state.posCart = [];
         state.quickCart = [];
         updatePosCartDOM();
+        playBeep('warning');
         showToast('Cart cleared', 'info');
         return;
       }
@@ -1825,7 +1880,8 @@ function attachEventListeners() {
   // Proceed to Checkout Triggers
   const handleOpenCheckout = () => {
     if (state.posCart.length === 0) {
-      alert('Please add at least one sweet to the cart first!');
+      showToast('Please add at least one sweet to the cart first!', 'warning');
+      playBeep('warning');
       return;
     }
     state.showCheckoutModal = true;
@@ -2047,29 +2103,67 @@ function attachEventListeners() {
       const method = btn.getAttribute('data-select-payment');
       if (!method) return;
       state.paymentMethod = method;
-
-      // Update button styling in-place (ZERO REFRESH!)
-      document.querySelectorAll('[data-select-payment]').forEach(b => {
-        const isCurrent = b.getAttribute('data-select-payment') === method;
-        if (isCurrent) {
-          b.className = 'payment-method-pill p-2.5 rounded-xl border text-center text-xs font-bold transition-all border-[var(--brand-primary)] bg-[var(--brand-primary-light)] text-[var(--brand-primary)] shadow-xs ring-2 ring-[var(--brand-primary)]/20 cursor-pointer';
-        } else {
-          b.className = 'payment-method-pill p-2.5 rounded-xl border text-center text-xs font-bold transition-all border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:border-[var(--brand-primary)] cursor-pointer';
-        }
-      });
-
-      // Toggle Khata section in-place (ZERO REFRESH!)
-      const khataEl = document.getElementById('checkout-khata-info');
-      if (khataEl) {
-        if (method === 'Khata') {
-          khataEl.classList.remove('hidden');
-        } else {
-          khataEl.classList.add('hidden');
-        }
-      }
-
       saveState();
       syncActiveCheckoutDraft();
+      renderApp();
+    });
+  });
+
+  // Cash Received Input & Live Change Due Calculator
+  const cashReceivedInput = document.getElementById('checkout-cash-received-input') as HTMLInputElement | null;
+  if (cashReceivedInput) {
+    cashReceivedInput.addEventListener('input', (e) => {
+      const val = parseFloat((e.target as HTMLInputElement).value) || 0;
+      state.cashTendered = val;
+      const cartSub = state.posCart.reduce((sum: number, it: any) => sum + (it.rate * it.qty), 0);
+      const disc = Math.round((cartSub * (state.discountPercent || 0)) / 100);
+      const payable = Math.max(0, cartSub - disc);
+      const changeEl = document.getElementById('checkout-change-due-val');
+      if (changeEl) {
+        changeEl.textContent = `₹${Math.max(0, val - payable)}`;
+      }
+    });
+  }
+
+  // Quick Cash Denomination Chips (Exact, ₹100, ₹200, ₹500, ₹1000, ₹2000)
+  document.querySelectorAll('[data-cash-quick]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const val = parseFloat(btn.getAttribute('data-cash-quick') || '0');
+      state.cashTendered = val;
+      const inputEl = document.getElementById('checkout-cash-received-input') as HTMLInputElement | null;
+      if (inputEl) inputEl.value = String(val);
+      const cartSub = state.posCart.reduce((sum: number, it: any) => sum + (it.rate * it.qty), 0);
+      const disc = Math.round((cartSub * (state.discountPercent || 0)) / 100);
+      const payable = Math.max(0, cartSub - disc);
+      const changeEl = document.getElementById('checkout-change-due-val');
+      if (changeEl) {
+        changeEl.textContent = `₹${Math.max(0, val - payable)}`;
+      }
+      playBeep('click');
+    });
+  });
+
+  // Khata Manager Override Checkbox
+  const khataOverrideBox = document.getElementById('khata-override-checkbox') as HTMLInputElement | null;
+  if (khataOverrideBox) {
+    khataOverrideBox.checked = !!state.khataOverrideApproved;
+    khataOverrideBox.addEventListener('change', (e) => {
+      state.khataOverrideApproved = (e.target as HTMLInputElement).checked;
+      playBeep('click');
+      renderApp();
+    });
+  }
+
+  // Box Tare Deduction Buttons (Legal Metrology Compliance)
+  document.querySelectorAll('[data-set-tare]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tare = parseFloat(btn.getAttribute('data-set-tare') || '0');
+      state.boxTareGrams = tare;
+      playBeep('click');
+      showToast(tare > 0 ? `Box Tare Set: -${tare}g per box` : 'Box Tare Cleared (0g)', 'info');
+      renderApp();
     });
   });
 
@@ -2119,8 +2213,31 @@ function attachEventListeners() {
       const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
       const totalPayable = Math.max(0, cartSubtotal - discountAmount);
 
+      // 1. Strict Khata Credit Limit Guard
+      if (state.paymentMethod === 'Khata') {
+        if (!state.selectedCustomer) {
+          showToast('Khata credit requires an attached customer! Please attach customer phone number.', 'warning');
+          playBeep('warning');
+          isProcessingOrder = false;
+          return;
+        }
+        const currentDue = state.selectedCustomer.khataBalance || 0;
+        const limit = state.selectedCustomer.creditLimit || 5000;
+        if ((currentDue + totalPayable) > limit && !state.khataOverrideApproved) {
+          showToast(`Khata credit limit (₹${limit}) exceeded! Check manager override to approve.`, 'error');
+          playBeep('warning');
+          isProcessingOrder = false;
+          return;
+        }
+      }
+
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      // Capture cash calculation details
+      const cashReceived = state.paymentMethod === 'Cash' ? (state.cashTendered || totalPayable) : null;
+      const changeReturned = state.paymentMethod === 'Cash' ? Math.max(0, (state.cashTendered || totalPayable) - totalPayable) : null;
+      const gstAmount = Math.round((totalPayable * 0.05) / 1.05);
 
       const newOrder = {
         id: `SA00${orderNum}`,
@@ -2133,7 +2250,13 @@ function attachEventListeners() {
         itemsCount: state.posCart.length,
         subtotal: cartSubtotal,
         discount: discountAmount,
-        tax: 0,
+        tax: gstAmount,
+        cgst: Math.round(gstAmount / 2),
+        sgst: Math.round(gstAmount / 2),
+        hsn: '2106 90',
+        fssai: state.shopInfo?.fssai || '10722026000412',
+        cashTendered: cashReceived,
+        changeDue: changeReturned,
         total: totalPayable,
         paymentMethod: state.paymentMethod,
         status: 'Completed',
@@ -2218,12 +2341,17 @@ function attachEventListeners() {
         }
       }
 
+      // Play major celebration chord sound
+      playBeep('success');
+
       // Smooth visual delay so user sees "Checked Out" confirmation
       await new Promise(r => setTimeout(r, 350));
 
       // Reset cart and activate the Checkout Complete celebration modal
       state.posCart = [];
       state.quickCart = [];
+      state.cashTendered = 0;
+      state.khataOverrideApproved = false;
       state.showCheckoutModal = false;
       state.showSuccessModal = true;
       saveState();
@@ -2404,14 +2532,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     },
     onCommit: (actionId, rowId) => {
       if (actionId === 'delete') {
-        const idx = state.orders.findIndex((o: any) => o.id === rowId);
-        if (idx !== -1) {
-          state.orders.splice(idx, 1);
-          deleteBranchOrderFromCloud(state.currentBranchId, rowId);
-          saveState();
-          showToast(`Invoice #${rowId} deleted successfully`, 'success');
-          renderApp();
-        }
+        voidAndRestoreOrder(rowId);
       }
     }
   });
@@ -2429,20 +2550,76 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     });
   });
 
+  // Void & Restore Order Engine (Restores Sweet Stock, Reverses Khata, Updates KPIs & Cloud)
+  const voidAndRestoreOrder = (orderId: string) => {
+    const idx = state.orders.findIndex((o: any) => o.id === orderId);
+    if (idx === -1) return;
+    const order = state.orders[idx];
+
+    // 1. Restore Inventory Stock for each sold item
+    if (Array.isArray(order.items)) {
+      order.items.forEach((item: any) => {
+        const sweet = state.sweets.find((s: any) => s.name === item.name || s.id === item.id);
+        if (sweet) {
+          sweet.stock = Math.round(((sweet.stock || 0) + (item.quantity || 1)) * 10) / 10;
+          if (sweet.stock > 10 && sweet.stockStatus === 'Low Stock') {
+            sweet.stockStatus = 'In Stock';
+          }
+        }
+      });
+    }
+
+    // 2. Reverse Khata Balance if paid via Khata
+    if (order.paymentMethod === 'Khata' && order.customerId) {
+      const cust = state.customers.find((c: any) => c.id === order.customerId);
+      if (cust) {
+        cust.khataBalance = Math.max(0, (cust.khataBalance || 0) - (order.total || 0));
+        cust.totalSpent = Math.max(0, (cust.totalSpent || 0) - (order.total || 0));
+        cust.totalOrders = Math.max(0, (cust.totalOrders || 0) - 1);
+        saveCustomerToCloud(cust, state.currentBranchId);
+      }
+    }
+
+    // 3. Reverse Sales KPIs & branch stats
+    if (state.kpis) {
+      if (state.kpis.sales) {
+        state.kpis.sales.value = Math.max(0, (state.kpis.sales.value || 0) - (order.total || 0));
+        state.kpis.sales.formatted = `₹${state.kpis.sales.value.toLocaleString()}`;
+      }
+      if (state.kpis.orders) {
+        state.kpis.orders.value = Math.max(0, (state.kpis.orders.value || 0) - 1);
+        state.kpis.orders.formatted = String(state.kpis.orders.value);
+      }
+    }
+
+    // 4. Record audit log
+    state.auditLogs.unshift({
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      user: state.shopInfo?.owner || 'Manager',
+      action: 'Bill Voided & Restocked',
+      details: `Voided Invoice #${orderId} (₹${order.total}). Restored inventory for ${order.items?.length || 0} sweet items.`
+    });
+
+    // 5. Remove order from state and synchronize with Firebase Cloud
+    state.orders.splice(idx, 1);
+    deleteBranchOrderFromCloud(state.currentBranchId, orderId);
+    saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
+    saveBranchKpisToCloud(state.currentBranchId, state.kpis);
+    saveBranchSnapshot(state.currentBranchId);
+    saveState();
+
+    playBeep('warning');
+    showToast(`✓ Invoice #${orderId} voided & inventory restored!`, 'info');
+    renderApp();
+  };
+
   // Direct Delete Button Clicks (Table Mode)
   document.querySelectorAll('[data-delete-order]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = btn.getAttribute('data-delete-order');
-      if (id && confirm(`Are you sure you want to delete invoice #${id}?`)) {
-        const idx = state.orders.findIndex((o: any) => o.id === id);
-        if (idx !== -1) {
-          state.orders.splice(idx, 1);
-          deleteBranchOrderFromCloud(state.currentBranchId, id);
-          saveState();
-          showToast(`Invoice #${id} deleted`, 'info');
-          renderApp();
-        }
+      if (id && confirm(`Are you sure you want to void invoice #${id} and restore its inventory?`)) {
+        voidAndRestoreOrder(id);
       }
     });
   });
@@ -3483,7 +3660,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.shopInfo.gstin = fd.get('gstin');
     state.shopInfo.fssai = fd.get('fssai');
     saveState();
-    alert('Store details updated successfully!');
+    showToast('✓ Store details updated successfully!', 'success');
     renderApp();
   });
 
@@ -3582,7 +3759,8 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.posCart = [];
     state.quickCart = [];
     saveState();
-    alert('Bill parked successfully! You can resume it anytime.');
+    playBeep('add');
+    showToast(`✓ Bill parked with Token #${10 + state.parkedBills.length - 1}`, 'success');
     renderApp();
   });
 
@@ -3603,6 +3781,8 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         details: `Resumed parked bill: ${billToResume.label}`
       });
       saveState();
+      playBeep('add');
+      showToast(`✓ Resumed parked bill: ${billToResume.label}`, 'info');
       renderApp();
     }
   });
@@ -3659,7 +3839,8 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         });
 
         saveState();
-        alert(`Inward stock PO recorded! +${delta} ${rm.unit} added to ${rm.name}.`);
+        playBeep('add');
+        showToast(`✓ Inward stock PO recorded! +${delta} ${rm.unit} added to ${rm.name}.`, 'success');
         renderApp();
       }
     });
