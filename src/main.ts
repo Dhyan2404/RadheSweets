@@ -23,7 +23,6 @@ import {
   getBranchDefaultCatalog
 } from './firebase.js';
 import { initialData } from './data.js';
-import { renderStorefrontView } from './components/StorefrontView.ts';
 import { renderSidebar } from './components/Sidebar.ts';
 import { renderTopBar } from './components/TopBar.ts';
 import { renderMobileBottomNav, renderMobileDrawer } from './components/MobileNav.ts';
@@ -138,7 +137,7 @@ const state = {
   selectedWeightUnit: stored?.selectedWeightUnit || 'kg',
 
   // Navigation & View Mode
-  activeTab: (stored?.activeTab && stored.activeTab !== 'recipes') ? stored.activeTab : 'dashboard',
+  activeTab: (stored?.activeTab && stored.activeTab !== 'recipes' && stored.activeTab !== 'storefront') ? stored.activeTab : 'pos',
   deviceMode: stored?.deviceMode || 'desktop', // 'desktop' or 'mobile'
   currentTheme: stored?.currentTheme || 'warm', // 'warm' or 'ice'
   isDarkMode: stored?.isDarkMode || false,
@@ -662,10 +661,6 @@ function setupGlobalFirestoreListeners() {
 // Dynamic SEO Metadata & URL Hash Synchronization for Google Crawling
 function updatePageSeoMetadata(activeTab: string) {
   const titles: Record<string, { title: string; desc: string }> = {
-    storefront: {
-      title: 'Online Sweets Store & Home Delivery | Radhe Sweets Ahmedabad',
-      desc: 'Order authentic Shuddh Desi Ghee sweets, Kaju Katli, Motichoor Ladoo, and festive wedding gift hampers online. Same-day express doorstep delivery in Ahmedabad.'
-    },
     dashboard: {
       title: 'Radhe Sweets Ahmedabad | Shop Management & Live Kitchen Console',
       desc: 'Radhe Sweets master confectionery dashboard in Ahmedabad. Track live sales, fast selling sweets, kitchen stock valuation and order fulfillment.'
@@ -747,19 +742,19 @@ export function renderApp() {
     appContainer.innerHTML = `
       <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D]">
         <!-- Desktop Sidebar Navigation (Visible on md and up) -->
-        <div id="desktop-sidebar-container">
+        <div id="desktop-sidebar-container" class="hidden md:block shrink-0">
           ${renderSidebar(state.activeTab)}
         </div>
 
         <!-- Main Content Area with Persistent Scroll Container -->
-        <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto">
           <!-- Top Navigation Header -->
-          <div id="topbar-container">
+          <div id="topbar-container" class="sticky top-0 z-30">
             ${renderTopBar(state)}
           </div>
 
           <!-- Active Tab Body -->
-          <main id="main-tab-content" class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter">
+          <main id="main-tab-content" class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8">
             ${renderTabContent()}
           </main>
         </div>
@@ -780,7 +775,7 @@ export function renderApp() {
     `;
   } else {
     // Incremental, ZERO-FLICKER render: Preserve scroll positions and input focus
-    const savedScrollTop = mainScrollContainer.scrollTop;
+    const savedScrollTop = mainScrollContainer?.scrollTop;
     const savedWindowScroll = window.scrollY || document.documentElement.scrollTop;
 
     // Capture currently focused element & selection range
@@ -798,7 +793,7 @@ export function renderApp() {
       mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter";
       mainTabContent.innerHTML = renderTabContent();
 
-      mainScrollContainer.scrollTop = 0;
+      if (mainScrollContainer && window.innerWidth >= 768) mainScrollContainer.scrollTop = 0;
       window.scrollTo(0, 0);
     } else {
       // In-page click/action: DO NOT play animate-page-enter (prevents blank/flicker flash!)
@@ -810,8 +805,10 @@ export function renderApp() {
       mainTabContent.innerHTML = renderTabContent();
 
       // Restore scroll positions seamlessly
-      if (savedScrollTop) mainScrollContainer.scrollTop = savedScrollTop;
-      if (savedWindowScroll) window.scrollTo({ top: savedWindowScroll, behavior: 'instant' as ScrollBehavior });
+      if (savedScrollTop && mainScrollContainer && window.innerWidth >= 768) mainScrollContainer.scrollTop = savedScrollTop;
+      if (savedWindowScroll && Math.abs(window.scrollY - savedWindowScroll) > 10) {
+        window.scrollTo({ top: savedWindowScroll, behavior: 'instant' as ScrollBehavior });
+      }
 
       // Restore focused input & cursor position
       if (activeId) {
@@ -860,8 +857,6 @@ export function showToast(message, type = 'success') {
 
 function renderTabContent() {
   switch (state.activeTab) {
-    case 'storefront':
-      return renderStorefrontView(state);
     case 'dashboard':
       return renderDashboardView(state);
     case 'pos':
@@ -935,19 +930,22 @@ function attachEventListeners() {
   // Initialize rolling odometer counters
   initAllCounters();
 
-  // Mobile Drawer Toggle
-  document.getElementById('mobile-menu-toggle')?.addEventListener('click', () => {
+  // Mobile Drawer Toggle (accessible from TopBar hamburger AND bottom island Menu button)
+  const openMobileDrawer = () => {
     state.showMobileDrawer = true;
     renderApp();
-  });
-  document.getElementById('close-mobile-drawer-btn')?.addEventListener('click', () => {
+  };
+  const closeMobileDrawer = () => {
     state.showMobileDrawer = false;
     renderApp();
-  });
-  document.getElementById('mobile-drawer-backdrop')?.addEventListener('click', (e) => {
-    if (e.target.id === 'mobile-drawer-backdrop') {
-      state.showMobileDrawer = false;
-      renderApp();
+  };
+
+  document.getElementById('mobile-menu-toggle')?.addEventListener('click', openMobileDrawer);
+  document.getElementById('mobile-bottom-menu-btn')?.addEventListener('click', openMobileDrawer);
+  document.getElementById('close-mobile-drawer-btn')?.addEventListener('click', closeMobileDrawer);
+  document.getElementById('mobile-drawer-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'mobile-drawer-backdrop') {
+      closeMobileDrawer();
     }
   });
 
@@ -4205,13 +4203,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
   // Initial attach of matching listeners inside modal
   bindDialerMatchPickers();
-
-  // Attach Storefront View Event Listeners (Online Customer Shopping)
-  bindStorefrontEvents();
 }
 
-// Interactive Storefront & Online Shopping Event Listeners
+// Customer storefront removed - management portal only
 function bindStorefrontEvents() {
+  return;
   // Category / Diet filter pill clicks
   document.querySelectorAll('[data-customer-diet]').forEach(btn => {
     btn.addEventListener('click', (e) => {

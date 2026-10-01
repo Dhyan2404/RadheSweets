@@ -295,9 +295,9 @@ export function renderPosView(state: any) {
               </div>
 
               <!-- Controls: Weighing Unit Toggle + Search -->
-              <div class="flex items-center gap-2 shrink-0">
+              <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto shrink-0">
                 <!-- Dual-Unit Selector Toggle (g vs kg) -->
-                <div class="flex items-center bg-[var(--bg-subtle)] p-0.5 rounded-xl border border-[var(--border-color)] text-xs font-bold">
+                <div class="flex items-center bg-[var(--bg-subtle)] p-0.5 rounded-xl border border-[var(--border-color)] text-xs font-bold shrink-0">
                   <button 
                     type="button" 
                     id="unit-toggle-kg"
@@ -346,7 +346,7 @@ export function renderPosView(state: any) {
                 </div>
 
                 <!-- Search Sweets Input -->
-                <div class="relative w-full sm:w-56">
+                <div class="relative flex-1 sm:w-56 min-w-[150px]">
                   <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-light)]">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                   </span>
@@ -370,7 +370,7 @@ export function renderPosView(state: any) {
             </div>
 
             <!-- Sweets Cards Grid (All 100 sweets rendered, filtered via .hidden for ZERO REFRESH) -->
-            <div id="pos-sweets-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-20 lg:pb-0">
+            <div id="pos-sweets-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-36 lg:pb-6">
               ${sweets.map((sweet: any) => {
                 const inCartItem = posCart.find((i: any) => i.id === sweet.id);
                 const matchesCategory = !activeCategory || activeCategory === 'All' || sweet.category === activeCategory;
@@ -570,7 +570,7 @@ export function renderPosView(state: any) {
       <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) -->
       <aside 
         id="mobile-floating-checkout-bar" 
-        class="lg:hidden fixed bottom-[4.25rem] inset-x-3 z-30 bg-gradient-to-r from-[#C86D3B] via-[#BD5E2A] to-[#A84C1C] text-white p-3 rounded-2xl shadow-[0_8px_25px_rgba(200,109,59,0.5)] border border-orange-300/40 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
+        class="lg:hidden fixed bottom-[5.25rem] sm:bottom-20 inset-x-3 z-30 bg-gradient-to-r from-[#C86D3B] via-[#BD5E2A] to-[#A84C1C] text-white p-3 rounded-2xl shadow-[0_8px_25px_rgba(200,109,59,0.5)] border border-orange-300/40 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
         aria-label="Mobile Sticky Checkout Bar"
       >
         <button type="button" id="mobile-cart-toggle-btn" class="flex items-center gap-2.5 text-left cursor-pointer active:scale-95 transition-transform">

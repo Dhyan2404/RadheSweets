@@ -338,6 +338,23 @@ body {
   }
 }
 
+@media (max-width: 768px) {
+  #toast-container {
+    bottom: 84px !important;
+    left: 16px !important;
+    right: 16px !important;
+    align-items: center;
+  }
+}
+
+/* Touch device ergonomics: zero 300ms tap delay & zero tap highlight flash */
+@media (hover: none) {
+  button, [role="button"], a, input, select {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 /* Toast Notifications (shadcn/ui style) */
 #toast-container {
   position: fixed;
