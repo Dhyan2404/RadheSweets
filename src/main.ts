@@ -64,7 +64,8 @@ const state = {
   shopInfo: stored?.shopInfo || { ...initialData.shopInfo },
   kpis: stored?.kpis || { ...initialData.kpis },
   orderStatusCounts: stored?.orderStatusCounts || { ...initialData.orderStatusCounts },
-  sweets: stored?.sweets || [...initialData.sweets],
+  sweets: (stored?.sweets && stored.sweets.length >= 100) ? stored.sweets : [...initialData.sweets],
+  showMobileCartSheet: false,
   customers: (stored?.customers && stored.customers.length > 0)
     ? stored.customers.map((c: any) => {
         const match = initialData.customers.find((ic: any) => ic.id === c.id || ic.name === c.name);
@@ -935,33 +936,37 @@ function attachEventListeners() {
   if (state.activeTab === 'dashboard') {
     const kpiContainer = document.getElementById('kpi-tiles-container');
     const scrollContainer = document.getElementById('main-content-scroll-container');
-    let hasScrolledBefore = false;
 
     const handleDashboardScroll = () => {
       const scrollY = (scrollContainer ? scrollContainer.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
       
       // Hysteresis threshold to prevent jitter:
-      // When scrolled down > 55px, smoothly morph into docked 1x6 Grid
-      // When scrolled back up < 35px, smoothly ease back into full 2x3 Grid with smooth ease-in animation
-      if (scrollY > 55) {
-        hasScrolledBefore = true;
+      // When scrolled down > 65px, smoothly morph into docked 1x6 Grid
+      // When scrolled back up < 30px, smoothly ease back into full 2x3 Grid
+      if (scrollY > 65) {
         if (!kpiContainer?.classList.contains('kpi-grid-1x6')) {
           kpiContainer?.classList.remove('kpi-grid-2x3');
           kpiContainer?.classList.add('kpi-grid-1x6');
         }
-      } else if (scrollY < 35) {
+      } else if (scrollY < 30) {
         if (!kpiContainer?.classList.contains('kpi-grid-2x3')) {
           kpiContainer?.classList.remove('kpi-grid-1x6');
           kpiContainer?.classList.add('kpi-grid-2x3');
-          if (hasScrolledBefore) {
-            kpiContainer?.classList.add('has-scrolled');
-          }
         }
       }
     };
 
-    window.addEventListener('scroll', handleDashboardScroll, { passive: true });
-    scrollContainer?.addEventListener('scroll', handleDashboardScroll, { passive: true });
+    let scrollRafId: number | null = null;
+    const throttledScrollHandler = () => {
+      if (scrollRafId !== null) return;
+      scrollRafId = requestAnimationFrame(() => {
+        handleDashboardScroll();
+        scrollRafId = null;
+      });
+    };
+
+    window.addEventListener('scroll', throttledScrollHandler, { passive: true });
+    scrollContainer?.addEventListener('scroll', throttledScrollHandler, { passive: true });
     // Initialize scroll state on render
     handleDashboardScroll();
 
@@ -1222,6 +1227,26 @@ function attachEventListeners() {
     renderApp();
   };
   document.getElementById('pos-proceed-checkout-btn')?.addEventListener('click', handleOpenCheckout);
+  document.getElementById('pos-header-checkout-btn')?.addEventListener('click', handleOpenCheckout);
+  document.getElementById('mobile-bar-pay-btn')?.addEventListener('click', handleOpenCheckout);
+  document.getElementById('mobile-sheet-proceed-checkout-btn')?.addEventListener('click', () => {
+    state.showMobileCartSheet = false;
+    handleOpenCheckout();
+  });
+  document.getElementById('mobile-cart-toggle-btn')?.addEventListener('click', () => {
+    state.showMobileCartSheet = !state.showMobileCartSheet;
+    renderApp();
+  });
+  document.getElementById('close-mobile-cart-sheet-btn')?.addEventListener('click', () => {
+    state.showMobileCartSheet = false;
+    renderApp();
+  });
+  document.getElementById('mobile-cart-sheet-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'mobile-cart-sheet-backdrop') {
+      state.showMobileCartSheet = false;
+      renderApp();
+    }
+  });
   document.getElementById('dashboard-checkout-btn')?.addEventListener('click', () => {
     state.activeTab = 'pos';
     state.showCheckoutModal = true;
