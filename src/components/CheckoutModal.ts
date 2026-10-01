@@ -29,7 +29,7 @@ export function renderCheckoutModal(state: any) {
         <div id="checkout-customer-section" class="bg-[var(--bg-subtle)] p-3.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-full ${selectedCustomer ? 'bg-[var(--brand-primary)]' : 'bg-stone-600'} text-white font-bold text-xs flex items-center justify-center shadow-xs">
-              ${selectedCustomer ? selectedCustomer.name.split(' ').map((n: string)=>n[0]).join('').slice(0, 2) : 'WC'}
+              ${selectedCustomer?.name ? selectedCustomer.name.split(' ').filter(Boolean).map((n: string)=>n[0]).join('').slice(0, 2).toUpperCase() : 'WC'}
             </div>
             <div>
               <div class="flex items-center space-x-2">
@@ -83,10 +83,10 @@ export function renderCheckoutModal(state: any) {
                   <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-2.5 min-w-0">
                       <img 
-                        src="${item.image || `/assets/sweets/${item.id}.png`}" 
+                        src="${item.image || (item.id && String(item.id).startsWith('sw-') ? `/assets/sweets/${item.id}.png` : '/assets/sweets/sw-1.png')}" 
                         alt="${item.name}" 
                         class="w-10 h-10 rounded-xl object-cover border border-amber-200/80 shadow-2xs shrink-0 bg-white"
-                        onerror="this.src='/assets/sweets/${item.id}.png'"
+                        onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';"
                       />
                       <div class="min-w-0">
                         <p class="font-bold text-[var(--text-main)] text-xs sm:text-sm truncate">${item.name}</p>

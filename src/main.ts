@@ -879,7 +879,8 @@ function attachEventListeners() {
           existing.total = Math.round(existing.qty * (existing.rate || existing.price || price));
         } else {
           const foundSweet = (state.sweets || []).find((s: any) => s.id === sweetId) || { id: sweetId, name: sweetName, pricePerKg: price, category: 'Traditional' };
-          state.posCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
+          const sweetImg = foundSweet.image || (sweetId && String(sweetId).startsWith('sw-') ? `/assets/sweets/${sweetId}.png` : '/assets/sweets/sw-1.png');
+          state.posCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg', image: sweetImg });
         }
 
         if (!state.quickCart) state.quickCart = [];
@@ -1044,7 +1045,8 @@ function attachEventListeners() {
             existing.total = Math.round(existing.qty * (existing.rate || existing.price || price));
           } else {
             const foundSweet = (state.sweets || []).find((s: any) => s.id === sweetId) || { id: sweetId, name: sweetName, pricePerKg: price, category: 'Traditional' };
-            state.posCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
+            const sweetImg = foundSweet.image || (sweetId && String(sweetId).startsWith('sw-') ? `/assets/sweets/${sweetId}.png` : '/assets/sweets/sw-1.png');
+            state.posCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg', image: sweetImg });
           }
 
           if (!state.quickCart) state.quickCart = [];
@@ -1309,7 +1311,8 @@ function attachEventListeners() {
         existingPos.qty = (existingPos.qty || 1) + 1;
         existingPos.total = Math.round(existingPos.qty * (existingPos.rate || existingPos.price || price));
       } else {
-        state.posCart.push({ id, name, qty: 1, rate: price, total: price, unit: 'kg' });
+        const itemImage = (id && String(id).startsWith('sw-')) ? `/assets/sweets/${id}.png` : '/assets/sweets/sw-1.png';
+        state.posCart.push({ id, name, qty: 1, rate: price, total: price, unit: 'kg', image: itemImage });
       }
 
       saveState();
@@ -3663,55 +3666,94 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   });
 
   // Customer Phone Call Dialer Handlers (ZERO-FLICKER IN-PLACE UPDATE)
-  const handleSelectCustomerFromDialer = (custId: string | null) => {
-    if (!custId) return;
-    const cust = state.customers.find((c: any) => c.id === custId);
-    if (cust) {
-      completeCustomerSelection(cust);
+  const handleAttachDialedNumber = () => {
+    const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
+    if (!rawDigits || rawDigits.length === 0) {
+      showToast('Please dial a customer mobile number first.', 'warning');
+      return;
     }
+
+    const formattedPhone = formatDialerPhone(rawDigits);
+
+    // 1. Check if existing customer matches these digits
+    const existing = state.customers.find((c: any) => {
+      const cDigits = (c.phone || '').replace(/\D/g, '');
+      return (cDigits.length >= 6 && cDigits.endsWith(rawDigits)) || (rawDigits.length >= 6 && rawDigits.endsWith(cDigits)) || (c.phone === formattedPhone);
+    });
+
+    if (existing) {
+      completeCustomerSelection(existing);
+      return;
+    }
+
+    // 2. Otherwise create a new customer profile and attach instantly!
+    const nameInput = document.getElementById('dialer-new-customer-name') as HTMLInputElement | null;
+    const typedName = nameInput?.value?.trim();
+    const customerName = typedName || `Patron (${formattedPhone})`;
+
+    const newCustomer = {
+      id: `cust-${Date.now()}`,
+      name: customerName,
+      phone: formattedPhone,
+      email: '',
+      address: 'Ahmedabad, Gujarat',
+      type: 'Regular',
+      tier: 'Regular',
+      loyaltyPoints: 50, // Welcome points!
+      khataBalance: 0,
+      creditLimit: 5000,
+      totalOrders: 1,
+      totalSpent: 0,
+      notes: 'Registered via Counter Phone Dialer'
+    };
+
+    state.customers.unshift(newCustomer);
+    if (state.kpis && state.kpis.customers) {
+      state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+      state.kpis.customers.formatted = String(state.kpis.customers.value);
+    }
+    saveCustomerToCloud(newCustomer, state.currentBranchId);
+    saveBranchSnapshot(state.currentBranchId);
+    completeCustomerSelection(newCustomer);
   };
 
   const bindDialerMatchPickers = () => {
+    // Pick existing customer from directory
     document.querySelectorAll('[data-dialer-pick-customer]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         const custId = btn.getAttribute('data-dialer-pick-customer');
-        handleSelectCustomerFromDialer(custId);
+        const cust = state.customers.find((c: any) => c.id === custId);
+        if (cust) {
+          completeCustomerSelection(cust);
+        }
       });
     });
 
-    const quickAddForm = document.getElementById('dialer-quick-add-form');
-    if (quickAddForm) {
-      quickAddForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target as HTMLFormElement);
-        const name = (fd.get('name') as string || '').trim();
-        const phone = (fd.get('phone') as string || '').trim();
-        const tier = (fd.get('tier') as string || 'Regular');
-        if (!name) return;
+    // 1-Click Instant Attach New Button in Matches pane
+    document.getElementById('dialer-attach-new-instant-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAttachDialedNumber();
+    });
 
-        const newCustomer = {
-          id: `cust-${Date.now()}`,
-          name: name,
-          phone: phone ? (phone.startsWith('+91') ? phone : `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`) : '+91 98000 00000',
-          email: '',
-          address: 'Ahmedabad, Gujarat',
-          type: tier,
-          tier: tier,
-          loyaltyPoints: 50,
-          khataBalance: 0,
-          creditLimit: 5000,
-          totalOrders: 1,
-          totalSpent: 0,
-          notes: 'Registered via Phone Dialer'
-        };
+    // Save with Optional Name & Attach Button
+    document.getElementById('dialer-save-named-customer-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAttachDialedNumber();
+    });
 
-        state.customers.unshift(newCustomer);
-        state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
-        state.kpis.customers.formatted = String(state.kpis.customers.value);
-        saveCustomerToCloud(newCustomer, state.currentBranchId);
-        saveBranchSnapshot(state.currentBranchId);
-        completeCustomerSelection(newCustomer);
+    // Enter key in Optional Name Input
+    const nameInput = document.getElementById('dialer-new-customer-name') as HTMLInputElement | null;
+    if (nameInput) {
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          handleAttachDialedNumber();
+        }
       });
     }
   };
@@ -3720,14 +3762,44 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
     const displayEl = document.getElementById('dialer-phone-display');
     const countEl = document.getElementById('dialer-digit-count');
-    const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+    const attachHeroBtn = document.getElementById('dialer-attach-number-btn') as HTMLButtonElement | null;
+    const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement | null;
     const container = document.getElementById('dialer-matches-container');
 
-    if (displayEl) displayEl.textContent = formatDialerPhone(rawDigits);
-    if (countEl) countEl.textContent = `${rawDigits.length} / 10 digits`;
+    const formattedPhone = formatDialerPhone(rawDigits);
+    const hasDigits = rawDigits.length > 0;
+    const isComplete = rawDigits.length === 10;
+
+    if (displayEl) {
+      displayEl.textContent = formattedPhone;
+    }
+    
+    if (countEl) {
+      if (isComplete) {
+        countEl.className = 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 inline-block shadow-2xs animate-pulse';
+        countEl.textContent = '✓ 10 Digits Complete';
+      } else {
+        countEl.className = 'text-[11px] font-bold text-[var(--text-muted)]';
+        countEl.textContent = `${rawDigits.length} / 10 digits`;
+      }
+    }
+
+    if (attachHeroBtn) {
+      if (hasDigits) {
+        attachHeroBtn.disabled = false;
+        attachHeroBtn.className = 'w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer';
+        attachHeroBtn.innerHTML = `<span>⚡ Attach ${formattedPhone} to Order</span>`;
+      } else {
+        attachHeroBtn.disabled = true;
+        attachHeroBtn.className = 'w-full py-3.5 px-4 bg-stone-200 dark:bg-stone-800 text-stone-400 font-bold text-sm rounded-2xl cursor-not-allowed flex items-center justify-center gap-2';
+        attachHeroBtn.innerHTML = `<span>📞 Dial 10 digits to attach</span>`;
+      }
+    }
+
     if (searchInput && searchInput.value !== state.dialerInput) {
       searchInput.value = state.dialerInput;
     }
+
     if (container) {
       container.innerHTML = renderDialerMatchesHtml(state.customers, state.dialerInput, rawDigits);
       bindDialerMatchPickers();
@@ -3745,6 +3817,13 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     renderApp();
   });
 
+  // Primary Hero Button: Attach Dialed Number
+  document.getElementById('dialer-attach-number-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleAttachDialedNumber();
+  });
+
   // Instant Walk-in Sale (No Phone Needed)
   document.getElementById('dialer-instant-walkin-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -3755,6 +3834,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   document.querySelectorAll('[data-dial-digit]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       const digit = btn.getAttribute('data-dial-digit');
       if (digit && state.dialerInput.length < 10) {
         state.dialerInput += digit;
@@ -3765,35 +3845,48 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
   // Dialer Backspace & Clear - ZERO REFRESH!
   const handleDialerBackspace = (e?: Event) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     state.dialerInput = state.dialerInput.slice(0, -1);
     updateDialerDOM();
   };
+
   document.getElementById('dialer-backspace-btn')?.addEventListener('click', handleDialerBackspace);
   document.getElementById('dialer-backspace-key')?.addEventListener('click', handleDialerBackspace);
   document.getElementById('dialer-clear-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     state.dialerInput = '';
     updateDialerDOM();
   });
 
   // Search input typing (both name and phone) - ZERO REFRESH!
-  const dialerSearchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+  const dialerSearchInput = document.getElementById('dialer-search-input') as HTMLInputElement | null;
   if (dialerSearchInput) {
     dialerSearchInput.addEventListener('input', (e) => {
       state.dialerInput = (e.target as HTMLInputElement).value;
       updateDialerDOM();
+    });
+    dialerSearchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleAttachDialedNumber();
+      }
     });
   }
 
   // Toggle Add by Name button
   document.getElementById('dialer-toggle-add-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     const container = document.getElementById('dialer-matches-container');
     if (container) {
       container.innerHTML = renderDialerMatchesHtml([], 'add-new-custom', state.dialerInput);
       bindDialerMatchPickers();
-      const nameInput = document.getElementById('dialer-new-name') as HTMLInputElement;
+      const nameInput = document.getElementById('dialer-new-customer-name') as HTMLInputElement;
       if (nameInput) nameInput.focus();
     }
   });
@@ -3803,25 +3896,92 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 }
 
 // Physical Keyboard Numpad listener for Dialer - ZERO REFRESH!
-window.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', (e: KeyboardEvent) => {
   if (!state.showCustomerDialerModal) return;
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  const isInputOrTextarea = e.target && ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA');
+
+  if (isInputOrTextarea) {
+    // If enter pressed inside input in dialer, attach number
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
+      if (rawDigits.length > 0) {
+        const phone = formatDialerPhone(rawDigits);
+        const existing = state.customers.find((c: any) => {
+          const cDigits = (c.phone || '').replace(/\D/g, '');
+          return (cDigits.length >= 6 && cDigits.endsWith(rawDigits)) || (c.phone === phone);
+        });
+        if (existing) {
+          completeCustomerSelection(existing);
+        } else {
+          const nameInput = document.getElementById('dialer-new-customer-name') as HTMLInputElement | null;
+          const typedName = nameInput?.value?.trim();
+          const customerName = typedName || `Patron (${phone})`;
+          const newCustomer = {
+            id: `cust-${Date.now()}`,
+            name: customerName,
+            phone: phone,
+            email: '',
+            address: 'Ahmedabad, Gujarat',
+            type: 'Regular',
+            tier: 'Regular',
+            loyaltyPoints: 50,
+            khataBalance: 0,
+            creditLimit: 5000,
+            totalOrders: 1,
+            totalSpent: 0,
+            notes: 'Registered via Phone Dialer'
+          };
+          state.customers.unshift(newCustomer);
+          if (state.kpis?.customers) {
+            state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+            state.kpis.customers.formatted = String(state.kpis.customers.value);
+          }
+          saveCustomerToCloud(newCustomer, state.currentBranchId);
+          saveBranchSnapshot(state.currentBranchId);
+          completeCustomerSelection(newCustomer);
+        }
+      }
+    }
+    return;
+  }
+
+  // Dial digits 0-9
   if (/^[0-9]$/.test(e.key)) {
+    e.preventDefault();
     if (state.dialerInput.length < 10) {
       state.dialerInput += e.key;
       const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
       const displayEl = document.getElementById('dialer-phone-display');
       const countEl = document.getElementById('dialer-digit-count');
-      const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+      const attachHeroBtn = document.getElementById('dialer-attach-number-btn') as HTMLButtonElement | null;
+      const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement | null;
       const container = document.getElementById('dialer-matches-container');
-      if (displayEl) displayEl.textContent = formatDialerPhone(rawDigits);
-      if (countEl) countEl.textContent = `${rawDigits.length} / 10 digits`;
+
+      const formatted = formatDialerPhone(rawDigits);
+      if (displayEl) displayEl.textContent = formatted;
+      if (countEl) {
+        if (rawDigits.length === 10) {
+          countEl.className = 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 inline-block shadow-2xs animate-pulse';
+          countEl.textContent = '✓ 10 Digits Complete';
+        } else {
+          countEl.className = 'text-[11px] font-bold text-[var(--text-muted)]';
+          countEl.textContent = `${rawDigits.length} / 10 digits`;
+        }
+      }
+      if (attachHeroBtn) {
+        attachHeroBtn.disabled = false;
+        attachHeroBtn.className = 'w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer';
+        attachHeroBtn.innerHTML = `<span>⚡ Attach ${formatted} to Order</span>`;
+      }
       if (searchInput && searchInput.value !== state.dialerInput) searchInput.value = state.dialerInput;
       if (container) {
         container.innerHTML = renderDialerMatchesHtml(state.customers, state.dialerInput, rawDigits);
         document.querySelectorAll('[data-dialer-pick-customer]').forEach(btn => {
           btn.addEventListener('click', (ev) => {
             ev.preventDefault();
+            ev.stopPropagation();
             const custId = btn.getAttribute('data-dialer-pick-customer');
             const cust = state.customers.find((c: any) => c.id === custId);
             if (cust) {
@@ -3829,22 +3989,111 @@ window.addEventListener('keydown', (e) => {
             }
           });
         });
+        document.getElementById('dialer-attach-new-instant-btn')?.addEventListener('click', () => {
+          const phone = formatDialerPhone(rawDigits);
+          const newCust = {
+            id: `cust-${Date.now()}`,
+            name: `Patron (${phone})`,
+            phone: phone,
+            email: '',
+            address: 'Ahmedabad, Gujarat',
+            type: 'Regular',
+            tier: 'Regular',
+            loyaltyPoints: 50,
+            khataBalance: 0,
+            creditLimit: 5000,
+            totalOrders: 1,
+            totalSpent: 0,
+            notes: 'Registered via Phone Dialer'
+          };
+          state.customers.unshift(newCust);
+          saveCustomerToCloud(newCust, state.currentBranchId);
+          saveBranchSnapshot(state.currentBranchId);
+          completeCustomerSelection(newCust);
+        });
       }
     }
   } else if (e.key === 'Backspace') {
+    e.preventDefault();
     state.dialerInput = state.dialerInput.slice(0, -1);
     const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
     const displayEl = document.getElementById('dialer-phone-display');
     const countEl = document.getElementById('dialer-digit-count');
-    const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement;
+    const attachHeroBtn = document.getElementById('dialer-attach-number-btn') as HTMLButtonElement | null;
+    const searchInput = document.getElementById('dialer-search-input') as HTMLInputElement | null;
     const container = document.getElementById('dialer-matches-container');
-    if (displayEl) displayEl.textContent = formatDialerPhone(rawDigits);
-    if (countEl) countEl.textContent = `${rawDigits.length} / 10 digits`;
+
+    const formatted = formatDialerPhone(rawDigits);
+    if (displayEl) displayEl.textContent = formatted;
+    if (countEl) {
+      countEl.className = 'text-[11px] font-bold text-[var(--text-muted)]';
+      countEl.textContent = `${rawDigits.length} / 10 digits`;
+    }
+    if (attachHeroBtn) {
+      if (rawDigits.length > 0) {
+        attachHeroBtn.disabled = false;
+        attachHeroBtn.className = 'w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer';
+        attachHeroBtn.innerHTML = `<span>⚡ Attach ${formatted} to Order</span>`;
+      } else {
+        attachHeroBtn.disabled = true;
+        attachHeroBtn.className = 'w-full py-3.5 px-4 bg-stone-200 dark:bg-stone-800 text-stone-400 font-bold text-sm rounded-2xl cursor-not-allowed flex items-center justify-center gap-2';
+        attachHeroBtn.innerHTML = `<span>📞 Dial 10 digits to attach</span>`;
+      }
+    }
     if (searchInput && searchInput.value !== state.dialerInput) searchInput.value = state.dialerInput;
     if (container) {
       container.innerHTML = renderDialerMatchesHtml(state.customers, state.dialerInput, rawDigits);
+      document.querySelectorAll('[data-dialer-pick-customer]').forEach(btn => {
+        btn.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const custId = btn.getAttribute('data-dialer-pick-customer');
+          const cust = state.customers.find((c: any) => c.id === custId);
+          if (cust) {
+            completeCustomerSelection(cust);
+          }
+        });
+      });
+    }
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const rawDigits = (state.dialerInput || '').replace(/\D/g, '').slice(0, 10);
+    if (rawDigits.length > 0) {
+      const phone = formatDialerPhone(rawDigits);
+      const existing = state.customers.find((c: any) => {
+        const cDigits = (c.phone || '').replace(/\D/g, '');
+        return (cDigits.length >= 6 && cDigits.endsWith(rawDigits)) || (c.phone === phone);
+      });
+      if (existing) {
+        completeCustomerSelection(existing);
+      } else {
+        const newCust = {
+          id: `cust-${Date.now()}`,
+          name: `Patron (${phone})`,
+          phone: phone,
+          email: '',
+          address: 'Ahmedabad, Gujarat',
+          type: 'Regular',
+          tier: 'Regular',
+          loyaltyPoints: 50,
+          khataBalance: 0,
+          creditLimit: 5000,
+          totalOrders: 1,
+          totalSpent: 0,
+          notes: 'Registered via Phone Dialer'
+        };
+        state.customers.unshift(newCust);
+        if (state.kpis?.customers) {
+          state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+          state.kpis.customers.formatted = String(state.kpis.customers.value);
+        }
+        saveCustomerToCloud(newCust, state.currentBranchId);
+        saveBranchSnapshot(state.currentBranchId);
+        completeCustomerSelection(newCust);
+      }
     }
   } else if (e.key === 'Escape') {
+    e.preventDefault();
     state.showCustomerDialerModal = false;
     if (state.returnToCheckout) {
       state.showCheckoutModal = true;

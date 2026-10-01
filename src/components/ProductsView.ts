@@ -311,7 +311,7 @@ export function renderProductsView(state: any) {
                           alt="${item.name}" 
                           class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                           loading="lazy"
-                          onerror="this.src='/assets/sweets/${item.id}.png'"
+                          onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';"
                         />
                       </div>
                       <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${

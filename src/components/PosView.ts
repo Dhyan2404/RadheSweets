@@ -39,10 +39,10 @@ export function renderDesktopCartItemsHtml(posCart: any[] = []): string {
     <div class="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] text-xs" data-cart-row="${item.id}">
       <div class="flex items-center space-x-2.5">
         <img 
-          src="${item.image || `/assets/sweets/${item.id}.png`}" 
+          src="${item.image || (item.id && String(item.id).startsWith('sw-') ? `/assets/sweets/${item.id}.png` : '/assets/sweets/sw-1.png')}" 
           alt="${item.name}" 
           class="w-10 h-10 rounded-lg object-cover border border-[var(--border-color)] shadow-2xs"
-          onerror="this.src='/assets/sweets/${item.id}.png'"
+          onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';"
         />
         <div>
           <p class="font-bold text-[var(--text-main)] leading-snug">${item.name}</p>
@@ -93,10 +93,10 @@ export function renderMobileCartItemsHtml(posCart: any[] = []): string {
     <div class="flex items-center justify-between py-2 border-b border-stone-100 text-xs" data-cart-row="${item.id}">
       <div class="flex items-center space-x-2.5">
         <img 
-          src="${item.image || `/assets/sweets/${item.id}.png`}" 
+          src="${item.image || (item.id && String(item.id).startsWith('sw-') ? `/assets/sweets/${item.id}.png` : '/assets/sweets/sw-1.png')}" 
           alt="${item.name}" 
           class="w-10 h-10 rounded-lg object-cover border border-stone-200 shadow-2xs"
-          onerror="this.src='/assets/sweets/${item.id}.png'"
+          onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';"
         />
         <div>
           <p class="font-bold text-[#2A1F1D]">${item.name}</p>
@@ -363,11 +363,11 @@ export function renderPosView(state: any) {
                     <!-- Image Thumbnail cropped to exact size for each sweet -->
                     <div class="relative h-28 sm:h-32 overflow-hidden bg-stone-100">
                       <img 
-                        src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" 
+                        src="${sweet.image || (sweet.id && String(sweet.id).startsWith('sw-') ? `/assets/sweets/${sweet.id}.png` : '/assets/sweets/sw-1.png')}" 
                         alt="${sweet.name}" 
                         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
-                        onerror="this.src='/assets/sweets/${sweet.id}.png'"
+                        onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';"
                       />
 
                       <!-- Number & Stock Badge -->

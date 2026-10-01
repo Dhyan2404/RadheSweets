@@ -503,7 +503,7 @@ export function renderDashboardView(state: any) {
                       <tr class="table-row-hover transition-all cursor-pointer">
                         <td class="py-3 px-5 flex items-center space-x-3">
                           <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-amber-50 shrink-0 shadow-2xs">
-                            <img src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" alt="${sweet.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='/assets/sweets/sw-1.png'" />
+                            <img src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" alt="${sweet.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';" />
                           </div>
                           <div class="min-w-0">
                             <span class="font-semibold text-[#2A1F1D] block truncate">${sweet.name}</span>

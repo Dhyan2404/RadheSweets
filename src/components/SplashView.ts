@@ -59,7 +59,7 @@ export function renderSplashView(options: { isModal?: boolean; progress?: number
               src="./assets/radha_krishna_hero.png" 
               alt="Radhe Sweets - Sweet Moments With Radhe Krishna" 
               class="w-full h-auto object-cover max-h-[460px] mx-auto filter drop-shadow-sm"
-              onerror="this.src='./assets/festive_banner.png'"
+              onerror="this.onerror=null; this.src='./assets/festive_banner.png';"
             />
           </div>
         </div>
@@ -71,7 +71,7 @@ export function renderSplashView(options: { isModal?: boolean; progress?: number
               src="./assets/mobile_splash.png" 
               alt="Radhe Sweets - Sweet Moments With Radhe Krishna" 
               class="w-full h-auto max-h-[420px] object-contain mx-auto"
-              onerror="this.src='./assets/radha_krishna_hero.png'"
+              onerror="this.onerror=null; this.src='./assets/radha_krishna_hero.png';"
             />
           </div>
         </div>

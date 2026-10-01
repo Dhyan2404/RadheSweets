@@ -1,5 +1,5 @@
 // Customer Phone Dialer & Database Search/Registration Modal Component
-// Modern Dual-Pane Truecaller / Smartphone Dialer with Zero-Flicker In-Place Updates
+// Modern Dual-Pane Truecaller / Smartphone POS Dialer with Zero-Flicker In-Place Updates
 
 export function formatDialerPhone(rawDigits: string): string {
   const digits = (rawDigits || '').replace(/\D/g, '').slice(0, 10);
@@ -8,14 +8,14 @@ export function formatDialerPhone(rawDigits: string): string {
   } else if (digits.length > 0) {
     return `+91 ${digits}`;
   }
-  return '+91 ';
+  return '+91 ••••• •••••';
 }
 
 export function filterDialerCustomers(customers: any[], query: string): any[] {
   const clean = (query || '').trim().toLowerCase();
   if (!clean) {
     // If empty query, show frequent / recent customers
-    return customers.slice(0, 5);
+    return customers.slice(0, 6);
   }
 
   const cleanDigits = clean.replace(/\D/g, '');
@@ -31,101 +31,119 @@ export function filterDialerCustomers(customers: any[], query: string): any[] {
 export function renderDialerMatchesHtml(customers: any[], query: string, rawDigits: string): string {
   const matches = filterDialerCustomers(customers, query);
   const cleanDigits = (rawDigits || '').replace(/\D/g, '').slice(0, 10);
-  const is10Digits = cleanDigits.length === 10;
-  const exactMatch = matches.find(c => (c.phone || '').replace(/\D/g, '').endsWith(cleanDigits));
+  const formattedDialed = cleanDigits.length > 0 ? formatDialerPhone(cleanDigits) : '';
+  const exactMatch = matches.find(c => {
+    const cDigits = (c.phone || '').replace(/\D/g, '');
+    return cleanDigits.length > 0 && (cDigits.endsWith(cleanDigits) || cleanDigits.endsWith(cDigits));
+  });
 
+  // If no matches found in directory for this query or dialed digits
   if (matches.length === 0) {
     return `
-      <div class="p-4 bg-amber-50/80 border border-amber-200 rounded-2xl space-y-3 animate-fadeIn text-center">
-        <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 font-bold text-xl flex items-center justify-center mx-auto">
-          👤+
-        </div>
-        <div>
-          <h4 class="font-bold text-sm text-amber-950">New Customer — Quick Register</h4>
-          <p class="text-xs text-amber-800 mt-0.5">No existing customer with "${query}". Add name to attach & give +50 points bonus!</p>
+      <div class="p-5 bg-gradient-to-br from-amber-50 to-orange-50/60 border-2 border-amber-200/90 rounded-2xl space-y-4 animate-fadeIn">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500 text-white font-black text-xl flex items-center justify-center shrink-0 shadow-xs">
+            👤+
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm sm:text-base text-amber-950">New Customer Registration</h4>
+            <p class="text-xs text-amber-800 font-medium">
+              ${cleanDigits.length > 0 ? `Number: <strong>${formattedDialed}</strong> is not registered yet.` : 'Search found no registered customer.'}
+            </p>
+          </div>
         </div>
 
-        <form id="dialer-quick-add-form" class="text-left space-y-2.5 pt-1">
-          <div>
-            <label class="block text-[11px] font-bold text-amber-900 mb-0.5">Customer Name *</label>
+        <!-- 1-Click Instant Attach Button -->
+        <button 
+          type="button" 
+          id="dialer-attach-new-instant-btn"
+          class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span>⚡ Attach ${cleanDigits.length > 0 ? formattedDialed : 'This Number'} to Order (+50 Pts)</span>
+        </button>
+
+        <!-- Optional Name Section -->
+        <div class="pt-3 border-t border-amber-200/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-amber-900">Optional: Add Customer Name</span>
+            <span class="text-[10px] text-amber-700 font-medium">Leave blank for quick attach</span>
+          </div>
+          <div class="flex gap-2">
             <input 
               type="text" 
-              id="dialer-new-name" 
-              name="name" 
-              required 
+              id="dialer-new-customer-name" 
               placeholder="e.g. Ramesh Patel, Shaileshbhai"
-              class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-[var(--text-main)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:outline-none"
+              class="flex-1 px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-[var(--text-main)] placeholder-stone-400 focus:ring-2 focus:ring-amber-500 focus:outline-none"
             />
+            <button 
+              type="button" 
+              id="dialer-save-named-customer-btn" 
+              class="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all whitespace-nowrap cursor-pointer"
+            >
+              Save &amp; Attach
+            </button>
           </div>
-          <div>
-            <label class="block text-[11px] font-bold text-amber-900 mb-0.5">Mobile Number</label>
-            <input 
-              type="tel" 
-              id="dialer-new-phone" 
-              name="phone" 
-              value="${cleanDigits}" 
-              placeholder="10 digit mobile"
-              class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-mono font-bold text-[var(--text-main)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-amber-900 mb-0.5">Customer Tier</label>
-            <select id="dialer-new-tier" name="tier" class="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-semibold text-[var(--text-main)]">
-              <option value="Regular">Regular Customer</option>
-              <option value="VIP">VIP Gold Tier</option>
-              <option value="Corporate">Corporate Khata</option>
-            </select>
-          </div>
-          <button 
-            type="submit" 
-            class="w-full py-2.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-98 flex items-center justify-center gap-1.5"
-          >
-            <span>✓ Save & Attach to Order</span>
-          </button>
-        </form>
+        </div>
       </div>
     `;
   }
 
   return `
-    <div class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+    <div class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
       ${matches.map(c => {
-        const isSelected = exactMatch && exactMatch.id === c.id;
-        const initials = (c.name || 'C').split(' ').map((n: string) => n[0]).join('').slice(0, 2);
+        const isExact = exactMatch && exactMatch.id === c.id;
+        const initials = (c.name || 'C').split(' ').filter(Boolean).map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
         return `
           <div 
-            class="p-3 rounded-2xl border ${isSelected ? 'border-emerald-400 bg-emerald-50/80 ring-2 ring-emerald-300' : 'border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-[var(--brand-primary-light)]'} transition-all flex items-center justify-between gap-3 group"
+            class="p-3 sm:p-3.5 rounded-2xl border ${
+              isExact 
+                ? 'border-emerald-500 bg-emerald-50/90 ring-2 ring-emerald-400/40 shadow-xs' 
+                : 'border-[var(--border-color)] bg-[var(--bg-surface)] hover:border-amber-400 hover:bg-[var(--brand-primary-light)]'
+            } transition-all flex items-center justify-between gap-3 group"
           >
             <div class="flex items-center space-x-3 min-w-0">
-              <div class="w-10 h-10 rounded-full ${isSelected ? 'bg-emerald-600' : 'bg-stone-700'} text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs">
+              <div class="w-11 h-11 rounded-2xl ${isExact ? 'bg-emerald-600' : 'bg-stone-700'} text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                 ${initials}
               </div>
               <div class="min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="font-extrabold text-xs sm:text-sm text-[var(--text-main)] truncate">${c.name}</span>
-                  <span class="text-[9px] px-1.5 py-0.2 rounded font-bold ${c.tier === 'VIP' ? 'bg-amber-500 text-white' : c.tier === 'Corporate' ? 'bg-indigo-600 text-white' : 'bg-stone-200 text-stone-700'}">
+                  <span class="text-[9px] px-1.5 py-0.5 rounded font-extrabold ${
+                    c.tier === 'VIP' ? 'bg-amber-500 text-white shadow-2xs' : 
+                    c.tier === 'Corporate' ? 'bg-indigo-600 text-white shadow-2xs' : 
+                    'bg-stone-200 text-stone-700'
+                  }">
                     ${c.tier || 'Regular'}
                   </span>
+                  ${isExact ? `
+                    <span class="text-[9px] px-1.5 py-0.5 rounded font-black bg-emerald-600 text-white shadow-2xs">
+                      ★ Matched
+                    </span>
+                  ` : ''}
                 </div>
-                <p class="text-xs font-mono font-semibold text-[var(--text-muted)] mt-0.5">${c.phone}</p>
-                <div class="flex items-center gap-2 mt-1 text-[10px] text-[var(--text-light)]">
-                  <span>⭐ ${c.loyaltyPoints || 0} pts</span>
+                <p class="text-xs font-mono font-bold text-[var(--text-muted)] mt-0.5">${c.phone}</p>
+                <div class="flex items-center gap-2 mt-1 text-[10px] text-[var(--text-light)] flex-wrap">
+                  <span class="font-semibold text-amber-700">⭐ ${c.loyaltyPoints || 0} pts</span>
                   <span>•</span>
                   <span>Spent: ₹${c.totalSpent || 0}</span>
                   ${c.khataBalance > 0 ? `
                     <span>•</span>
-                    <span class="text-rose-600 font-bold">Khata: ₹${c.khataBalance}</span>
+                    <span class="text-rose-600 font-extrabold">Khata Due: ₹${c.khataBalance}</span>
                   ` : ''}
                 </div>
               </div>
             </div>
 
             <button 
-              type="button"
+              type="button" 
               data-dialer-pick-customer="${c.id}"
-              class="px-3 py-2 rounded-xl ${isSelected ? 'bg-emerald-600 text-white shadow-xs' : 'bg-[var(--bg-subtle)] text-[var(--brand-primary)] group-hover:bg-[var(--brand-primary)] group-hover:text-white'} text-xs font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1 shrink-0"
+              class="px-4 py-2.5 rounded-xl ${
+                isExact 
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs' 
+                  : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)] group-hover:bg-[var(--brand-primary)] group-hover:text-white'
+              } text-xs font-extrabold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
-              <span>✓ Select</span>
+              <span>✓ Attach</span>
             </button>
           </div>
         `;
@@ -138,56 +156,73 @@ export function renderCustomerDialerModal(state: any) {
   const { customers = [], dialerInput = '' } = state;
   const rawDigits = (dialerInput || '').replace(/\D/g, '').slice(0, 10);
   const formattedPhone = formatDialerPhone(rawDigits);
+  const hasDigits = rawDigits.length > 0;
+  const isComplete = rawDigits.length === 10;
 
   return `
     <div class="modal-backdrop" id="customer-dialer-modal">
-      <div class="modal-content p-5 sm:p-6 space-y-4 max-w-3xl w-full select-none">
+      <div class="modal-content p-5 sm:p-7 space-y-5 max-w-4xl w-full select-none rounded-3xl shadow-2xl border border-[var(--border-color)]">
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-          <div class="flex items-center space-x-2.5">
-            <span class="w-9 h-9 rounded-2xl bg-[var(--brand-primary-light)] text-[var(--brand-primary)] flex items-center justify-center font-bold text-base shadow-xs">
+        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
+          <div class="flex items-center space-x-3">
+            <span class="w-11 h-11 rounded-2xl bg-amber-500/10 text-[var(--brand-primary)] flex items-center justify-center font-bold text-xl shadow-xs border border-amber-300/40">
               📞
             </span>
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-[var(--text-main)]">Patron Phone Dialer & Live Directory</h3>
-              <p class="text-[11px] text-[var(--text-muted)]">Instant lookup as you dial digits or search by customer name</p>
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-extrabold text-[var(--text-main)]">Patron Phone Dialer &amp; Directory</h3>
+                <span class="hidden sm:inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Instant POS Link
+                </span>
+              </div>
+              <p class="text-xs text-[var(--text-muted)] mt-0.5">Dial 10-digit mobile number or search existing patrons to attach to the active order</p>
             </div>
           </div>
-          <button type="button" id="close-dialer-btn" class="p-1.5 text-[var(--text-light)] hover:text-[var(--text-main)] rounded-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          <button 
+            type="button" 
+            id="close-dialer-btn" 
+            class="p-2 text-[var(--text-light)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] rounded-xl transition-colors cursor-pointer"
+            title="Close Dialer (Esc)"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
           </button>
         </div>
 
-        <!-- 2-Column Split: Left Dialpad (Smartphone) | Right Live Matches (Truecaller Style) -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+        <!-- 2-Column Split: Left Dialpad (Smartphone POS) | Right Live Directory Matches -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           
-          <!-- Left Column: Phone Display & 12-Key Dialpad (5 Cols) -->
-          <div class="md:col-span-5 space-y-3 bg-[var(--bg-subtle)] p-4 rounded-2xl border border-[var(--border-color)]">
+          <!-- Left Column: Phone Display, 12-Key Large Dialpad & Hero Action (5 Cols) -->
+          <div class="md:col-span-5 space-y-4 bg-[var(--bg-subtle)] p-4 sm:p-5 rounded-2xl border border-[var(--border-color)] shadow-xs">
             <!-- Screen Display -->
-            <div class="bg-[var(--bg-surface)] p-3.5 rounded-xl border border-[var(--border-color)] text-center space-y-1 relative shadow-inner">
-              <p class="text-[10px] uppercase font-bold text-[var(--text-light)] tracking-widest">
-                Dialing Number
-              </p>
-              <div class="flex items-center justify-center space-x-2">
-                <span id="dialer-phone-display" class="text-2xl font-mono font-black text-[var(--text-main)] tracking-wider">
+            <div class="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--border-color)] text-center space-y-2 relative shadow-inner">
+              <div class="flex items-center justify-between text-[10px] uppercase font-bold text-[var(--text-light)] tracking-widest px-1">
+                <span>Dialing Mobile</span>
+                <span id="dialer-digit-count" class="${
+                  isComplete 
+                    ? 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 inline-block shadow-2xs animate-pulse' 
+                    : 'text-[11px] font-bold text-[var(--text-muted)]'
+                }">
+                  ${isComplete ? '✓ 10 Digits Complete' : `${rawDigits.length} / 10 digits`}
+                </span>
+              </div>
+              
+              <div class="flex items-center justify-center space-x-2 py-1">
+                <span id="dialer-phone-display" class="text-2xl sm:text-3xl font-mono font-black text-[var(--text-main)] tracking-wider">
                   ${formattedPhone}
                 </span>
                 <button 
                   type="button" 
                   id="dialer-backspace-btn" 
-                  class="p-1.5 text-stone-400 hover:text-rose-500 transition-colors" 
-                  title="Backspace"
+                  class="p-2 text-stone-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all cursor-pointer" 
+                  title="Backspace (Delete single digit)"
                 >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                 </button>
               </div>
-              <p id="dialer-digit-count" class="text-[10px] font-semibold text-[var(--text-muted)]">
-                ${rawDigits.length} / 10 digits
-              </p>
             </div>
 
-            <!-- Touch Keypad (0-9, Backspace, Clear) -->
-            <div class="grid grid-cols-3 gap-2">
+            <!-- Touch Keypad (0-9, Backspace, Clear) with Large Buttons -->
+            <div class="grid grid-cols-3 gap-2.5">
               <button type="button" data-dial-digit="1" class="dial-key-btn">
                 <span class="dial-num">1</span>
                 <span class="dial-letters">~</span>
@@ -224,60 +259,76 @@ export function renderCustomerDialerModal(state: any) {
                 <span class="dial-num">9</span>
                 <span class="dial-letters">WXYZ</span>
               </button>
-              <button type="button" id="dialer-clear-btn" class="dial-key-btn text-rose-500">
-                <span class="dial-num text-xs">CLR</span>
-                <span class="dial-letters">Clear</span>
+              <button type="button" id="dialer-clear-btn" class="dial-key-btn text-rose-500 hover:bg-rose-50 hover:border-rose-300">
+                <span class="dial-num text-sm font-black">CLR</span>
+                <span class="dial-letters text-rose-400">Clear</span>
               </button>
               <button type="button" data-dial-digit="0" class="dial-key-btn">
                 <span class="dial-num">0</span>
                 <span class="dial-letters">+</span>
               </button>
-              <button type="button" id="dialer-backspace-key" class="dial-key-btn text-stone-600">
-                <span class="dial-num text-sm">⌫</span>
+              <button type="button" id="dialer-backspace-key" class="dial-key-btn text-stone-600 hover:bg-stone-100">
+                <span class="dial-num text-base font-black">⌫</span>
                 <span class="dial-letters">Delete</span>
               </button>
             </div>
 
-            <!-- Instant Counter Walk-in Quick Button -->
-            <button 
-              type="button"
-              id="dialer-instant-walkin-btn" 
-              class="w-full py-2.5 px-3 bg-[var(--bg-surface)] hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-[var(--border-color)] text-[var(--text-main)] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
-            >
-              <span>⚡ Quick Walk-in (No Number)</span>
-            </button>
+            <!-- Direct Primary Action: HERO ATTACH BUTTON -->
+            <div class="space-y-2 pt-1">
+              <button 
+                type="button" 
+                id="dialer-attach-number-btn" 
+                ${hasDigits ? '' : 'disabled'}
+                class="${
+                  hasDigits 
+                    ? 'w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer' 
+                    : 'w-full py-3.5 px-4 bg-stone-200 dark:bg-stone-800 text-stone-400 font-bold text-sm rounded-2xl cursor-not-allowed flex items-center justify-center gap-2'
+                }"
+              >
+                <span>${hasDigits ? `⚡ Attach ${formattedPhone} to Order` : '📞 Dial 10 digits to attach'}</span>
+              </button>
+
+              <!-- Secondary Walk-in Counter Button -->
+              <button 
+                type="button"
+                id="dialer-instant-walkin-btn" 
+                class="w-full py-2.5 px-3 bg-[var(--bg-surface)] hover:bg-stone-100 dark:hover:bg-stone-800 border border-[var(--border-color)] text-[var(--text-main)] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <span>⚡ Walk-in Counter (No Number)</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Right Column: Live Directory Search, Matches & Add by Name (7 Cols) -->
-          <div class="md:col-span-7 space-y-3">
+          <!-- Right Column: Live Directory Search & Matches (7 Cols) -->
+          <div class="md:col-span-7 space-y-3.5">
             <!-- Search & Filter Bar (by Name or Number) -->
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-light)]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--text-light)]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path></svg>
               </span>
               <input 
                 type="text" 
                 id="dialer-search-input" 
                 value="${dialerInput}"
-                placeholder="Search older customers by Name or Phone..." 
-                class="w-full pl-9 pr-24 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl text-xs font-bold text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
+                placeholder="Search patrons by Name or Phone..." 
+                class="w-full pl-10 pr-24 py-3 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl text-xs sm:text-sm font-bold text-[var(--text-main)] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] shadow-2xs"
               />
               <button 
                 type="button" 
                 id="dialer-toggle-add-btn" 
-                class="absolute right-1.5 top-1.5 px-2.5 py-1 text-[11px] font-bold bg-[var(--brand-primary-light)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white rounded-lg transition-colors"
+                class="absolute right-2 top-2 px-3 py-1.5 text-xs font-bold bg-[var(--brand-primary-light)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white rounded-xl transition-colors cursor-pointer"
               >
-                + Add by Name
+                + Quick Add
               </button>
             </div>
 
             <!-- Header Label for Matches -->
             <div class="flex items-center justify-between px-1">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Store Customers Directory
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-[var(--text-muted)]">
+                ${dialerInput ? 'Search &amp; Dial Results' : 'Frequent &amp; Recent Patrons'}
               </span>
               <span class="text-[10px] font-semibold text-[var(--text-light)]">
-                Tap to select for order
+                Click Attach to select
               </span>
             </div>
 
