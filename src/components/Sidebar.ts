@@ -102,7 +102,7 @@ export function renderSidebar(currentTab) {
       <div class="mt-auto pt-4 border-t border-[#F0ECE4]/60" data-purpose="sidebar-bottom-art">
         <div class="relative overflow-hidden rounded-2xl group cursor-pointer transition-all duration-300 hover:scale-[1.03]">
           <img 
-            src="/image.png" 
+            src="/assets/sweet_moments.png" 
             alt="Sweet moments... Better together" 
             class="w-full h-auto object-contain select-none pointer-events-none drop-shadow-sm transition-transform duration-500 group-hover:scale-105" 
             loading="lazy"

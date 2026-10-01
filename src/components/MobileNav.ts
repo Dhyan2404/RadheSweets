@@ -212,7 +212,7 @@ export function renderMobileDrawer(state) {
         <div class="pt-4 border-t border-stone-200 mt-auto">
           <div class="relative overflow-hidden rounded-2xl p-1 flex flex-col items-center">
             <img 
-              src="/image.png" 
+              src="/assets/sweet_moments.png" 
               alt="Sweet moments... Better together" 
               class="w-full max-w-[200px] h-auto object-contain select-none pointer-events-none drop-shadow-sm" 
               loading="lazy"
