@@ -1,6 +1,8 @@
 import subprocess
+import time
+import sys
 
-def run_git_automation():
+def run_git_and_close():
     # યુઝર પાસેથી કમિટ મેસેજ મેળવો
     commit_message = input("તમારો કમિટ મેસેજ (Commit Message) ટાઇપ કરો: ")
     
@@ -8,7 +10,7 @@ def run_git_automation():
     if not commit_message.strip():
         commit_message = "UR CHANGE"
     
-    # પાવરશેલ માટે કમાન્ડ તૈયાર કરો
+    # પાવરશેલ માટે કમાન્ડ
     command = f'powershell -Command "git add .; git commit -m \\"{commit_message}\\"; git push origin main"'
     
     try:
@@ -19,9 +21,16 @@ def run_git_automation():
         print("\nસફળતાપૂર્વક અપલોડ (Push) થઇ ગયું!")
         print(result.stdout)
         
+        # સફળતાપૂર્વક રન થયા પછી 5 સેકન્ડ રાહ જુઓ અને બંધ કરો
+        print("\nઆ વિન્ડો 5 સેકન્ડમાં આપમેળે બંધ થઈ જશે...")
+        time.sleep(5)
+        sys.exit()  # પાયથન વિન્ડો બંધ કરવા માટે
+        
     except subprocess.CalledProcessError as e:
+        # જો ભૂલ આવે તો વિન્ડો બંધ નહીં થાય જેથી તમે એરર વાંચી શકો
         print("\nભૂલ (Error) આવી:")
         print(e.stderr)
+        input("\nવિન્ડો બંધ કરવા માટે એન્ટર (Enter) દબાવો...")
 
 if __name__ == "__main__":
-    run_git_automation()
+    run_git_and_close()

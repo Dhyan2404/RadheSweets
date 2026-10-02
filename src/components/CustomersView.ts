@@ -11,29 +11,24 @@ export function renderCustomersView(state: any) {
     customersSortBy = 'most-spent'
   } = state;
 
-  const vipCustomers = customers.filter((c: any) => c.tier === 'VIP' || c.type === 'VIP');
-  
   const tabs = [
     { id: 'all', label: `All Customers (${customers.length})` },
-    { id: 'vip', label: `VIP Members (${vipCustomers.length})` },
     { id: 'advance', label: `Advance Bulk Orders (${advanceOrders.length})`, isAdvance: true }
   ];
 
   const isAdvanceTab = customersFilterTab === 'advance';
 
-  // Compute live customer KPIs
-  const totalLoyaltyPoints = customers.reduce((sum: number, c: any) => sum + (Number(c.loyaltyPoints) || 0), 0);
+  // Compute live customer metrics (all patrons are treated equally)
   const totalCustomerSpend = customers.reduce((sum: number, c: any) => sum + (Number(c.totalSpent) || 0), 0);
+  const totalOrdersCount = customers.reduce((sum: number, c: any) => sum + (Number(c.totalOrders) || 0), 0);
 
   // Top 3 Customers by Total Spend
   const top3Customers = [...customers]
     .sort((a: any, b: any) => (Number(b.totalSpent) || 0) - (Number(a.totalSpent) || 0))
     .slice(0, 3);
 
-  // Filter & Search
+  // Filter & Search (All patrons equal - no tier segregation)
   let filteredCustomers = customers.filter((c: any) => {
-    if (customersFilterTab === 'vip') return c.tier === 'VIP' || c.type === 'VIP';
-    
     if (!customersSearchQuery) return true;
     const q = customersSearchQuery.toLowerCase();
     return (
@@ -65,13 +60,13 @@ export function renderCustomersView(state: any) {
       <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2.5">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">Customer Directory &amp; Loyalty</h1>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">Customer Directory &amp; Advance Orders</h1>
             <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA]">
               <span class="w-2 h-2 rounded-full bg-[#1E7E34]"></span>
               Patron CRM Active
             </span>
           </div>
-          <p class="text-xs sm:text-sm text-[#7C7267] mt-1 font-medium">Manage customer profiles, Customer IDs, VIP rewards, lifetime spending &amp; bulk festival orders</p>
+          <p class="text-xs sm:text-sm text-[#7C7267] mt-1 font-medium">Manage customer profiles, unique Customer IDs, lifetime spending &amp; bulk advance orders</p>
         </div>
 
         <div class="flex items-center gap-2.5">
@@ -117,55 +112,55 @@ export function renderCustomersView(state: any) {
           </div>
         </article>
 
-        <!-- CARD 2: VIP Loyalty Club -->
+        <!-- CARD 2: Advance Bulk Orders -->
         <article 
-          data-customers-tab="vip"
+          data-customers-tab="advance"
           class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between cursor-pointer hover:border-[#DDA15E] hover:shadow-md transition-all group"
         >
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-[#7C7267] group-hover:text-[#2A1F1D]">VIP Loyalty Members</span>
+            <span class="text-xs font-semibold text-[#7C7267] group-hover:text-[#2A1F1D]">Advance Bulk Orders</span>
             <div class="w-9 h-9 rounded-2xl bg-[#FEF9C3] flex items-center justify-center text-[#A16207]">
-              ⭐
+              📅
             </div>
           </div>
           <div class="mt-3">
             <div class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">
               ${renderCounter({
-                value: vipCustomers.length,
-                suffix: '<span class="text-sm font-normal text-[#7C7267]">Gold Tier</span>',
+                value: advanceOrders.length,
+                suffix: '<span class="text-sm font-normal text-[#7C7267]">bookings</span>',
                 fontWeight: 800,
                 gradientFrom: 'rgba(255, 255, 255, 0.75)'
               })}
             </div>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
-              <span>Special festival discounts</span>
-              <span class="font-bold text-[#A16207]">Privilege Tier</span>
+              <span>Weddings &amp; Catering</span>
+              <span class="font-bold text-[#A16207]">Active Bookings</span>
             </div>
           </div>
         </article>
 
-        <!-- CARD 3: Loyalty Points Pool -->
+        <!-- CARD 3: Total Orders Logged -->
         <article 
           class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between"
         >
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-[#7C7267]">Loyalty Points Balance</span>
+            <span class="text-xs font-semibold text-[#7C7267]">Total Counter Visits</span>
             <div class="w-9 h-9 rounded-2xl bg-[#FEF3C7] flex items-center justify-center text-[#D97706]">
-              🎁
+              🛍️
             </div>
           </div>
           <div class="mt-3">
             <div class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D] tracking-tight">
               ${renderCounter({
-                value: totalLoyaltyPoints,
-                suffix: '<span class="text-sm font-normal text-[#7C7267]">pts</span>',
+                value: totalOrdersCount || customers.length,
+                suffix: '<span class="text-sm font-normal text-[#7C7267]">bills</span>',
                 fontWeight: 800,
                 gradientFrom: 'rgba(255, 255, 255, 0.75)'
               })}
             </div>
             <div class="flex items-center justify-between text-[11px] text-[#7C7267] mt-1.5 pt-1.5 border-t border-[#F7F3EE]">
-              <span>1 pt per ₹50 spend</span>
-              <span class="font-bold text-[#D97706]">Redeemable</span>
+              <span>Customer purchases</span>
+              <span class="font-bold text-[#D97706]">Completed</span>
             </div>
           </div>
         </article>
@@ -207,12 +202,12 @@ export function renderCustomersView(state: any) {
             <div class="flex items-center gap-2">
               <span class="text-xl">🏆</span>
               <div>
-                <h3 class="text-sm sm:text-base font-extrabold text-[#2A1F1D]">Top 3 Patrons (Highest Spenders)</h3>
+                <h3 class="text-sm sm:text-base font-extrabold text-[#2A1F1D]">Top 3 Customers (Highest Spenders)</h3>
                 <p class="text-[11px] text-stone-500">Honoring our top sweet lovers and high-frequency buyers</p>
               </div>
             </div>
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-amber-900 border border-amber-300">
-              VIP Champions
+              Patron Spotlight
             </span>
           </div>
 

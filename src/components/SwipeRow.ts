@@ -294,7 +294,13 @@ export function initSwipeRow(
     const dx = e.clientX - startX;
     const finalOffset = currentX + dx;
 
-    // Never auto-delete on dragging: only snap open the 3 actions or snap closed
+    // If already open and the user deliberately swipes left again (dx < -40), commit deletion!
+    if (currentX === -totalDrawerWidth && dx < -40) {
+      collapseAndRemove('delete');
+      return;
+    }
+
+    // Never auto-delete on first swipe: only snap open the 3 actions or snap closed
     if (finalOffset < -35) {
       // Snap open cleanly to reveal all 3 buttons: WhatsApp, View/Edit, and Delete
       currentX = -totalDrawerWidth;
