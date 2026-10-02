@@ -1,6 +1,6 @@
 // Firebase Cloud Firestore ERP Integration for Radhe Sweets
 // Real-time Cloud persistence per store branch (Navrangpura, Satellite, SG Highway)
-// Project: radhesweets0
+// Project: radhesweets0 - Pure Cloud Firestore (No Storage)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
@@ -21,7 +21,6 @@ export const firebaseConfig = {
   apiKey: "AIzaSyBwwDF69fFaa0dT7praHTIpwmL4RlQ24i0",
   authDomain: "radhesweets0.firebaseapp.com",
   projectId: "radhesweets0",
-  storageBucket: "radhesweets0.firebasestorage.app",
   messagingSenderId: "968718161119",
   appId: "1:968718161119:web:30822e03e06865eb25056a",
   measurementId: "G-6S1GR5B6TF"
@@ -39,32 +38,13 @@ try {
 }
 export { analytics };
 
-// Graceful error handler with offline resilience
-export function handleFirestoreError(label, err) {
-  if (!err) return;
-  const msg = err?.message || String(err);
-  if (
-    msg.includes('not found') || 
-    msg.includes('offline') || 
-    msg.includes('unavailable') || 
-    msg.includes('(default)') ||
-    err?.code === 'not-found' || 
-    err?.code === 'unavailable'
-  ) {
-    firestoreLiveState.connected = false;
-    firestoreLiveState.syncStatus = 'offline';
-    return;
-  }
-  console.warn(`[Firebase Firestore] ${label}:`, msg);
-}
-
 // Live Connection State Tracking
 export const firestoreLiveState = {
-  connected: true,
+  connected: false,
   lastSyncTime: new Date(),
-  syncStatus: 'synced', // 'synced' | 'syncing' | 'offline'
+  syncStatus: 'connecting', // 'synced' | 'syncing' | 'needs_db_create' | 'offline'
   activeBranchId: 'br-1',
-  activeSubscriptions: []
+  errorDetails: null
 };
 
 const statusListeners = new Set();
@@ -73,12 +53,36 @@ export function onFirestoreStatusChange(cb) {
   return () => statusListeners.delete(cb);
 }
 
-function updateStatus(newStatus) {
+function updateStatus(newStatus, error = null) {
   firestoreLiveState.syncStatus = newStatus;
   firestoreLiveState.lastSyncTime = new Date();
+  if (error) firestoreLiveState.errorDetails = error;
+  if (newStatus === 'synced') firestoreLiveState.connected = true;
   statusListeners.forEach(cb => {
     try { cb(firestoreLiveState); } catch(e) {}
   });
+}
+
+// Graceful error handler with explicit Firestore diagnostics
+export function handleFirestoreError(label, err) {
+  if (!err) return;
+  const msg = err?.message || String(err);
+  if (
+    msg.includes('not found') || 
+    msg.includes('(default)') ||
+    err?.code === 'not-found'
+  ) {
+    firestoreLiveState.connected = false;
+    updateStatus('needs_db_create', 'Firestore (default) database not yet created in Firebase Console.');
+    console.warn(`[Firebase Firestore] Note: Database not yet created in project radhesweets0. To enable cross-device cloud sync, click "Create database" at: https://console.firebase.google.com/project/radhesweets0/firestore`);
+    return;
+  }
+  if (msg.includes('offline') || msg.includes('unavailable') || err?.code === 'unavailable') {
+    firestoreLiveState.connected = false;
+    updateStatus('offline', msg);
+    return;
+  }
+  console.warn(`[Firebase Firestore] ${label}:`, msg);
 }
 
 /**
@@ -88,7 +92,6 @@ export function getBranchDefaultCatalog(branchId) {
   const masterSweets = initialData.sweets || [];
   
   if (branchId === "br-2") {
-    // Satellite Luxury Boutique: Premium diamond packaging, luxury rates, boutique stock
     return {
       name: "Satellite Luxury Boutique",
       branchId: "br-2",
@@ -111,7 +114,6 @@ export function getBranchDefaultCatalog(branchId) {
       }))
     };
   } else if (branchId === "br-3") {
-    // SG Highway Central Kitchen: High volume wholesale batches, optimized wholesale rates
     return {
       name: "SG Highway Central Kitchen",
       branchId: "br-3",
@@ -134,7 +136,6 @@ export function getBranchDefaultCatalog(branchId) {
       }))
     };
   } else {
-    // Navrangpura Flagship (br-1)
     return {
       name: "Navrangpura Flagship",
       branchId: "br-1",
@@ -155,7 +156,6 @@ export function getBranchDefaultCatalog(branchId) {
 
 /**
  * Load complete branch data (all 100 sweets, KPIs) from Cloud Firestore
- * Self-healing: if Firestore has no data or < 50 sweets, seeds the complete 100 catalog!
  */
 export async function loadBranchDataFromCloud(branchId) {
   const seed = getBranchDefaultCatalog(branchId);
@@ -163,23 +163,19 @@ export async function loadBranchDataFromCloud(branchId) {
     const branchDocRef = doc(db, "branches", branchId);
     const snap = await Promise.race([
       getDoc(branchDocRef),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
     ]);
     if (snap && snap.exists && snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
       const data = snap.data();
       let branchKpis = data.kpis || seed.kpis;
-      if (branchId !== 'br-1') {
-        const hasLiveOrders = Array.isArray(data.orders) && data.orders.length > 0;
-        if (!hasLiveOrders && (!branchKpis.sales || branchKpis.sales.value === 0 || !data.hasLiveOrders)) {
-          branchKpis = seed.kpis;
-        }
-      }
+      updateStatus('synced');
       return { sweets: data.sweets, kpis: branchKpis };
     }
   } catch (error) {
     handleFirestoreError(`Load branch ${branchId}`, error);
   }
-  // Fallback to local branch snapshot first so mobile does not revert to hardcoded seed defaults!
+
+  // Fallback to local snapshot
   try {
     const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
     if (localSnap && localSnap.sweets && localSnap.sweets.length >= 50) {
@@ -190,7 +186,7 @@ export async function loadBranchDataFromCloud(branchId) {
 }
 
 /**
- * Save branch-specific sweets & stock to Cloud Firestore
+ * Save branch-specific sweets & stock directly to Cloud Firestore
  */
 export async function saveBranchSweetsToCloud(branchId, sweets) {
   updateStatus('syncing');
@@ -202,34 +198,27 @@ export async function saveBranchSweetsToCloud(branchId, sweets) {
       sweetsCount: sweets.length,
       lastUpdated: new Date().toISOString()
     }, { merge: true });
-    localStorage.setItem(`radhe_branch_${branchId}_sweets`, JSON.stringify(sweets));
     updateStatus('synced');
     return true;
   } catch (error) {
     handleFirestoreError(`Branch ${branchId} sweets sync`, error);
-    localStorage.setItem(`radhe_branch_${branchId}_sweets`, JSON.stringify(sweets));
-    updateStatus('synced');
     return false;
   }
 }
 
 /**
- * Real-time Listener for Branch Sweets Catalog & Stock
+ * Real-time Listener for Branch Sweets Catalog & Stock (Firestore)
  */
 export function subscribeToBranchSweets(branchId, callback) {
   try {
     const branchDocRef = doc(db, "branches", branchId);
     return onSnapshot(branchDocRef, (snap) => {
       if (snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
+        updateStatus('synced');
         callback(snap.data().sweets);
       }
     }, (err) => {
       handleFirestoreError('Sweets listener', err);
-      // Keep listener alive and resilient without wiping out current state
-      try {
-        const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
-        if (localSnap?.sweets) callback(localSnap.sweets);
-      } catch(_) {}
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to sweets', e);
@@ -238,13 +227,12 @@ export function subscribeToBranchSweets(branchId, callback) {
 }
 
 /**
- * Save order to Cloud Firestore (both branch-subcollection & root collection)
- * Also updates sweet stock, customer metrics, and branch KPIs/profits
+ * Save order directly to Cloud Firestore
  */
 export async function saveBranchOrderToCloud(branchId, order, currentSweets = [], allCustomers = []) {
   updateStatus('syncing');
   try {
-    // 1. Save to branch orders
+    // 1. Save to branch orders subcollection
     const branchOrderRef = doc(db, "branches", branchId, "orders", order.id);
     await setDoc(branchOrderRef, {
       ...order,
@@ -283,7 +271,7 @@ export async function saveBranchOrderToCloud(branchId, order, currentSweets = []
       await updateCustomerStatsInCloud(order.customerId, order.total, order.paymentMethod === 'Khata');
     }
 
-    // 5. Update branch KPIs, Revenue & Gross Profit in Firestore
+    // 5. Update branch KPIs & Revenue in Firestore
     await updateBranchProfitInCloud(branchId, order, currentSweets);
 
     // 6. Clear active counter checkout draft
@@ -292,14 +280,13 @@ export async function saveBranchOrderToCloud(branchId, order, currentSweets = []
     updateStatus('synced');
     return true;
   } catch (error) {
-    console.warn(`[Firebase Firestore] Order ${order.id} sync fallback:`, error.message);
-    updateStatus('synced');
+    handleFirestoreError(`Order ${order.id} sync`, error);
     return false;
   }
 }
 
 /**
- * Delete order from Cloud Firestore (both branch orders and global orders)
+ * Delete order from Cloud Firestore
  */
 export async function deleteBranchOrderFromCloud(branchId, orderId) {
   updateStatus('syncing');
@@ -311,14 +298,13 @@ export async function deleteBranchOrderFromCloud(branchId, orderId) {
     updateStatus('synced');
     return true;
   } catch (error) {
-    console.warn(`[Firebase Firestore] Delete order ${orderId} fallback:`, error.message);
-    updateStatus('synced');
+    handleFirestoreError(`Delete order ${orderId}`, error);
     return false;
   }
 }
 
 /**
- * Real-time Listener for Branch Orders
+ * Real-time Listener for Branch Orders (Firestore)
  */
 export function subscribeToBranchOrders(branchId, callback) {
   try {
@@ -330,26 +316,21 @@ export function subscribeToBranchOrders(branchId, callback) {
         orders.push(docSnap.data());
       });
       orders.sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime());
+      updateStatus('synced');
       callback(orders);
     }, (err) => {
       handleFirestoreError('Orders listener', err);
-      try {
-        const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
-        if (localSnap?.orders) callback(localSnap.orders);
-      } catch(e) {}
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to orders', e);
-    callback(branchId === 'br-1' ? initialData.orders : []);
     return () => {};
   }
 }
 
 /**
- * Save customer to Cloud Firestore (both branch-subcollection & root collection)
- * Also uploads updated roster to Firebase Cloud Storage for rock-solid cross-device persistence
+ * Save customer to Cloud Firestore
  */
-export async function saveCustomerToCloud(customer, branchId = null, allCustomers = null) {
+export async function saveCustomerToCloud(customer, branchId = null) {
   updateStatus('syncing');
   try {
     const custDocRef = doc(db, "customers", customer.id);
@@ -366,48 +347,26 @@ export async function saveCustomerToCloud(customer, branchId = null, allCustomer
         updatedAt: new Date().toISOString()
       }, { merge: true });
     }
+    updateStatus('synced');
+    return true;
   } catch (error) {
     handleFirestoreError(`Customer ${customer.id} sync`, error);
+    return false;
   }
-
-  // Backup to Firebase Cloud Storage
-  try {
-    if (allCustomers && Array.isArray(allCustomers) && allCustomers.length > 0) {
-      uploadToFirebaseStorage("customers/customers_khata.json", {
-        totalCustomers: allCustomers.length,
-        branchId: branchId || 'br-1',
-        updatedAt: new Date().toISOString(),
-        customers: allCustomers
-      });
-    }
-  } catch (_) {}
-
-  updateStatus('synced');
-  return true;
 }
 
-export async function saveBranchCustomerToCloud(branchId, customer, allCustomers = null) {
-  return saveCustomerToCloud(customer, branchId, allCustomers);
+export async function saveBranchCustomerToCloud(branchId, customer) {
+  return saveCustomerToCloud(customer, branchId);
 }
 
 export async function saveAllBranchCustomersToCloud(branchId, customers) {
-  try {
-    uploadToFirebaseStorage("customers/customers_khata.json", {
-      totalCustomers: customers.length,
-      branchId: branchId || 'br-1',
-      updatedAt: new Date().toISOString(),
-      customers
-    });
-    customers.forEach(cust => {
-      saveCustomerToCloud(cust, branchId);
-    });
-  } catch (e) {
-    console.warn('[Firebase] Save all customers failed:', e);
+  for (const cust of customers) {
+    await saveCustomerToCloud(cust, branchId);
   }
 }
 
 /**
- * Update Customer metrics (total orders, total spend, and khata balance) in Firestore
+ * Update Customer metrics in Firestore
  */
 export async function updateCustomerStatsInCloud(customerId, orderAmount, isKhataPayment) {
   if (!customerId) return;
@@ -431,13 +390,12 @@ export async function updateCustomerStatsInCloud(customerId, orderAmount, isKhat
       }, { merge: true });
     }
   } catch (e) {
-    console.warn(`[Firebase Firestore] Customer stats update fallback:`, e.message);
+    handleFirestoreError('Customer stats update', e);
   }
 }
 
 /**
- * Real-time Listener for Branch Customers Directory
- * Merges cloud changes seamlessly with baseline so no customer is lost
+ * Real-time Listener for Branch Customers Directory (Firestore)
  */
 export function subscribeToBranchCustomers(branchId, callback) {
   try {
@@ -460,26 +418,17 @@ export function subscribeToBranchCustomers(branchId, callback) {
         cloudCustomers.forEach(cc => {
           if (!merged.some(m => m.id === cc.id)) merged.push(cc);
         });
+        updateStatus('synced');
         callback(merged);
       } else {
+        updateStatus('synced');
         callback(cloudCustomers);
       }
     }, (err) => {
       handleFirestoreError(`Branch ${branchId} customers listener`, err);
-      // Fallback: try loading from Firebase Cloud Storage
-      downloadFromFirebaseStorage("customers/customers_khata.json").then(data => {
-        if (data && Array.isArray(data.customers) && data.customers.length > 0) {
-          callback(data.customers);
-        } else {
-          callback(branchId === "br-1" ? initialData.customers : []);
-        }
-      }).catch(() => {
-        callback(branchId === "br-1" ? initialData.customers : []);
-      });
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to branch customers', e);
-    callback(branchId === "br-1" ? initialData.customers : []);
     return () => {};
   }
 }
@@ -499,6 +448,7 @@ export function subscribeToCustomers(callback) {
       snapshot.forEach(docSnap => {
         customers.push(docSnap.data());
       });
+      updateStatus('synced');
       callback(customers);
     }, (err) => {
       handleFirestoreError('Customers listener', err);
@@ -510,9 +460,9 @@ export function subscribeToCustomers(callback) {
 }
 
 /**
- * Save Staff Member to Cloud Firestore & Storage
+ * Save Staff Member to Cloud Firestore
  */
-export async function saveStaffMemberToCloud(staffMember, branchId = null, allStaff = null) {
+export async function saveStaffMemberToCloud(staffMember, branchId = null) {
   updateStatus('syncing');
   try {
     const staffDocRef = doc(db, "staff", staffMember.id);
@@ -529,49 +479,27 @@ export async function saveStaffMemberToCloud(staffMember, branchId = null, allSt
         updatedAt: new Date().toISOString()
       }, { merge: true });
     }
+    updateStatus('synced');
+    return true;
   } catch (error) {
     handleFirestoreError(`Staff ${staffMember.id} sync`, error);
+    return false;
   }
-
-  try {
-    if (allStaff && Array.isArray(allStaff)) {
-      uploadToFirebaseStorage("staff/staff_roster.json", {
-        totalStaff: allStaff.length,
-        branchId: branchId || 'br-1',
-        updatedAt: new Date().toISOString(),
-        staff: allStaff
-      });
-    }
-  } catch (_) {}
-
-  updateStatus('synced');
-  return true;
 }
 
-export async function deleteStaffMemberFromCloud(staffId, branchId = null, allStaff = null) {
+export async function deleteStaffMemberFromCloud(staffId, branchId = null) {
   updateStatus('syncing');
   try {
     await deleteDoc(doc(db, "staff", staffId));
     if (branchId) {
       await deleteDoc(doc(db, "branches", branchId, "staff", staffId));
     }
+    updateStatus('synced');
+    return true;
   } catch (error) {
     handleFirestoreError(`Delete staff ${staffId}`, error);
+    return false;
   }
-
-  try {
-    if (allStaff && Array.isArray(allStaff)) {
-      uploadToFirebaseStorage("staff/staff_roster.json", {
-        totalStaff: allStaff.length,
-        branchId: branchId || 'br-1',
-        updatedAt: new Date().toISOString(),
-        staff: allStaff
-      });
-    }
-  } catch (_) {}
-
-  updateStatus('synced');
-  return true;
 }
 
 export function subscribeToBranchStaff(branchId, callback) {
@@ -586,18 +514,10 @@ export function subscribeToBranchStaff(branchId, callback) {
       snapshot.forEach(docSnap => {
         staffList.push(docSnap.data());
       });
+      updateStatus('synced');
       callback(staffList);
     }, (err) => {
       handleFirestoreError(`Branch ${branchId} staff listener`, err);
-      downloadFromFirebaseStorage("staff/staff_roster.json").then(data => {
-        if (data && Array.isArray(data.staff) && data.staff.length > 0) {
-          callback(data.staff);
-        } else {
-          callback(initialData.staff || []);
-        }
-      }).catch(() => {
-        callback(initialData.staff || []);
-      });
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to branch staff', e);
@@ -606,9 +526,9 @@ export function subscribeToBranchStaff(branchId, callback) {
 }
 
 /**
- * Save Expense to Cloud Firestore & Storage
+ * Save Expense to Cloud Firestore
  */
-export async function saveExpenseToCloud(expense, branchId = null, allExpenses = null) {
+export async function saveExpenseToCloud(expense, branchId = null) {
   updateStatus('syncing');
   try {
     const expenseDocRef = doc(db, "expenses", expense.id);
@@ -625,45 +545,27 @@ export async function saveExpenseToCloud(expense, branchId = null, allExpenses =
         updatedAt: new Date().toISOString()
       }, { merge: true });
     }
+    updateStatus('synced');
+    return true;
   } catch (error) {
     handleFirestoreError(`Expense ${expense.id} sync`, error);
+    return false;
   }
-
-  try {
-    if (allExpenses) {
-      uploadToFirebaseStorage("expenses/expenses_ledger.json", {
-        updatedAt: new Date().toISOString(),
-        expenses: allExpenses
-      });
-    }
-  } catch (_) {}
-
-  updateStatus('synced');
-  return true;
 }
 
-export async function deleteExpenseFromCloud(expenseId, branchId = null, allExpenses = null) {
+export async function deleteExpenseFromCloud(expenseId, branchId = null) {
   updateStatus('syncing');
   try {
     await deleteDoc(doc(db, "expenses", expenseId));
     if (branchId) {
       await deleteDoc(doc(db, "branches", branchId, "expenses", expenseId));
     }
+    updateStatus('synced');
+    return true;
   } catch (error) {
     handleFirestoreError(`Delete expense ${expenseId}`, error);
+    return false;
   }
-
-  try {
-    if (allExpenses) {
-      uploadToFirebaseStorage("expenses/expenses_ledger.json", {
-        updatedAt: new Date().toISOString(),
-        expenses: allExpenses
-      });
-    }
-  } catch (_) {}
-
-  updateStatus('synced');
-  return true;
 }
 
 export function subscribeToBranchExpenses(branchId, callback) {
@@ -674,14 +576,10 @@ export function subscribeToBranchExpenses(branchId, callback) {
       snapshot.forEach(docSnap => {
         expensesList.push(docSnap.data());
       });
-      callback(expensesList);
+      updateStatus('synced');
+      callback({ total: expensesList.reduce((sum, e) => sum + (e.amount || 0), 0), items: expensesList });
     }, (err) => {
       handleFirestoreError(`Branch ${branchId} expenses listener`, err);
-      downloadFromFirebaseStorage("expenses/expenses_ledger.json").then(data => {
-        if (data && data.expenses) {
-          callback(data.expenses);
-        }
-      }).catch(() => {});
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to branch expenses', e);
@@ -701,13 +599,10 @@ export async function saveBranchKpisToCloud(branchId, kpis) {
       branchId,
       updatedAt: new Date().toISOString()
     }, { merge: true });
-    localStorage.setItem(`radhe_branch_${branchId}_kpis`, JSON.stringify(kpis));
     updateStatus('synced');
     return true;
   } catch (error) {
-    console.warn(`[Firebase Firestore] Branch ${branchId} KPIs sync fallback:`, error.message);
-    localStorage.setItem(`radhe_branch_${branchId}_kpis`, JSON.stringify(kpis));
-    updateStatus('synced');
+    handleFirestoreError(`Branch ${branchId} KPIs sync`, error);
     return false;
   }
 }
@@ -750,37 +645,33 @@ export async function updateBranchProfitInCloud(branchId, newOrder, sweets = [])
     await setDoc(kpiDocRef, updatedKpis, { merge: true });
     return updatedKpis;
   } catch (e) {
-    console.warn(`[Firebase Firestore] Update profit warning:`, e.message);
+    handleFirestoreError('Update profit', e);
     return null;
   }
 }
 
 /**
- * Real-time Listener for Branch KPIs & Profits
+ * Real-time Listener for Branch KPIs & Profits (Firestore)
  */
 export function subscribeToBranchKpis(branchId, callback) {
   try {
     const kpiDocRef = doc(db, "branches", branchId, "kpis", "today");
     return onSnapshot(kpiDocRef, (snap) => {
       if (snap.exists()) {
+        updateStatus('synced');
         callback(snap.data());
       }
     }, (err) => {
       handleFirestoreError('KPIs listener', err);
-      const seed = getBranchDefaultCatalog(branchId);
-      callback(seed.kpis);
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to KPIs', e);
-    const seed = getBranchDefaultCatalog(branchId);
-    callback(seed.kpis);
     return () => {};
   }
 }
 
 /**
- * Live Active Checkout Details (Draft ticket / Counter state) in Firestore
- * Syncs active cart, selected customer, discount in real-time across terminals
+ * Live Active Checkout Details in Firestore
  */
 let checkoutSyncTimer = null;
 export function saveActiveCheckoutToCloud(branchId, checkoutData) {
@@ -823,6 +714,7 @@ export function subscribeToActiveCheckout(branchId, callback) {
     const checkoutRef = doc(db, "branches", branchId, "activeCheckout", "current");
     return onSnapshot(checkoutRef, (snap) => {
       if (snap.exists()) {
+        updateStatus('synced');
         callback(snap.data());
       }
     }, (err) => {
@@ -834,181 +726,54 @@ export function subscribeToActiveCheckout(branchId, callback) {
   }
 }
 
-// Cloud Storage REST Endpoints
-const BUCKET = firebaseConfig.storageBucket || "radhesweets0.firebasestorage.app";
-const BASE_STORAGE_URL = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o`;
-
 /**
- * Upload JSON payload or Buffer to Firebase Cloud Storage via REST
- */
-export async function uploadToFirebaseStorage(storagePath, content, contentType = "application/json") {
-  const encodedName = encodeURIComponent(storagePath);
-  const uploadUrl = `${BASE_STORAGE_URL}?uploadType=media&name=${encodedName}`;
-  const body = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
-
-  try {
-    const res = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": contentType },
-      body
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodedName}?alt=media${data.downloadTokens ? `&token=${data.downloadTokens}` : ''}`;
-    }
-  } catch (err) {
-    console.warn(`[Firebase Storage] Upload failed for ${storagePath}:`, err.message);
-  }
-  return null;
-}
-
-/**
- * Upload all 100 sweets catalog to Firebase Cloud Storage
- */
-export async function uploadAllSweetsToStorage(sweets) {
-  return await uploadToFirebaseStorage("sweets/catalog_100_sweets.json", {
-    title: "Radhe Sweets Master Confectionery Catalog",
-    totalCount: sweets.length,
-    updatedAt: new Date().toISOString(),
-    sweets
-  });
-}
-
-/**
- * Upload individual order to Firebase Cloud Storage
- */
-export async function uploadOrderToStorage(order) {
-  await uploadToFirebaseStorage(`orders/items/${order.id}.json`, order);
-  return true;
-}
-
-/**
- * Upload performance analytics & KPIs to Firebase Cloud Storage
- */
-export async function uploadPerformanceToStorage(analytics, kpis) {
-  return await uploadToFirebaseStorage("performance/analytics_and_kpis.json", {
-    title: "Radhe Sweets Store Performance & Financial Analytics",
-    syncedAt: new Date().toISOString(),
-    kpis,
-    analytics
-  });
-}
-
-/**
- * One-Click Full ERP Cloud Sync to Firebase Storage & Firestore
+ * One-Click Full ERP Cloud Sync directly into Cloud Firestore
  */
 export async function syncAllToFirebaseCloud(state) {
   updateStatus('syncing');
   const tasks = [];
-  
-  // 1. Sweets Catalog (All 100 sweets into Firestore & Storage)
+  const branchId = state.currentBranchId || 'br-1';
+
+  // 1. Sweets Catalog (All 100 sweets directly to Firestore)
   if (state.sweets && state.sweets.length > 0) {
-    tasks.push(uploadAllSweetsToStorage(state.sweets));
-    tasks.push(saveBranchSweetsToCloud(state.currentBranchId || 'br-1', state.sweets));
+    tasks.push(saveBranchSweetsToCloud(branchId, state.sweets));
   }
 
-  // 2. Orders into Firestore & Storage
+  // 2. Orders into Firestore
   if (state.orders && state.orders.length > 0) {
-    tasks.push(uploadToFirebaseStorage("orders/all_orders.json", {
-      totalOrders: state.orders.length,
-      updatedAt: new Date().toISOString(),
-      orders: state.orders
-    }));
-    state.orders.slice(0, 15).forEach(order => {
-      tasks.push(saveBranchOrderToCloud(state.currentBranchId || 'br-1', order, state.sweets, state.customers));
+    state.orders.slice(0, 30).forEach(order => {
+      tasks.push(saveBranchOrderToCloud(branchId, order, state.sweets, state.customers));
     });
   }
 
-  // 3. Performance & KPIs
-  tasks.push(uploadPerformanceToStorage(state.analytics, state.kpis));
-  tasks.push(saveBranchKpisToCloud(state.currentBranchId || 'br-1', state.kpis));
+  // 3. Performance & KPIs into Firestore
+  if (state.kpis) {
+    tasks.push(saveBranchKpisToCloud(branchId, state.kpis));
+  }
 
-  // 4. Staff & Payroll
+  // 4. Staff & Payroll into Firestore
   if (state.staff && state.staff.length > 0) {
-    tasks.push(uploadToFirebaseStorage("staff/staff_roster.json", {
-      totalStaff: state.staff.length,
-      updatedAt: new Date().toISOString(),
-      staff: state.staff
-    }));
-  }
-
-  // 5. Customers & Khata
-  if (state.customers && state.customers.length > 0) {
-    tasks.push(uploadToFirebaseStorage("customers/customers_khata.json", {
-      totalCustomers: state.customers.length,
-      updatedAt: new Date().toISOString(),
-      customers: state.customers
-    }));
-    state.customers.forEach(cust => {
-      tasks.push(saveCustomerToCloud(cust));
+    state.staff.forEach(member => {
+      tasks.push(saveStaffMemberToCloud(member, branchId));
     });
   }
 
-  // 6. Expenses
-  if (state.expenses) {
-    tasks.push(uploadToFirebaseStorage("expenses/expenses_ledger.json", {
-      updatedAt: new Date().toISOString(),
-      expenses: state.expenses
-    }));
+  // 5. Customers & Khata into Firestore
+  if (state.customers && state.customers.length > 0) {
+    state.customers.forEach(cust => {
+      tasks.push(saveCustomerToCloud(cust, branchId));
+    });
   }
 
-  // 7. Global Snapshot Manifest
-  tasks.push(uploadToFirebaseStorage("manifest/radhe_sweets_global_backup.json", {
-    appName: "Radhe Sweets Shop Manager & Live Kitchen Console",
-    syncedAt: new Date().toISOString(),
-    sweetsCount: state.sweets?.length || 0,
-    ordersCount: state.orders?.length || 0,
-    staffCount: state.staff?.length || 0,
-    customersCount: state.customers?.length || 0,
-    branchId: state.currentBranchId || 'br-1',
-    kpis: state.kpis
-  }));
+  // 6. Expenses into Firestore
+  if (state.expenses && Array.isArray(state.expenses.items)) {
+    state.expenses.items.forEach(exp => {
+      tasks.push(saveExpenseToCloud(exp, branchId));
+    });
+  }
 
   const results = await Promise.allSettled(tasks);
   const successCount = results.filter(r => r.status === 'fulfilled').length;
   updateStatus('synced');
   return { success: true, count: successCount };
 }
-
-/**
- * Download JSON file directly from Firebase Cloud Storage via REST
- */
-export async function downloadFromFirebaseStorage(storagePath) {
-  const encodedName = encodeURIComponent(storagePath);
-  const url = `${BASE_STORAGE_URL}/${encodedName}?alt=media`;
-  try {
-    const res = await fetch(url);
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    // optional / silent fallback
-  }
-  return null;
-}
-
-/**
- * Load complete cloud snapshot from Firebase Storage
- */
-export async function loadCloudDataSnapshot(branchId = 'br-1') {
-  try {
-    const [sweetsData, customersData, ordersData, staffData, expensesData] = await Promise.allSettled([
-      downloadFromFirebaseStorage("sweets/catalog_100_sweets.json"),
-      downloadFromFirebaseStorage("customers/customers_khata.json"),
-      downloadFromFirebaseStorage("orders/all_orders.json"),
-      downloadFromFirebaseStorage("staff/staff_roster.json"),
-      downloadFromFirebaseStorage("expenses/expenses_ledger.json")
-    ]);
-
-    return {
-      sweets: sweetsData.status === 'fulfilled' && sweetsData.value?.sweets ? sweetsData.value.sweets : null,
-      customers: customersData.status === 'fulfilled' && customersData.value?.customers ? customersData.value.customers : null,
-      orders: ordersData.status === 'fulfilled' && ordersData.value?.orders ? ordersData.value.orders : null,
-      staff: staffData.status === 'fulfilled' && staffData.value?.staff ? staffData.value.staff : null,
-      expenses: expensesData.status === 'fulfilled' && expensesData.value?.expenses ? expensesData.value.expenses : null
-    };
-  } catch (e) {
-    return null;
-  }
-}
-

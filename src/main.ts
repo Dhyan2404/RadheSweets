@@ -9,7 +9,6 @@ import {
   saveBranchCustomerToCloud,
   saveAllBranchCustomersToCloud,
   loadBranchDataFromCloud,
-  uploadOrderToStorage,
   syncAllToFirebaseCloud,
   subscribeToBranchOrders,
   subscribeToCustomers,
@@ -25,7 +24,6 @@ import {
   subscribeToActiveCheckout,
   saveActiveCheckoutToCloud,
   clearActiveCheckoutInCloud,
-  loadCloudDataSnapshot,
   firestoreLiveState,
   onFirestoreStatusChange,
   getBranchDefaultCatalog
@@ -2529,7 +2527,6 @@ function attachEventListeners() {
       // Save branch snapshot locally & to Cloud Firestore
       saveBranchSnapshot(state.currentBranchId);
       saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers);
-      uploadOrderToStorage(newOrder);
       saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
       saveBranchKpisToCloud(state.currentBranchId, state.kpis);
       clearActiveCheckoutInCloud(state.currentBranchId);
@@ -4692,7 +4689,6 @@ function bindStorefrontEvents() {
 
     saveBranchSnapshot(state.currentBranchId);
     saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers);
-    uploadOrderToStorage(newOrder);
     saveBranchKpisToCloud(state.currentBranchId, state.kpis);
 
     // Clear cart and close modal
@@ -5036,39 +5032,6 @@ function initApp() {
     }
   }).catch(() => {});
 
-  // 4. Initial Sync with Cloud Storage (Customers, Orders, Sweets, Staff, Expenses)
-  loadCloudDataSnapshot(state.currentBranchId).then((cloudSnapshot: any) => {
-    if (!cloudSnapshot) return;
-    let hasCloudUpdate = false;
-    if (cloudSnapshot.customers && Array.isArray(cloudSnapshot.customers) && cloudSnapshot.customers.length > 0) {
-      if (JSON.stringify(cloudSnapshot.customers) !== JSON.stringify(state.customers)) {
-        state.customers = cloudSnapshot.customers;
-        hasCloudUpdate = true;
-      }
-    }
-    if (cloudSnapshot.staff && Array.isArray(cloudSnapshot.staff) && cloudSnapshot.staff.length > 0) {
-      if (JSON.stringify(cloudSnapshot.staff) !== JSON.stringify(state.staff)) {
-        state.staff = cloudSnapshot.staff;
-        hasCloudUpdate = true;
-      }
-    }
-    if (cloudSnapshot.orders && Array.isArray(cloudSnapshot.orders) && cloudSnapshot.orders.length > 0) {
-      if (JSON.stringify(cloudSnapshot.orders) !== JSON.stringify(state.orders)) {
-        state.orders = cloudSnapshot.orders;
-        hasCloudUpdate = true;
-      }
-    }
-    if (cloudSnapshot.expenses && cloudSnapshot.expenses.items) {
-      if (JSON.stringify(cloudSnapshot.expenses) !== JSON.stringify(state.expenses)) {
-        state.expenses = cloudSnapshot.expenses;
-        hasCloudUpdate = true;
-      }
-    }
-    if (hasCloudUpdate && shouldBackgroundSyncRender()) {
-      saveState();
-      renderApp();
-    }
-  }).catch(() => {});
 
   // 5. Multi-Tab & Device Auto-Sync on Tab Focus
   window.addEventListener('visibilitychange', () => {
