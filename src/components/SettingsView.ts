@@ -115,42 +115,119 @@ export function renderSettingsView(state: any) {
         </div>
       </section>
 
-      <!-- 2. Active Branch Location Selector -->
-      <section class="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
+      <!-- 2. Active Branch Network & Multi-Location CRUD -->
+      <section class="bg-[var(--bg-surface)] p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3">
           <div>
-            <h3 class="text-sm sm:text-base font-extrabold text-[var(--text-main)] flex items-center gap-2">
-              <span>🏢</span>
-              <span>Active Branch Location</span>
-            </h3>
-            <p class="text-xs text-[var(--text-light)]">Switch between Ahmedabad confectionery branches. Real-time sales and inventory will reflect this branch.</p>
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-orange-100 text-[#C86D3B] flex items-center justify-center font-bold text-sm shadow-2xs">
+                🏢
+              </span>
+              <h3 class="text-sm sm:text-base font-extrabold text-[var(--text-main)]">
+                Store Branches &amp; Cloud Network
+              </h3>
+            </div>
+            <p class="text-[11px] sm:text-xs text-[var(--text-light)] mt-0.5">
+              Add new branch stores, edit location details, or switch active branch. All 100 sweets &amp; orders isolate and sync in Cloud Firestore.
+            </p>
           </div>
-          <span class="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 self-start sm:self-auto">
-            Multi-Branch Mode
-          </span>
+          
+          <div class="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <button 
+              type="button" 
+              id="open-add-branch-modal-btn"
+              class="px-3.5 py-2 bg-gradient-to-r from-[#B25D2E] to-[#C86D3B] hover:brightness-105 active:scale-95 text-white rounded-xl text-xs font-extrabold shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <span>+</span>
+              <span>Add Branch</span>
+            </button>
+            <span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+              ${branches.length} Branches
+            </span>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          ${branches.map((b: any) => `
-            <div 
-              data-setting-select-branch="${b.id}"
-              class="p-4 rounded-2xl border cursor-pointer transition-all ${
-                b.id === currentBranchId 
-                  ? 'border-[var(--brand-primary)] bg-[var(--bg-highlight)] ring-2 ring-[var(--brand-primary)]/20 shadow-xs' 
-                  : 'border-[var(--border-color)] bg-[var(--bg-subtle)] hover:border-[var(--brand-primary)]'
-              }"
-            >
-              <div class="flex items-center justify-between">
-                <span class="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-white px-2 py-0.5 rounded border border-[var(--border-color)]">${b.code}</span>
-                ${b.id === currentBranchId 
-                  ? '<span class="text-xs text-emerald-600 font-extrabold">Active ✓</span>' 
-                  : '<span class="text-xs text-[var(--brand-primary)] font-bold">Switch →</span>'}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          ${branches.map((b: any) => {
+            const isActive = b.id === currentBranchId;
+            return `
+              <div 
+                class="p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                  isActive 
+                    ? 'border-[var(--brand-primary)] bg-[var(--bg-highlight)] ring-2 ring-[var(--brand-primary)]/20 shadow-xs' 
+                    : 'border-[var(--border-color)] bg-[var(--bg-subtle)] hover:border-[var(--brand-primary)]/50'
+                }"
+              >
+                <div>
+                  <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <span class="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-white px-2 py-0.5 rounded-lg border border-[var(--border-color)]">
+                      ${b.code || 'BR-00'}
+                    </span>
+                    ${isActive 
+                      ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">Active Store ✓</span>' 
+                      : `
+                        <button 
+                          type="button"
+                          data-setting-select-branch="${b.id}"
+                          class="px-2.5 py-1 bg-white hover:bg-orange-50 active:scale-95 text-[#C86D3B] border border-orange-200/80 rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
+                        >
+                          Switch →
+                        </button>
+                      `}
+                  </div>
+
+                  <h4 class="font-extrabold text-sm sm:text-base text-[var(--text-main)] tracking-tight">
+                    ${b.name}
+                  </h4>
+                  <p class="text-xs text-[var(--text-muted)] mt-0.5 flex items-center gap-1">
+                    <span>📍</span>
+                    <span class="line-clamp-1">${b.address || b.city || 'Ahmedabad, Gujarat'}</span>
+                  </p>
+
+                  ${b.phone || b.manager ? `
+                    <div class="mt-2 pt-2 border-t border-stone-200/50 text-[11px] text-stone-500 space-y-0.5">
+                      ${b.manager ? `<p class="flex items-center gap-1"><span>👤</span> <span>Manager: <strong>${b.manager}</strong></span></p>` : ''}
+                      ${b.phone ? `<p class="flex items-center gap-1"><span>📞</span> <span>${b.phone}</span></p>` : ''}
+                    </div>
+                  ` : ''}
+
+                  <div class="mt-2.5 pt-2 border-t border-[var(--border-color)]/70 flex items-center justify-between text-[11px] text-[var(--text-light)] font-medium">
+                    <span>Sales: ₹${(b.revenue || 0).toLocaleString()}</span>
+                    <span>Margin: ${b.margin || '34%'}</span>
+                  </div>
+                </div>
+
+                <!-- Branch Actions: Edit & Remove -->
+                <div class="mt-3 pt-2.5 border-t border-stone-200/60 flex items-center justify-end gap-1.5">
+                  <button 
+                    type="button"
+                    data-action="edit-branch"
+                    data-branch-id="${b.id}"
+                    class="px-2.5 py-1 bg-white hover:bg-stone-100 text-stone-700 active:scale-95 border border-stone-200 rounded-lg text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    title="Edit branch details"
+                  >
+                    <span>✏️</span>
+                    <span>Edit</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    data-action="delete-branch"
+                    data-branch-id="${b.id}"
+                    class="px-2.5 py-1 ${
+                      branches.length <= 1 
+                        ? 'opacity-40 cursor-not-allowed bg-stone-100 text-stone-400 border border-stone-200' 
+                        : 'bg-red-50 hover:bg-red-100 text-red-700 active:scale-95 border border-red-200 cursor-pointer'
+                    } rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1 shadow-2xs"
+                    ${branches.length <= 1 ? 'disabled title="Cannot delete the only branch"' : 'title="Delete branch from Cloud Firestore"'}
+                  >
+                    <span>🗑️</span>
+                    <span>Remove</span>
+                  </button>
+                </div>
               </div>
-              <h4 class="font-extrabold text-sm text-[var(--text-main)] mt-2">${b.name}</h4>
-              <p class="text-xs text-[var(--text-muted)]">${b.city || 'Ahmedabad'}</p>
-              <p class="text-[11px] text-[var(--text-light)] mt-2 font-medium">Revenue: ₹${(b.revenue || 0).toLocaleString()} • Margin: ${b.margin || '34%'}</p>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </section>
 

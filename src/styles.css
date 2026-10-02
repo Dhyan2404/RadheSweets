@@ -670,5 +670,33 @@ html, body {
   transform: scale(0.94);
 }
 
-
-
+/* ==========================================================================
+   Anti-Chunky Sleek Mobile Optimization
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* Prevent massive chunky card paddings on phone screens */
+  .kpi-card {
+    padding: 0.75rem !important;
+    border-radius: 1rem !important;
+  }
+  .kpi-stat-value {
+    font-size: 1.25rem !important;
+    line-height: 1.25 !important;
+  }
+  .kpi-icon-badge {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+  .spring-card {
+    border-radius: 1rem !important;
+  }
+  /* Refine inputs and buttons on mobile */
+  input, select, textarea {
+    font-size: 13px !important;
+  }
+  /* Slim down table padding on mobile */
+  th, td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}

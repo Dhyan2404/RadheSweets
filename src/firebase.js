@@ -9,6 +9,7 @@ import {
   doc, 
   setDoc, 
   getDoc, 
+  getDocs,
   deleteDoc,
   collection, 
   onSnapshot,
@@ -183,6 +184,165 @@ export function getBranchDefaultCatalog(branchId) {
       sweets: masterSweets.map(s => ({ ...s }))
     };
   }
+}
+
+/**
+ * Save branch details directly to Cloud Firestore (both branch document and metadata index)
+ * Saves EVERY detail: name, code, city, address, phone, manager, targets, revenue, margin, status, etc.
+ */
+export async function saveBranchToCloud(branch, allBranches = null) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branch.id);
+    const branchPayload = {
+      id: branch.id,
+      name: branch.name || 'Unnamed Branch',
+      code: branch.code || '',
+      city: branch.city || 'Ahmedabad',
+      address: branch.address || '',
+      phone: branch.phone || '',
+      manager: branch.manager || '',
+      revenue: Number(branch.revenue) || 0,
+      orders: Number(branch.orders) || 0,
+      margin: branch.margin || '34%',
+      targetDailyRevenue: Number(branch.targetDailyRevenue || branch.targetDailySales) || 50000,
+      targetDailySales: Number(branch.targetDailyRevenue || branch.targetDailySales) || 50000,
+      targetMargin: branch.targetMargin || '35%',
+      status: branch.status || 'Active',
+      sweetsCount: branch.sweetsCount || 100,
+      createdAt: branch.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    await setDoc(branchDocRef, branchPayload, { merge: true });
+
+    if (allBranches && Array.isArray(allBranches)) {
+      const metaRef = doc(db, "metadata", "branches");
+      await setDoc(metaRef, {
+        list: allBranches.map(b => b.id === branch.id ? { ...b, ...branchPayload } : b),
+        count: allBranches.length,
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
+    }
+
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Save branch ${branch.id}`, error);
+    return false;
+  }
+}
+
+/**
+ * Delete branch from Cloud Firestore
+ */
+export async function deleteBranchFromCloud(branchId, remainingBranches = null) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await deleteDoc(branchDocRef);
+
+    if (remainingBranches && Array.isArray(remainingBranches)) {
+      const metaRef = doc(db, "metadata", "branches");
+      await setDoc(metaRef, {
+        list: remainingBranches,
+        count: remainingBranches.length,
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
+    }
+
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Delete branch ${branchId}`, error);
+    return false;
+  }
+}
+
+/**
+ * Real-time listener for branch updates across all devices and tabs
+ * Uses Firestore collection listener for instant multi-device reflection
+ */
+export function subscribeToBranches(callback) {
+  try {
+    const branchesCol = collection(db, "branches");
+    return onSnapshot(branchesCol, (snapshot) => {
+      if (snapshot.empty) return;
+      const list = [];
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        list.push({
+          id: docSnap.id,
+          name: d.name || docSnap.id,
+          code: d.code || 'BR-LOC',
+          city: d.city || 'Ahmedabad',
+          address: d.address || '',
+          phone: d.phone || '',
+          manager: d.manager || '',
+          revenue: Number(d.revenue) || 0,
+          orders: Number(d.orders) || 0,
+          margin: d.margin || '34%',
+          targetDailyRevenue: Number(d.targetDailyRevenue || d.targetDailySales) || 50000,
+          targetDailySales: Number(d.targetDailyRevenue || d.targetDailySales) || 50000,
+          targetMargin: d.targetMargin || '35%',
+          status: d.status || 'Active',
+          sweetsCount: d.sweetsCount || (d.sweets ? d.sweets.length : 100),
+          createdAt: d.createdAt || null,
+          updatedAt: d.updatedAt || null
+        });
+      });
+      if (list.length > 0) {
+        updateStatus('synced');
+        callback(list);
+      }
+    }, (err) => {
+      handleFirestoreError('Branches collection listener', err);
+    });
+  } catch (e) {
+    handleFirestoreError('Failed to subscribe to branches', e);
+    return () => {};
+  }
+}
+
+/**
+ * Load all branches directly from Cloud Firestore
+ */
+export async function loadBranchesFromCloud() {
+  try {
+    const snap = await Promise.race([
+      getDocs(collection(db, "branches")),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+    if (snap && snap.docs && snap.docs.length > 0) {
+      const list = [];
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        list.push({
+          id: docSnap.id,
+          name: d.name || docSnap.id,
+          code: d.code || 'BR-LOC',
+          city: d.city || 'Ahmedabad',
+          address: d.address || '',
+          phone: d.phone || '',
+          manager: d.manager || '',
+          revenue: Number(d.revenue) || 0,
+          orders: Number(d.orders) || 0,
+          margin: d.margin || '34%',
+          targetDailyRevenue: Number(d.targetDailyRevenue || d.targetDailySales) || 50000,
+          targetDailySales: Number(d.targetDailyRevenue || d.targetDailySales) || 50000,
+          targetMargin: d.targetMargin || '35%',
+          status: d.status || 'Active',
+          sweetsCount: d.sweetsCount || (d.sweets ? d.sweets.length : 100),
+          createdAt: d.createdAt || null,
+          updatedAt: d.updatedAt || null
+        });
+      });
+      updateStatus('synced');
+      return list;
+    }
+  } catch (error) {
+    handleFirestoreError('Load branches from cloud', error);
+  }
+  return null;
 }
 
 /**

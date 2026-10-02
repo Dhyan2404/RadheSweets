@@ -7,115 +7,115 @@ export function renderMobileBottomNav(currentTab: string, state?: any) {
   const posCartCount = posCart.reduce((sum: number, it: any) => sum + (it.qty || 1), 0);
 
   return `
-    <!-- Floating Curved Mobile Island Navbar for Radhe Sweets Management ERP -->
-    <nav class="fixed bottom-3 inset-x-2 sm:inset-x-6 max-w-md mx-auto z-40 select-none pointer-events-auto md:hidden" data-purpose="mobile-management-navbar">
-      <div class="relative bg-white/95 backdrop-blur-2xl border border-[#F0ECE4] shadow-[0_16px_36px_rgba(42,31,29,0.18)] rounded-[32px] px-2 py-1.5 flex items-center justify-between">
+    <!-- Sleek Compact Mobile Island Navbar for Radhe Sweets Management ERP -->
+    <nav class="fixed bottom-2.5 inset-x-2.5 sm:inset-x-6 max-w-sm sm:max-w-md mx-auto z-40 select-none pointer-events-auto md:hidden" data-purpose="mobile-management-navbar">
+      <div class="relative bg-white/95 backdrop-blur-xl border border-stone-200/90 shadow-[0_8px_30px_rgba(42,31,29,0.12)] rounded-2xl px-1.5 py-1 flex items-center justify-between">
         
         <!-- Tab 1: Dashboard / Home -->
         <button 
           type="button"
           data-tab="dashboard" 
-          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
+          class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
             currentTab === 'dashboard' 
               ? 'text-[#C86D3B] font-bold' 
               : 'text-stone-400 hover:text-stone-700 font-medium'
           }"
           aria-label="Dashboard"
         >
-          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-            currentTab === 'dashboard' ? 'bg-orange-50 text-[#C86D3B] scale-105' : ''
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+            currentTab === 'dashboard' ? 'bg-orange-50 text-[#C86D3B]' : ''
           }">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </div>
-          <span class="text-[10px] tracking-tight mt-0.5">Home</span>
-          ${currentTab === 'dashboard' ? '<span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
+          <span class="text-[9px] tracking-tight mt-0.5">Home</span>
+          ${currentTab === 'dashboard' ? '<span class="w-1 h-1 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1 h-1 opacity-0 mt-0.5"></span>'}
         </button>
 
         <!-- Tab 2: Orders & Invoices -->
         <button 
           type="button"
           data-tab="orders" 
-          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
+          class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
             currentTab === 'orders' 
               ? 'text-[#C86D3B] font-bold' 
               : 'text-stone-400 hover:text-stone-700 font-medium'
           }"
           aria-label="Orders"
         >
-          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-            currentTab === 'orders' ? 'bg-orange-50 text-[#C86D3B] scale-105' : ''
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+            currentTab === 'orders' ? 'bg-orange-50 text-[#C86D3B]' : ''
           }">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
           </div>
-          <span class="text-[10px] tracking-tight mt-0.5">Orders</span>
-          ${currentTab === 'orders' ? '<span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
+          <span class="text-[9px] tracking-tight mt-0.5">Orders</span>
+          ${currentTab === 'orders' ? '<span class="w-1 h-1 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1 h-1 opacity-0 mt-0.5"></span>'}
         </button>
 
-        <!-- Tab 3 (CENTER): HERO ROUND FLOATING POS BUTTON -->
-        <div class="relative -mt-7 sm:-mt-8 flex flex-col items-center shrink-0 px-1">
+        <!-- Tab 3 (CENTER): SLEEK HERO FLOATING POS BUTTON -->
+        <div class="relative -mt-4 sm:-mt-5 flex flex-col items-center shrink-0 px-1">
           <button 
             type="button"
             data-tab="pos" 
-            class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#B25D2E] via-[#C86D3B] to-[#E07A5F] text-white shadow-[0_10px_25px_rgba(200,109,59,0.5)] border-[3.5px] border-[#FAF7F2] ring-4 ring-orange-200/50 flex items-center justify-center transform active:scale-90 hover:scale-105 transition-all duration-200 cursor-pointer pulse-glow relative ${
-              isPos ? 'scale-105 ring-orange-400/60' : ''
+            class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-[#B25D2E] via-[#C86D3B] to-[#E07A5F] text-white shadow-[0_6px_18px_rgba(200,109,59,0.45)] border-2 border-white ring-2 ring-orange-200/60 flex items-center justify-center transform active:scale-90 hover:scale-105 transition-all duration-200 cursor-pointer relative ${
+              isPos ? 'scale-105 ring-orange-400/80 shadow-[0_8px_20px_rgba(200,109,59,0.6)]' : ''
             }"
             aria-label="Express Sell POS"
           >
-            <svg class="w-6 h-6 text-white drop-shadow-xs" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
               <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
             ${posCartCount > 0 ? `
-              <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-emerald-500 text-white font-black text-[10px] shadow-xs">
+              <span class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-emerald-500 text-white font-black text-[9px] shadow-xs">
                 ${posCartCount}
               </span>
             ` : ''}
           </button>
-          <span class="text-[10px] font-black text-[#C86D3B] tracking-tight mt-0.5">Sell POS</span>
+          <span class="text-[9px] font-extrabold text-[#C86D3B] tracking-tight mt-0.5">Sell POS</span>
         </div>
 
         <!-- Tab 4: Customers & Khata -->
         <button 
           type="button"
           data-tab="customers" 
-          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
+          class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
             currentTab === 'customers' 
               ? 'text-[#C86D3B] font-bold' 
               : 'text-stone-400 hover:text-stone-700 font-medium'
           }"
           aria-label="Customers & Khata"
         >
-          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-            currentTab === 'customers' ? 'bg-orange-50 text-[#C86D3B] scale-105' : ''
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+            currentTab === 'customers' ? 'bg-orange-50 text-[#C86D3B]' : ''
           }">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </div>
-          <span class="text-[10px] tracking-tight mt-0.5">Khata</span>
-          ${currentTab === 'customers' ? '<span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
+          <span class="text-[9px] tracking-tight mt-0.5">Khata</span>
+          ${currentTab === 'customers' ? '<span class="w-1 h-1 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1 h-1 opacity-0 mt-0.5"></span>'}
         </button>
 
         <!-- Tab 5: All Modules / Slide-out Menu Trigger -->
         <button 
           type="button"
           id="mobile-bottom-menu-btn"
-          class="flex-1 flex flex-col items-center justify-center py-1 rounded-2xl transition-all cursor-pointer text-stone-500 hover:text-stone-800 font-medium active:scale-95"
+          class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer text-stone-500 hover:text-stone-800 font-medium active:scale-95"
           aria-label="All Modules Menu"
         >
-          <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M4 6h16M4 12h16M4 18h7" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </div>
-          <span class="text-[10px] tracking-tight mt-0.5">Menu</span>
-          <span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>
+          <span class="text-[9px] tracking-tight mt-0.5">Menu</span>
+          <span class="w-1 h-1 opacity-0 mt-0.5"></span>
         </button>
 
       </div>

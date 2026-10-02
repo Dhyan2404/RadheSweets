@@ -24,6 +24,10 @@ import {
   subscribeToActiveCheckout,
   saveActiveCheckoutToCloud,
   clearActiveCheckoutInCloud,
+  saveBranchToCloud,
+  deleteBranchFromCloud,
+  subscribeToBranches,
+  loadBranchesFromCloud,
   firestoreLiveState,
   onFirestoreStatusChange,
   getBranchDefaultCatalog,
@@ -80,6 +84,10 @@ import {
   renderRecordLeaveModal, 
   renderRecordAdvanceModal 
 } from './components/StaffView.ts';
+import { 
+  renderAddBranchModal, 
+  renderEditBranchModal 
+} from './components/BranchModals.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 
@@ -213,6 +221,11 @@ const state = {
   showRecordLeaveModal: false,
   showRecordAdvanceModal: false,
   advanceStaffId: null,
+
+  // Branch Modals
+  showAddBranchModal: false,
+  showEditBranchModal: false,
+  editingBranch: null,
 
   // Customer Storefront State
   userCart: stored?.userCart || [],
@@ -760,7 +773,29 @@ export async function handleBranchSwitch(targetBranchId: string) {
 (window as any).appState = state;
 
 function setupGlobalFirestoreListeners() {
-  // Branch-specific listeners are configured per active branch in setupBranchFirestoreListeners
+  // Real-time branch network subscription across all devices & browser tabs
+  subscribeToBranches((cloudBranches: any[]) => {
+    if (cloudBranches && Array.isArray(cloudBranches) && cloudBranches.length > 0) {
+      const currentJson = JSON.stringify(state.branches.map((b: any) => ({
+        id: b.id, name: b.name, code: b.code, city: b.city, address: b.address,
+        phone: b.phone, manager: b.manager, revenue: b.revenue, margin: b.margin
+      })));
+      const incomingJson = JSON.stringify(cloudBranches.map((b: any) => ({
+        id: b.id, name: b.name, code: b.code, city: b.city, address: b.address,
+        phone: b.phone, manager: b.manager, revenue: b.revenue, margin: b.margin
+      })));
+      if (currentJson !== incomingJson) {
+        state.branches = cloudBranches;
+        if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
+          state.currentBranchId = state.branches[0].id;
+        }
+        saveState();
+        if (shouldBackgroundSyncRender()) {
+          renderApp();
+        }
+      }
+    }
+  });
 }
 
 // Dynamic SEO Metadata & URL Hash Synchronization for Google Crawling
@@ -853,7 +888,7 @@ export function renderApp() {
         <!-- Main Content Area with Persistent Scroll Container -->
         <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto w-full max-w-[100vw] overflow-x-hidden">
           <!-- Active Tab Body -->
-          <main id="main-tab-content" class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8">
+          <main id="main-tab-content" class="flex-1 p-2.5 sm:p-5 md:p-8 space-y-3 sm:space-y-6 pb-20 sm:pb-24 md:pb-8">
             ${renderTabContent()}
           </main>
         </div>
@@ -1000,6 +1035,8 @@ function renderModals() {
     ${state.showPaySalaryModal ? renderPaySalaryModal(state) : ''}
     ${state.showRecordLeaveModal ? renderRecordLeaveModal(state) : ''}
     ${state.showRecordAdvanceModal ? renderRecordAdvanceModal(state) : ''}
+    ${state.showAddBranchModal ? renderAddBranchModal(state) : ''}
+    ${state.showEditBranchModal ? renderEditBranchModal(state) : ''}
   `;
 }
 
@@ -1482,6 +1519,199 @@ function attachEventListeners() {
 
   document.getElementById('branch-select')?.addEventListener('change', (e: any) => {
     handleBranchSwitch(e.target.value);
+  });
+
+  // ==========================================
+  // Branch Management CRUD: Add, Edit, Delete with Cloud Firestore Sync
+  // ==========================================
+  // 1. Open Add Branch Modal
+  document.getElementById('open-add-branch-modal-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    state.showAddBranchModal = true;
+    renderApp();
+  });
+
+  // Close Add Branch Modal
+  const closeAddBranch = () => {
+    state.showAddBranchModal = false;
+    renderApp();
+  };
+  document.getElementById('close-add-branch-modal-btn')?.addEventListener('click', closeAddBranch);
+  document.getElementById('cancel-add-branch-modal-btn')?.addEventListener('click', closeAddBranch);
+  document.getElementById('add-branch-modal-backdrop')?.addEventListener('click', (e) => {
+    if (e.target && (e.target as HTMLElement).id === 'add-branch-modal-backdrop') {
+      closeAddBranch();
+    }
+  });
+
+  // Submit Add Branch Form
+  document.getElementById('add-branch-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const branchName = (formData.get('branchName') as string || '').trim();
+    const branchCode = (formData.get('branchCode') as string || '').trim().toUpperCase();
+    const branchCity = (formData.get('branchCity') as string || 'Ahmedabad').trim();
+    const branchAddress = (formData.get('branchAddress') as string || '').trim();
+    const branchPhone = (formData.get('branchPhone') as string || '').trim();
+    const branchManager = (formData.get('branchManager') as string || '').trim();
+    const branchTargetRevenue = parseFloat(formData.get('branchTargetRevenue') as string || '45000') || 45000;
+    const branchMargin = (formData.get('branchMargin') as string || '34.0%').trim();
+
+    if (!branchName) {
+      showToast('Please enter a branch store name', 'warning');
+      return;
+    }
+
+    const newBranchId = `br-${Date.now().toString(36)}`;
+    const newBranch = {
+      id: newBranchId,
+      name: branchName,
+      code: branchCode || `BR-${Math.floor(10 + Math.random() * 90)}`,
+      city: branchCity,
+      address: branchAddress,
+      phone: branchPhone,
+      manager: branchManager,
+      revenue: 0,
+      orders: 0,
+      margin: branchMargin,
+      targetDailyRevenue: branchTargetRevenue,
+      targetDailySales: branchTargetRevenue,
+      targetMargin: branchMargin,
+      status: 'Active',
+      sweetsCount: 100,
+      createdAt: new Date().toISOString()
+    };
+
+    state.branches.push(newBranch);
+    state.showAddBranchModal = false;
+    saveState();
+    renderApp();
+    showToast(`Adding ${branchName} and syncing 100 sweets to Cloud Firestore...`, 'info');
+
+    // Initialize 100 sweets catalog for new branch in Firestore
+    const defaultCatalog = getBranchDefaultCatalog(newBranchId);
+    saveBranchSnapshot(newBranchId);
+
+    // Save every detail to Cloud Firestore
+    await Promise.allSettled([
+      saveBranchToCloud(newBranch, state.branches),
+      saveBranchSweetsToCloud(newBranchId, defaultCatalog.sweets)
+    ]);
+
+    saveState();
+    renderApp();
+    showToast(`Branch "${branchName}" active in Cloud Firestore across all devices!`, 'success');
+  });
+
+  // 2. Open Edit Branch Modal
+  document.querySelectorAll('[data-action="edit-branch"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const branchId = btn.getAttribute('data-branch-id');
+      const branch = state.branches.find((b: any) => b.id === branchId);
+      if (branch) {
+        state.editingBranch = { ...branch };
+        state.showEditBranchModal = true;
+        renderApp();
+      }
+    });
+  });
+
+  // Close Edit Branch Modal
+  const closeEditBranch = () => {
+    state.showEditBranchModal = false;
+    state.editingBranch = null;
+    renderApp();
+  };
+  document.getElementById('close-edit-branch-modal-btn')?.addEventListener('click', closeEditBranch);
+  document.getElementById('cancel-edit-branch-modal-btn')?.addEventListener('click', closeEditBranch);
+  document.getElementById('edit-branch-modal-backdrop')?.addEventListener('click', (e) => {
+    if (e.target && (e.target as HTMLElement).id === 'edit-branch-modal-backdrop') {
+      closeEditBranch();
+    }
+  });
+
+  // Submit Edit Branch Form
+  document.getElementById('edit-branch-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const branchId = formData.get('branchId') as string;
+    const branchName = (formData.get('branchName') as string || '').trim();
+    const branchCode = (formData.get('branchCode') as string || '').trim().toUpperCase();
+    const branchCity = (formData.get('branchCity') as string || 'Ahmedabad').trim();
+    const branchAddress = (formData.get('branchAddress') as string || '').trim();
+    const branchPhone = (formData.get('branchPhone') as string || '').trim();
+    const branchManager = (formData.get('branchManager') as string || '').trim();
+    const branchTargetRevenue = parseFloat(formData.get('branchTargetRevenue') as string || '50000') || 50000;
+    const branchMargin = (formData.get('branchMargin') as string || '34.0%').trim();
+
+    const targetBranch = state.branches.find((b: any) => b.id === branchId);
+    if (!targetBranch) return;
+
+    targetBranch.name = branchName || targetBranch.name;
+    targetBranch.code = branchCode || targetBranch.code;
+    targetBranch.city = branchCity;
+    targetBranch.address = branchAddress;
+    targetBranch.phone = branchPhone;
+    targetBranch.manager = branchManager;
+    targetBranch.targetDailyRevenue = branchTargetRevenue;
+    targetBranch.targetDailySales = branchTargetRevenue;
+    targetBranch.margin = branchMargin;
+    targetBranch.targetMargin = branchMargin;
+    targetBranch.updatedAt = new Date().toISOString();
+
+    state.showEditBranchModal = false;
+    state.editingBranch = null;
+    saveState();
+    renderApp();
+    showToast(`Saving ${branchName} details to Cloud Firestore...`, 'info');
+
+    await saveBranchToCloud(targetBranch, state.branches);
+    saveState();
+    renderApp();
+    showToast(`Branch "${branchName}" updated globally in Cloud Firestore!`, 'success');
+  });
+
+  // 3. Delete Branch
+  document.querySelectorAll('[data-action="delete-branch"]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const branchId = btn.getAttribute('data-branch-id');
+      if (!branchId) return;
+
+      if (state.branches.length <= 1) {
+        showToast('Cannot remove the only remaining store branch!', 'warning');
+        return;
+      }
+
+      const branchToDelete = state.branches.find((b: any) => b.id === branchId);
+      const confirmMsg = `Are you sure you want to permanently delete branch "${branchToDelete?.name || branchId}" from Cloud Firestore and all devices?`;
+      if (!window.confirm(confirmMsg)) return;
+
+      // If currently active branch is deleted, switch active branch first
+      if (state.currentBranchId === branchId) {
+        const remaining = state.branches.find((b: any) => b.id !== branchId);
+        if (remaining) {
+          await handleBranchSwitch(remaining.id);
+        }
+      }
+
+      state.branches = state.branches.filter((b: any) => b.id !== branchId);
+      try {
+        localStorage.removeItem(getBranchStorageKey(branchId));
+      } catch (_) {}
+
+      saveState();
+      renderApp();
+      showToast(`Deleting branch from Cloud Firestore...`, 'info');
+
+      await deleteBranchFromCloud(branchId, state.branches);
+      saveState();
+      renderApp();
+      showToast(`Branch "${branchToDelete?.name || branchId}" permanently removed from Firestore!`, 'success');
+    });
   });
 
   // Theme Toggles
@@ -5051,6 +5281,18 @@ function initApp() {
     }
   }).catch(() => {});
 
+
+  // 4. Background Cloud Sync for branches from Cloud Firestore
+  loadBranchesFromCloud().then((cloudBranches: any) => {
+    if (cloudBranches && Array.isArray(cloudBranches) && cloudBranches.length > 0) {
+      state.branches = cloudBranches;
+      if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
+        state.currentBranchId = state.branches[0].id;
+      }
+      saveState();
+      renderApp();
+    }
+  }).catch(() => {});
 
   // 5. Multi-Tab & Device Auto-Sync on Tab Focus
   window.addEventListener('visibilitychange', () => {
