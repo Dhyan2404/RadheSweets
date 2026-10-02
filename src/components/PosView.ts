@@ -240,14 +240,14 @@ export function renderPosView(state: any) {
                     <span class="text-xs font-extrabold text-[var(--brand-primary)]">${selectedCustomer.name}</span>
                     <span class="text-[11px] font-mono text-[var(--text-muted)] font-semibold">${selectedCustomer.phone}</span>
                     <span class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.2 rounded">${selectedCustomer.tier || 'VIP'}</span>
-                    ${selectedCustomer.khataBalance > 0 ? `
-                      <span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
-                        Khata Due: ₹${selectedCustomer.khataBalance}
+                    ${selectedCustomer.id ? `
+                      <span class="text-[10px] font-black font-mono text-stone-800 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
+                        #${selectedCustomer.id.toUpperCase()}
                       </span>
                     ` : ''}
                   </div>
                 ` : `
-                  <p class="text-[11px] text-[var(--text-muted)] font-medium">Standard OTC sales. Dial customer number or search name for loyalty &amp; khata</p>
+                  <p class="text-[11px] text-[var(--text-muted)] font-medium">Standard OTC sales. Dial customer phone or search to attach Customer ID &amp; earn rewards</p>
                 `}
               </div>
             </div>

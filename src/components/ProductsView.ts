@@ -10,7 +10,10 @@ export function renderProductsView(state: any) {
     rawMaterials = [] 
   } = state;
 
-  const categories = ["All", "Sweets", "Snacks", "Beverages", "⚠️ Low Stock"];
+  const rawCats = state.categories || ["Kaju & Dry Fruit", "Ladoo", "Barfi & Peda", "Bengali & Chhena", "Desi Ghee & Fried", "Halwa", "Traditional & Milk", "Traditional & Flaky", "Traditional & Ghee", "Mawa & Khoya", "Beverages", "Snacks"];
+  const sweetCats = (sweets || []).map((s: any) => s.category).filter(Boolean);
+  const uniqueCats = Array.from(new Set([...rawCats, ...sweetCats])).filter(c => c !== 'All' && c !== '⚠️ Low Stock');
+  const categories = ["All", ...uniqueCats, "⚠️ Low Stock"];
   const isLowStockTab = productsFilterCategory === '⚠️ Low Stock' || productsFilterCategory === 'Low Stock';
 
   // Compute Live Inventory Metrics
@@ -105,10 +108,20 @@ export function renderProductsView(state: any) {
             <span>Export CSV</span>
           </button>
 
+          <!-- Manage Categories Button -->
+          <button 
+            id="open-manage-categories-modal-btn" 
+            class="px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#2A1F1D] border border-[#EFE7DE] text-xs font-bold rounded-2xl shadow-xs transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            title="Manage and create sweet categories"
+          >
+            <span class="text-sm">📁</span>
+            <span>Categories</span>
+          </button>
+
           <!-- Add Product Button -->
           <button 
             id="open-add-product-modal-btn" 
-            class="px-4 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white text-xs font-bold rounded-2xl shadow-sm transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            class="px-4 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white text-xs font-bold rounded-2xl shadow-sm transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             <span class="text-base leading-none">+</span>
             <span>Add New Sweet</span>
@@ -588,13 +601,17 @@ export function renderProductsView(state: any) {
   `;
 }
 
-// 1. Add Sweet Product Modal
-export function renderAddProductModal() {
+// 1. Add Sweet Product Modal (With Photo Upload & Dynamic Categories)
+export function renderAddProductModal(state?: any) {
+  const cats = (state?.categories && state.categories.length > 0)
+    ? state.categories.filter((c: string) => c !== 'All' && c !== '⚠️ Low Stock')
+    : ["Sweets", "Snacks", "Beverages", "Kaju & Dry Fruit", "Ladoo", "Barfi & Peda", "Bengali & Chhena", "Desi Ghee & Fried", "Halwa", "Traditional & Milk", "Traditional & Flaky", "Traditional & Ghee", "Mawa & Khoya"];
+
   return `
     <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn select-none" id="add-product-modal">
-      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-4 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp max-h-[92vh] overflow-y-auto">
         
-        <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
+        <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-3">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-2xl bg-[#FFF7ED] text-[#C86D3B] flex items-center justify-center font-bold text-lg border border-[#FED7AA]">
               🍬
@@ -604,14 +621,15 @@ export function renderAddProductModal() {
               <p class="text-xs text-[#7C7267]">Register a new confectionery item into catalog and stock ledger</p>
             </div>
           </div>
-          <button id="close-add-product-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
+          <button id="close-add-product-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors cursor-pointer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           </button>
         </div>
 
         <form id="add-product-form" class="space-y-4 text-xs">
+          <!-- Item Name -->
           <div>
-            <label class="block font-bold text-[#2A1F1D] mb-1.5">Item Name *</label>
+            <label class="block font-bold text-[#2A1F1D] mb-1.5">Sweet Item Name *</label>
             <input 
               type="text" 
               name="name" 
@@ -621,17 +639,87 @@ export function renderAddProductModal() {
             />
           </div>
 
+          <!-- Photo Customizer -->
+          <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="block font-bold text-stone-800 text-xs">Mithai Photo / Picture</label>
+              <span class="text-[10px] text-stone-500 font-semibold">Upload, URL, or Gallery</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-dashed border-amber-300 bg-white shrink-0 relative flex items-center justify-center shadow-2xs">
+                <img 
+                  id="add-sweet-preview-img" 
+                  src="/assets/sweets/sw-1.png" 
+                  alt="Preview" 
+                  class="w-full h-full object-cover"
+                />
+              </div>
+
+              <div class="flex-1 space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="px-3 py-1.5 bg-white hover:bg-amber-50 text-[#C86D3B] border border-amber-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs flex items-center gap-1.5">
+                    <span>📷</span>
+                    <span>Upload Device Photo</span>
+                    <input type="file" id="add-sweet-file-input" accept="image/*" class="hidden" />
+                  </label>
+                  <button type="button" id="add-sweet-clear-img-btn" class="px-2.5 py-1.5 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-xl text-[11px] font-semibold transition-all cursor-pointer">
+                    Reset
+                  </button>
+                </div>
+
+                <input 
+                  type="text" 
+                  name="image" 
+                  id="add-sweet-image-input" 
+                  placeholder="Or paste image URL (https://...)" 
+                  value="/assets/sweets/sw-1.png"
+                  class="w-full px-3 py-1.5 bg-white border border-[#EFE7DE] rounded-xl text-xs font-mono text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
+                />
+              </div>
+            </div>
+
+            <!-- Quick Mithai Photo Gallery Picker -->
+            <div class="pt-1 border-t border-stone-200/60">
+              <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-1">Pick From Mithai Gallery:</span>
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(num => `
+                  <button 
+                    type="button" 
+                    data-pick-gallery="/assets/sweets/sw-${num}.png"
+                    class="w-9 h-9 rounded-xl overflow-hidden border border-stone-200 hover:border-[#C86D3B] hover:scale-105 transition-all shrink-0 p-0.5 bg-white cursor-pointer shadow-2xs"
+                    title="Mithai Preset #${num}"
+                  >
+                    <img src="/assets/sweets/sw-${num}.png" class="w-full h-full object-cover rounded-lg" alt="Mithai ${num}" />
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Category & Unit -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block font-bold text-[#2A1F1D] mb-1.5">Category *</label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block font-bold text-[#2A1F1D]">Category *</label>
+                <button type="button" id="trigger-add-cat-btn" class="text-[10px] font-bold text-[#C86D3B] hover:underline cursor-pointer">+ New Category</button>
+              </div>
               <select 
                 name="category" 
+                id="add-sweet-category-select"
                 class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
-                <option value="Sweets">Sweets</option>
-                <option value="Snacks">Snacks / Namkeen</option>
-                <option value="Beverages">Beverages</option>
+                ${cats.map((cat: string) => `
+                  <option value="${cat}">${cat}</option>
+                `).join('')}
+                <option value="__NEW__">+ Add Custom Category...</option>
               </select>
+              <input 
+                type="text" 
+                id="add-sweet-custom-category-input" 
+                placeholder="Type new category name..." 
+                class="hidden w-full mt-2 px-3 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none"
+              />
             </div>
 
             <div>
@@ -644,10 +732,12 @@ export function renderAddProductModal() {
                 <option value="pcs">pcs (Pieces)</option>
                 <option value="boxes">boxes (Gift Boxes)</option>
                 <option value="litres">litres (Beverages)</option>
+                <option value="plates">plates (Snacks)</option>
               </select>
             </div>
           </div>
 
+          <!-- Price & Cost Price -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Selling Price (₹) *</label>
@@ -674,6 +764,7 @@ export function renderAddProductModal() {
             </div>
           </div>
 
+          <!-- Stock & Alert -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Opening Stock Qty *</label>
@@ -700,8 +791,16 @@ export function renderAddProductModal() {
             </div>
           </div>
 
+          <!-- Pure Ghee Badge Toggle -->
+          <div class="p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl">
+            <label class="flex items-center gap-2 cursor-pointer font-bold text-xs text-amber-950 select-none">
+              <input type="checkbox" name="isPureGhee" value="yes" checked class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" />
+              <span>✨ Certified Pure Shuddh Desi Ghee Confectionery</span>
+            </label>
+          </div>
+
           <div>
-            <label class="block font-bold text-[#2A1F1D] mb-1.5">Flavor & Ingredients Notes</label>
+            <label class="block font-bold text-[#2A1F1D] mb-1.5">Flavor &amp; Ingredients Notes</label>
             <input 
               type="text" 
               name="description" 
@@ -714,13 +813,13 @@ export function renderAddProductModal() {
             <button 
               type="button" 
               id="cancel-add-product-btn" 
-              class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
+              class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2] cursor-pointer"
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+              class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               Save Sweet Item
             </button>
@@ -731,29 +830,37 @@ export function renderAddProductModal() {
   `;
 }
 
-// 2. Edit Sweet Product Modal
-export function renderEditProductModal(sweet: any) {
+// 2. Edit Sweet Product Modal (With Photo Upload & Dynamic Categories)
+export function renderEditProductModal(sweet: any, state?: any) {
   if (!sweet) return '';
+
+  const cats = (state?.categories && state.categories.length > 0)
+    ? state.categories.filter((c: string) => c !== 'All' && c !== '⚠️ Low Stock')
+    : ["Sweets", "Snacks", "Beverages", "Kaju & Dry Fruit", "Ladoo", "Barfi & Peda", "Bengali & Chhena", "Desi Ghee & Fried", "Halwa", "Traditional & Milk", "Traditional & Flaky", "Traditional & Ghee", "Mawa & Khoya"];
+
+  const sweetImg = sweet.image || `/assets/sweets/${sweet.id}.png`;
+
   return `
     <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn select-none" id="edit-product-modal">
-      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-4 max-w-lg w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp max-h-[92vh] overflow-y-auto">
         
-        <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
+        <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-3">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-2xl bg-[#FFF7ED] text-[#C86D3B] flex items-center justify-center font-bold text-lg border border-[#FED7AA]">
               ✏️
             </div>
             <div>
               <h3 class="text-lg font-bold text-[#2A1F1D]">Edit: ${sweet.name}</h3>
-              <p class="text-xs text-[#7C7267]">Update pricing, reorder thresholds, and catalog details</p>
+              <p class="text-xs text-[#7C7267]">Update photo, pricing, categories, and catalog details</p>
             </div>
           </div>
-          <button id="close-edit-product-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors">
+          <button id="close-edit-product-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors cursor-pointer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           </button>
         </div>
 
         <form id="edit-product-form" class="space-y-4 text-xs" data-sweet-id="${sweet.id}">
+          <!-- Sweet Name -->
           <div>
             <label class="block font-bold text-[#2A1F1D] mb-1.5">Sweet Item Name *</label>
             <input 
@@ -765,6 +872,66 @@ export function renderEditProductModal(sweet: any) {
             />
           </div>
 
+          <!-- Photo Customizer -->
+          <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="block font-bold text-stone-800 text-xs">Mithai Photo / Picture</label>
+              <span class="text-[10px] text-stone-500 font-semibold">Change, Upload, or Gallery</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-dashed border-amber-300 bg-white shrink-0 relative flex items-center justify-center shadow-2xs">
+                <img 
+                  id="edit-sweet-preview-img" 
+                  src="${sweetImg}" 
+                  alt="${sweet.name}" 
+                  class="w-full h-full object-cover"
+                  onerror="this.src='/assets/sweets/sw-1.png'"
+                />
+              </div>
+
+              <div class="flex-1 space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label class="px-3 py-1.5 bg-white hover:bg-amber-50 text-[#C86D3B] border border-amber-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs flex items-center gap-1.5">
+                    <span>📷</span>
+                    <span>Upload New Photo</span>
+                    <input type="file" id="edit-sweet-file-input" accept="image/*" class="hidden" />
+                  </label>
+                  <button type="button" id="edit-sweet-reset-img-btn" data-default-src="/assets/sweets/${sweet.id}.png" class="px-2.5 py-1.5 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-xl text-[11px] font-semibold transition-all cursor-pointer">
+                    Default
+                  </button>
+                </div>
+
+                <input 
+                  type="text" 
+                  name="image" 
+                  id="edit-sweet-image-input" 
+                  placeholder="Or paste image URL (https://...)" 
+                  value="${sweetImg}" 
+                  class="w-full px-3 py-1.5 bg-white border border-[#EFE7DE] rounded-xl text-xs font-mono text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
+                />
+              </div>
+            </div>
+
+            <!-- Quick Mithai Photo Gallery Picker -->
+            <div class="pt-1 border-t border-stone-200/60">
+              <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-1">Pick From Mithai Gallery:</span>
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(num => `
+                  <button 
+                    type="button" 
+                    data-edit-pick-gallery="/assets/sweets/sw-${num}.png"
+                    class="w-9 h-9 rounded-xl overflow-hidden border border-stone-200 hover:border-[#C86D3B] hover:scale-105 transition-all shrink-0 p-0.5 bg-white cursor-pointer shadow-2xs"
+                    title="Mithai Preset #${num}"
+                  >
+                    <img src="/assets/sweets/sw-${num}.png" class="w-full h-full object-cover rounded-lg" alt="Mithai ${num}" />
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Category & Unit -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Category *</label>
@@ -772,9 +939,9 @@ export function renderEditProductModal(sweet: any) {
                 name="category" 
                 class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               >
-                <option value="Sweets" ${sweet.category === 'Sweets' ? 'selected' : ''}>Sweets</option>
-                <option value="Snacks" ${sweet.category === 'Snacks' ? 'selected' : ''}>Snacks / Namkeen</option>
-                <option value="Beverages" ${sweet.category === 'Beverages' ? 'selected' : ''}>Beverages</option>
+                ${cats.map((cat: string) => `
+                  <option value="${cat}" ${sweet.category === cat ? 'selected' : ''}>${cat}</option>
+                `).join('')}
               </select>
             </div>
 
@@ -788,10 +955,12 @@ export function renderEditProductModal(sweet: any) {
                 <option value="pcs" ${sweet.unit === 'pcs' ? 'selected' : ''}>pcs (Pieces)</option>
                 <option value="boxes" ${sweet.unit === 'boxes' ? 'selected' : ''}>boxes (Gift Boxes)</option>
                 <option value="litres" ${sweet.unit === 'litres' ? 'selected' : ''}>litres (Beverages)</option>
+                <option value="plates" ${sweet.unit === 'plates' ? 'selected' : ''}>plates (Snacks)</option>
               </select>
             </div>
           </div>
 
+          <!-- Selling Price & Cost Price -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Selling Price (₹) *</label>
@@ -818,6 +987,7 @@ export function renderEditProductModal(sweet: any) {
             </div>
           </div>
 
+          <!-- Stock & Alert -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block font-bold text-[#2A1F1D] mb-1.5">Current Stock Level *</label>
@@ -844,8 +1014,16 @@ export function renderEditProductModal(sweet: any) {
             </div>
           </div>
 
+          <!-- Pure Ghee Badge Toggle -->
+          <div class="p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl">
+            <label class="flex items-center gap-2 cursor-pointer font-bold text-xs text-amber-950 select-none">
+              <input type="checkbox" name="isPureGhee" value="yes" ${sweet.isPureGhee !== false ? 'checked' : ''} class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" />
+              <span>✨ Certified Pure Shuddh Desi Ghee Confectionery</span>
+            </label>
+          </div>
+
           <div>
-            <label class="block font-bold text-[#2A1F1D] mb-1.5">Description & Flavor Profile</label>
+            <label class="block font-bold text-[#2A1F1D] mb-1.5">Description &amp; Flavor Profile</label>
             <input 
               type="text" 
               name="description" 
@@ -858,7 +1036,7 @@ export function renderEditProductModal(sweet: any) {
             <button 
               type="button" 
               data-delete-sweet="${sweet.id}" 
-              class="px-4 py-2 text-[#DC2626] hover:bg-[#FEF2F2] rounded-xl font-bold transition-all text-xs"
+              class="px-4 py-2 text-[#DC2626] hover:bg-[#FEF2F2] rounded-xl font-bold transition-all text-xs cursor-pointer"
             >
               Delete Sweet
             </button>
@@ -867,19 +1045,105 @@ export function renderEditProductModal(sweet: any) {
               <button 
                 type="button" 
                 id="cancel-edit-product-btn" 
-                class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2]"
+                class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2] cursor-pointer"
               >
                 Cancel
               </button>
               <button 
                 type="submit" 
-                class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+                class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
                 Update Sweet
               </button>
             </div>
           </div>
         </form>
+      </div>
+    </div>
+  `;
+}
+
+// 2.5. Manage Categories Modal
+export function renderManageCategoriesModal(state: any) {
+  const rawCats = state.categories || ["Kaju & Dry Fruit", "Ladoo", "Barfi & Peda", "Bengali & Chhena", "Desi Ghee & Fried", "Halwa", "Traditional & Milk", "Traditional & Flaky", "Traditional & Ghee", "Mawa & Khoya", "Beverages", "Snacks"];
+  const sweets = state.sweets || [];
+  const sweetCats = sweets.map((s: any) => s.category).filter(Boolean);
+  const categories = Array.from(new Set([...rawCats, ...sweetCats])).filter((c: string) => c !== 'All' && c !== '⚠️ Low Stock');
+
+  return `
+    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn select-none" id="manage-categories-modal">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 space-y-5 max-w-md w-full border border-[#F0ECE4] shadow-2xl animate-scaleUp">
+        
+        <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-2xl bg-[#FFF7ED] text-[#C86D3B] flex items-center justify-center font-bold text-lg border border-[#FED7AA]">
+              📁
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-[#2A1F1D]">Manage Sweet Categories</h3>
+              <p class="text-xs text-[#7C7267]">Add new sweet categories or organize catalog tags</p>
+            </div>
+          </div>
+          <button id="close-manage-categories-btn" class="text-[#A89F95] hover:text-[#2A1F1D] p-2 hover:bg-[#FAF7F2] rounded-xl transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+          </button>
+        </div>
+
+        <!-- Add Category Form -->
+        <form id="add-category-form" class="flex gap-2">
+          <input 
+            type="text" 
+            name="newCategoryName" 
+            id="new-category-name-input"
+            required 
+            placeholder="New Category (e.g. Sugar Free Mithai)" 
+            class="flex-1 px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
+          />
+          <button 
+            type="submit" 
+            class="px-4 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap"
+          >
+            + Add
+          </button>
+        </form>
+
+        <!-- Categories List -->
+        <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+          ${categories.map((cat: string) => {
+            const count = sweets.filter((s: any) => s.category === cat).length;
+            const isDefault = ['Sweets', 'Snacks', 'Beverages'].includes(cat);
+            return `
+              <div class="flex items-center justify-between p-2.5 bg-stone-50 hover:bg-stone-100/70 border border-stone-200/80 rounded-2xl text-xs transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#C86D3B]"></span>
+                  <span class="font-bold text-stone-800">${cat}</span>
+                  <span class="text-[10px] px-2 py-0.5 bg-white border border-stone-200 rounded-full text-stone-500 font-bold">${count} items</span>
+                </div>
+                ${!isDefault && count === 0 ? `
+                  <button 
+                    type="button" 
+                    data-delete-category="${cat}"
+                    class="text-rose-500 hover:text-rose-700 text-xs p-1 hover:bg-rose-50 rounded-lg cursor-pointer"
+                    title="Delete unused category"
+                  >
+                    🗑️
+                  </button>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="pt-3 border-t border-[#F4EFE9] flex justify-end">
+          <button 
+            type="button" 
+            id="dismiss-manage-categories-btn" 
+            class="px-5 py-2 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-xl font-bold text-xs cursor-pointer hover:bg-[#FAF7F2]"
+          >
+            Done
+          </button>
+        </div>
+
       </div>
     </div>
   `;

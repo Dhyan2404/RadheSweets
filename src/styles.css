@@ -414,20 +414,168 @@ html, body {
   margin: 8px 0;
 }
 
+/* Helper for manual receipt print triggering */
+body.is-printing-receipt #app > div:not(#modals-root),
+body.is-printing-receipt #desktop-sidebar-container,
+body.is-printing-receipt #main-content-scroll-container,
+body.is-printing-receipt #mobile-nav-container,
+body.is-printing-receipt #toast-container {
+  display: none !important;
+}
+
 @media print {
-  body * {
-    visibility: hidden;
+  /* Set exact thermal receipt page bounds (80mm width standard thermal roll) */
+  @page {
+    size: 80mm auto;
+    margin: 0mm !important;
   }
-  .printable-area, .printable-area * {
-    visibility: visible;
+
+  /* Reset document and viewport - eliminate any 100vh or background layers */
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  /* Completely remove the application dashboard, catalog, navigation and toast from layout flow */
+  #app > div:not(#modals-root),
+  #desktop-sidebar-container,
+  #main-content-scroll-container,
+  #main-tab-content,
+  #mobile-nav-container,
+  #toast-container,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hide any non-receipt modal if present */
+  #modals-root > div:not(#thermal-receipt-modal) {
+    display: none !important;
+  }
+
+  /* Transform thermal receipt modal from fixed overlay to static natural flow */
+  #thermal-receipt-modal {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 80mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  #thermal-receipt-modal .modal-content {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 80mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #FFFFFF !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Hide interactive modal header, close button, and action buttons */
+  #thermal-receipt-modal .modal-content > div:first-child,
+  #thermal-receipt-modal .receipt-modal-actions,
+  #thermal-receipt-modal .mt-4.flex,
+  #thermal-receipt-modal button,
+  #close-receipt-btn,
+  #dismiss-receipt-btn,
+  #trigger-print-btn,
+  #toggle-receipt-qr-btn {
+    display: none !important;
+  }
+
+  /* Printable area and receipt formatting - prevent any page breaks */
   .printable-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .thermal-receipt {
+    display: block !important;
+    width: 100% !important;
+    max-width: 76mm !important;
+    margin: 0 auto !important;
+    padding: 4mm 2mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    color: #000000 !important;
+    background: #FFFFFF !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .thermal-receipt hr {
+    border: none !important;
+    border-top: 1px dashed #000000 !important;
+    margin: 4px 0 !important;
+  }
+
+  .thermal-receipt table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .thermal-receipt th,
+  .thermal-receipt td {
+    padding: 2px 0 !important;
+  }
+
+  .thermal-receipt-58mm {
+    max-width: 52mm !important;
+    font-size: 9.5px !important;
+    padding: 2mm 1mm !important;
+    line-height: 1.25 !important;
   }
 }
+
+.thermal-receipt-58mm {
+  max-width: 260px;
+  font-size: 11px;
+}
+
+.thermal-receipt-80mm {
+  max-width: 340px;
+  font-size: 12px;
+}
+
 
 /* Golden Floating Particles for Loading Screen */
 .golden-speck {

@@ -114,10 +114,22 @@ export function renderSidebar(currentTab) {
         </nav>
       </div>
 
-      <!-- Clean Brand Footer (Zero overflow artifacts) -->
-      <div class="mt-auto pt-4 border-t border-[#F0ECE4]/60 text-center" data-purpose="sidebar-bottom">
-        <p class="text-[11px] font-bold text-[#C86D3B]/90 tracking-wide">🙏 Jai Radhe Krishna</p>
-        <p class="text-[10px] text-stone-400 mt-0.5">Sweets &amp; Pure Ghee Mithai</p>
+      <!-- Clean Brand Footer with Sweet Moments Dessert Bowl Artwork -->
+      <div class="mt-auto pt-3 border-t border-[#F0ECE4]/80 text-center space-y-2" data-purpose="sidebar-bottom">
+        <div class="px-1">
+          <div class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-amber-50/70 via-orange-50/40 to-white p-2.5 border border-amber-200/60 shadow-xs hover:shadow-sm transition-all group">
+            <img 
+              src="/sweet_moments_dessert_bowl.png" 
+              alt="Sweet Moments Dessert Bowl" 
+              class="w-full h-auto max-h-32 object-contain mx-auto drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          </div>
+        </div>
+        <div>
+          <p class="text-[11px] font-bold text-[#C86D3B]/90 tracking-wide">🙏 Jai Radhe Krishna</p>
+          <p class="text-[10px] text-stone-400">Sweet Moments... Better Together</p>
+        </div>
       </div>
     </aside>
   `;

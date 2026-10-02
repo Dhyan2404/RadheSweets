@@ -31,7 +31,9 @@ import {
   firestoreLiveState,
   onFirestoreStatusChange,
   getBranchDefaultCatalog,
-  testFirestoreConnection
+  testFirestoreConnection,
+  saveBranchSettingsToCloud,
+  saveBranchCategoriesToCloud
 } from './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.ts';
@@ -49,7 +51,11 @@ import { initSlideCommit } from './components/SlideCommit.ts';
 import { initAllSwipeRows } from './components/SwipeRow.ts';
 import { initAllCounters } from './components/Counter.ts';
 import { renderOrderSuccessModal } from './components/OrderSuccessModal.ts';
-import { renderThermalReceiptModal } from './components/ThermalReceiptModal.ts';
+import { 
+  renderThermalReceiptModal, 
+  defaultReceiptSettings, 
+  renderReceiptSlipHtml 
+} from './components/ThermalReceiptModal.ts';
 import { renderOrdersView } from './components/OrdersView.ts';
 import { renderOrderDetailsModal } from './components/OrderDetailsModal.ts';
 import { 
@@ -63,8 +69,10 @@ import {
   renderAddProductModal, 
   renderEditProductModal, 
   renderRestockBatchModal, 
-  renderStockAdjustModal 
+  renderStockAdjustModal,
+  renderManageCategoriesModal
 } from './components/ProductsView.ts';
+import { compressImageFile } from './utils/imageCompressor.ts';
 import { renderExpensesView, renderAddExpenseModal } from './components/ExpensesView.ts';
 import { renderAnalyticsView } from './components/AnalyticsView.ts';
 import { renderProfitDetailsModal } from './components/ProfitModal.ts';
@@ -114,15 +122,21 @@ const state = {
   shopInfo: stored?.shopInfo || { ...initialData.shopInfo },
   kpis: stored?.kpis || { ...initialData.kpis },
   orderStatusCounts: stored?.orderStatusCounts || { ...initialData.orderStatusCounts },
-  sweets: ((stored?.sweets && stored.sweets.length >= 100) ? stored.sweets : [...initialData.sweets]).map((s: any) => {
+  sweets: ((stored?.sweets && stored.sweets.length > 0) ? stored.sweets : [...initialData.sweets]).map((s: any) => {
     const initMatch = initialData.sweets.find((is: any) => is.id === s.id);
     return {
       ...s,
-      name: initMatch?.name || s.name,
-      image: `/assets/sweets/${s.id}.png`,
-      fallbackImage: `/assets/sweets/${s.id}.png`
+      name: s.name || initMatch?.name || 'Mithai',
+      image: s.image || (initMatch ? `/assets/sweets/${s.id}.png` : '/assets/sweets/sw-1.png'),
+      fallbackImage: s.fallbackImage || (initMatch ? `/assets/sweets/${s.id}.png` : '/assets/sweets/sw-1.png')
     };
   }),
+  categories: stored?.categories || (initialData as any).categories || [
+    'Mawa Sweets', 'Kaju Sweets', 'Bengali Sweets', 'Pure Ghee Sweets',
+    'Dry Fruit', 'Traditional / Regional', 'Farsan & Namkeen',
+    'Bakery & Biscuits', 'Sugar Free', 'Syrup & Fried', 'Milk Sweets', 'Special Hampers'
+  ],
+  receiptSettings: stored?.receiptSettings || stored?.shopInfo?.receiptSettings || { ...defaultReceiptSettings },
   showMobileCartSheet: false,
   customers: (stored?.customers && stored.customers.length > 0)
     ? stored.customers.map((c: any) => {
@@ -202,6 +216,7 @@ const state = {
   showAddProductModal: false,
   showEditProductModal: false,
   editingSweet: null,
+  showManageCategoriesModal: false,
   showRestockBatchModal: false,
   showStockAdjustModal: false,
   showSplashModal: false,
@@ -276,7 +291,9 @@ function saveState() {
       userCart: state.userCart,
       customerName: state.customerName,
       customerPhone: state.customerPhone,
-      customerAddress: state.customerAddress
+      customerAddress: state.customerAddress,
+      categories: state.categories,
+      receiptSettings: state.receiptSettings
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     broadcastPeerSync('STATE_SAVED', toSave);
@@ -549,13 +566,19 @@ export function setupBranchFirestoreListeners(branchId: string) {
   });
   activeSubscriptions.push(unsubOrders);
 
-  // 2. Live Sweets Catalog (All 100 sweets & inventory for this branch)
-  const unsubSweets = subscribeToBranchSweets(branchId, (cloudSweets: any[]) => {
+  // 2. Live Sweets Catalog (All sweets, categories, and printer settings for this branch)
+  const unsubSweets = subscribeToBranchSweets(branchId, (cloudSweets: any[], cloudCategories?: string[], cloudSettings?: any) => {
     if (branchId !== state.currentBranchId) return;
-    if (cloudSweets && cloudSweets.length >= 50) {
+    if (cloudSweets && cloudSweets.length > 0) {
       state.sweets = cloudSweets;
+      if (cloudCategories && Array.isArray(cloudCategories) && cloudCategories.length > 0) {
+        state.categories = cloudCategories;
+      }
+      if (cloudSettings) {
+        state.receiptSettings = { ...state.receiptSettings, ...cloudSettings };
+      }
       saveState();
-      if (['pos', 'products', 'dashboard'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
+      if (['pos', 'products', 'dashboard', 'settings'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
         renderApp();
       }
     }
@@ -1019,13 +1042,14 @@ function renderModals() {
   return `
     ${state.showCheckoutModal ? renderCheckoutModal(state) : ''}
     ${state.showSuccessModal ? renderOrderSuccessModal(state.lastPlacedOrder) : ''}
-    ${state.showThermalModal ? renderThermalReceiptModal(state.activeOrder || state.lastPlacedOrder, state.shopInfo) : ''}
+    ${state.showThermalModal ? renderThermalReceiptModal(state.activeOrder || state.lastPlacedOrder, state.shopInfo, state.receiptSettings) : ''}
     ${state.showOrderDetailsModal ? renderOrderDetailsModal(state.activeOrder) : ''}
     ${state.showAddCustomerModal ? renderAddCustomerModal() : ''}
     ${state.showSettleKhataModal ? renderSettleKhataModal(state.settlingCustomer) : ''}
     ${state.showCustomerProfileModal ? renderCustomerProfileModal(state.profileCustomer, state.orders) : ''}
-    ${state.showAddProductModal ? renderAddProductModal() : ''}
-    ${state.showEditProductModal ? renderEditProductModal(state.editingSweet) : ''}
+    ${state.showAddProductModal ? renderAddProductModal(state) : ''}
+    ${state.showEditProductModal ? renderEditProductModal(state.editingSweet, state) : ''}
+    ${state.showManageCategoriesModal ? renderManageCategoriesModal(state) : ''}
     ${state.showRestockBatchModal ? renderRestockBatchModal(state) : ''}
     ${state.showStockAdjustModal ? renderStockAdjustModal(state) : ''}
     ${state.showAddExpenseModal ? renderAddExpenseModal() : ''}
@@ -2973,8 +2997,34 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.showThermalModal = false;
     renderApp();
   });
+  document.getElementById('thermal-receipt-modal')?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement)?.id === 'thermal-receipt-modal') {
+      state.showThermalModal = false;
+      renderApp();
+    }
+  });
+
   document.getElementById('trigger-print-btn')?.addEventListener('click', () => {
+    document.body.classList.add('is-printing-receipt');
     window.print();
+    setTimeout(() => {
+      document.body.classList.remove('is-printing-receipt');
+    }, 1500);
+  });
+
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('is-printing-receipt');
+  });
+
+  document.getElementById('toggle-receipt-qr-btn')?.addEventListener('click', () => {
+    const targetOrder = state.activeOrder || state.lastPlacedOrder;
+    if (targetOrder) {
+      const isUpi = String(targetOrder.paymentMethod || '').toLowerCase().includes('upi');
+      const current = targetOrder.showUpiQr !== undefined ? !!targetOrder.showUpiQr : isUpi;
+      targetOrder.showUpiQr = !current;
+      renderApp();
+      showToast(targetOrder.showUpiQr ? '📲 UPI QR code added to receipt' : 'UPI QR code removed from receipt', 'info');
+    }
   });
 
   // Orders View Handlers
@@ -3518,35 +3568,169 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.showAddProductModal = false;
     renderApp();
   });
-  document.getElementById('add-product-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'add-product-modal') {
+  document.getElementById('add-product-modal')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'add-product-modal') {
       state.showAddProductModal = false;
       renderApp();
     }
   });
 
-  document.getElementById('add-product-form')?.addEventListener('submit', (e) => {
+  // Category Manager Modal
+  document.getElementById('open-manage-categories-modal-btn')?.addEventListener('click', () => {
+    state.showManageCategoriesModal = true;
+    renderApp();
+  });
+  document.getElementById('close-manage-categories-btn')?.addEventListener('click', () => {
+    state.showManageCategoriesModal = false;
+    renderApp();
+  });
+  document.getElementById('dismiss-manage-categories-btn')?.addEventListener('click', () => {
+    state.showManageCategoriesModal = false;
+    renderApp();
+  });
+  document.getElementById('manage-categories-modal')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'manage-categories-modal') {
+      state.showManageCategoriesModal = false;
+      renderApp();
+    }
+  });
+  document.getElementById('add-category-form')?.addEventListener('submit', (e: any) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const newCat = (fd.get('newCategory') as string || '').trim();
+    if (newCat) {
+      if (!state.categories) state.categories = [];
+      if (!state.categories.includes(newCat)) {
+        state.categories.push(newCat);
+        saveBranchCategoriesToCloud(state.currentBranchId, state.categories);
+        saveState();
+        renderApp();
+        showToast(`Category "${newCat}" added!`, 'success');
+      } else {
+        showToast(`Category "${newCat}" already exists`, 'info');
+      }
+    }
+  });
+  document.querySelectorAll('[data-delete-category]').forEach(btn => {
+    btn.addEventListener('click', (e: any) => {
+      e.stopPropagation();
+      const cat = btn.getAttribute('data-delete-category');
+      if (cat && confirm(`Are you sure you want to remove category "${cat}"?`)) {
+        state.categories = (state.categories || []).filter((c: string) => c !== cat);
+        saveBranchCategoriesToCloud(state.currentBranchId, state.categories);
+        saveState();
+        renderApp();
+        showToast(`Category "${cat}" removed`, 'info');
+      }
+    });
+  });
+
+  // Dynamic custom category toggle in Add Sweet Modal
+  document.getElementById('add-sweet-category-select')?.addEventListener('change', (e: any) => {
+    const customBox = document.getElementById('add-sweet-custom-category-box');
+    if (customBox) {
+      customBox.style.display = e.target.value === 'custom' ? 'block' : 'none';
+      if (e.target.value === 'custom') {
+        (document.getElementById('add-sweet-custom-category-input') as HTMLInputElement)?.focus();
+      }
+    }
+  });
+
+  // Client-side image upload & compression for Add Product
+  document.getElementById('add-sweet-file-input')?.addEventListener('change', async (e: any) => {
+    const file = e.target?.files?.[0];
+    if (file) {
+      showToast('Compressing photo...', 'info');
+      try {
+        const compressed = await compressImageFile(file, 500, 0.82);
+        const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
+        if (preview) preview.src = compressed;
+        const urlInput = document.getElementById('add-sweet-image-url') as HTMLInputElement;
+        if (urlInput) urlInput.value = compressed;
+        showToast('✓ Photo attached & compressed!', 'success');
+      } catch (err) {
+        showToast('Could not process photo', 'error');
+      }
+    }
+  });
+
+  // URL input preview for Add Product
+  document.getElementById('add-sweet-image-url')?.addEventListener('input', (e: any) => {
+    const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
+    if (preview && e.target.value) preview.src = e.target.value;
+  });
+
+  // Gallery Picker chips for Add Product
+  document.querySelectorAll('[data-pick-gallery]').forEach(btn => {
+    btn.addEventListener('click', (e: any) => {
+      e.preventDefault();
+      const imgPath = btn.getAttribute('data-pick-gallery');
+      if (imgPath) {
+        const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
+        if (preview) preview.src = imgPath;
+        const urlInput = document.getElementById('add-sweet-image-url') as HTMLInputElement;
+        if (urlInput) urlInput.value = imgPath;
+        showToast('Preset photo selected', 'info');
+      }
+    });
+  });
+
+  // Clear Image for Add Product
+  document.getElementById('add-sweet-clear-img-btn')?.addEventListener('click', () => {
+    const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
+    if (preview) preview.src = '/assets/sweets/sw-1.png';
+    const urlInput = document.getElementById('add-sweet-image-url') as HTMLInputElement;
+    if (urlInput) urlInput.value = '';
+    const fileInput = document.getElementById('add-sweet-file-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  });
+
+  // Add Product Form Submit
+  document.getElementById('add-product-form')?.addEventListener('submit', (e: any) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const price = Number(fd.get('pricePerKg'));
     const cost = Number(fd.get('costPrice')) || Math.round(price * 0.62);
     const stock = Number(fd.get('stock') || 25);
     const minStock = Number(fd.get('minStock') || 15);
-    const name = fd.get('name');
-    const unit = fd.get('unit') || 'kg';
+    const name = ((fd.get('name') as string) || '').trim();
+    const unit = (fd.get('unit') as string) || 'kg';
+    
+    let category = (fd.get('category') as string) || 'Mawa Sweets';
+    if (category === 'custom') {
+      const customCat = ((fd.get('customCategory') as string) || '').trim();
+      if (customCat) {
+        category = customCat;
+        if (!state.categories.includes(customCat)) {
+          state.categories.push(customCat);
+          saveBranchCategoriesToCloud(state.currentBranchId, state.categories);
+        }
+      } else {
+        category = 'Mawa Sweets';
+      }
+    }
+
+    const isPureGhee = fd.get('isPureGhee') === 'on';
+    const imgUrlVal = ((fd.get('image') as string) || '').trim();
+    const previewEl = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
+    const finalImage = imgUrlVal || (previewEl ? previewEl.src : '/assets/sweets/sw-1.png');
+
     const newSweet = {
       id: `sw-${Date.now()}`,
       name: name,
       code: name.slice(0, 2).toUpperCase(),
-      category: fd.get('category'),
+      category: category,
       unit: unit,
       pricePerKg: price,
       costPrice: cost,
       stock: stock,
       minStock: minStock,
       stockStatus: stock <= minStock ? 'Low Stock' : 'In Stock',
-      badge: stock <= minStock ? 'Low Stock' : 'In Stock',
-      description: fd.get('description') || 'Freshly made confectionery item with pure ingredients.',
+      badge: isPureGhee ? 'Pure Desi Ghee' : (stock <= minStock ? 'Low Stock' : 'In Stock'),
+      isPureGhee: isPureGhee,
+      image: finalImage,
+      fallbackImage: finalImage,
+      description: (fd.get('description') as string) || 'Freshly made confectionery item with pure ingredients.',
       batchNumber: `BATCH-${Date.now().toString().slice(-6)}`
     };
     state.sweets.unshift(newSweet);
@@ -3580,35 +3764,107 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.editingSweet = null;
     renderApp();
   });
-  document.getElementById('edit-product-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'edit-product-modal') {
+  document.getElementById('edit-product-modal')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'edit-product-modal') {
       state.showEditProductModal = false;
       state.editingSweet = null;
       renderApp();
     }
   });
 
-  document.getElementById('edit-product-form')?.addEventListener('submit', (e) => {
+  // Client-side image upload & compression for Edit Product
+  document.getElementById('edit-sweet-file-input')?.addEventListener('change', async (e: any) => {
+    const file = e.target?.files?.[0];
+    if (file) {
+      showToast('Compressing photo...', 'info');
+      try {
+        const compressed = await compressImageFile(file, 500, 0.82);
+        const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
+        if (preview) preview.src = compressed;
+        const urlInput = document.getElementById('edit-sweet-image-url') as HTMLInputElement;
+        if (urlInput) urlInput.value = compressed;
+        showToast('✓ Photo attached & compressed!', 'success');
+      } catch (err) {
+        showToast('Could not process photo', 'error');
+      }
+    }
+  });
+
+  // URL input preview for Edit Product
+  document.getElementById('edit-sweet-image-url')?.addEventListener('input', (e: any) => {
+    const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
+    if (preview && e.target.value) preview.src = e.target.value;
+  });
+
+  // Gallery Picker chips for Edit Product
+  document.querySelectorAll('[data-edit-pick-gallery]').forEach(btn => {
+    btn.addEventListener('click', (e: any) => {
+      e.preventDefault();
+      const imgPath = btn.getAttribute('data-edit-pick-gallery');
+      if (imgPath) {
+        const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
+        if (preview) preview.src = imgPath;
+        const urlInput = document.getElementById('edit-sweet-image-url') as HTMLInputElement;
+        if (urlInput) urlInput.value = imgPath;
+        showToast('Preset photo selected', 'info');
+      }
+    });
+  });
+
+  // Reset Image for Edit Product
+  document.getElementById('edit-sweet-reset-img-btn')?.addEventListener('click', () => {
+    if (state.editingSweet) {
+      const orig = state.editingSweet.image || `/assets/sweets/${state.editingSweet.id}.png`;
+      const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
+      if (preview) preview.src = orig;
+      const urlInput = document.getElementById('edit-sweet-image-url') as HTMLInputElement;
+      if (urlInput) urlInput.value = orig;
+      const fileInput = document.getElementById('edit-sweet-file-input') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    }
+  });
+
+  // Edit Product Form Submit
+  document.getElementById('edit-product-form')?.addEventListener('submit', (e: any) => {
     e.preventDefault();
     const id = e.target.getAttribute('data-sweet-id');
-    const sweet = state.sweets.find(s => s.id === id);
+    const sweet = state.sweets.find((s: any) => s.id === id);
     if (sweet) {
       const fd = new FormData(e.target);
-      sweet.name = fd.get('name');
-      sweet.category = fd.get('category');
-      sweet.unit = fd.get('unit');
-      sweet.pricePerKg = Number(fd.get('pricePerKg'));
-      sweet.costPrice = Number(fd.get('costPrice'));
-      sweet.stock = Number(fd.get('stock'));
-      sweet.minStock = Number(fd.get('minStock'));
-      sweet.description = fd.get('description');
+      const name = ((fd.get('name') as string) || '').trim();
+      const category = (fd.get('category') as string) || sweet.category;
+      const unit = (fd.get('unit') as string) || sweet.unit;
+      const price = Number(fd.get('pricePerKg'));
+      const cost = Number(fd.get('costPrice'));
+      const stock = Number(fd.get('stock'));
+      const minStock = Number(fd.get('minStock'));
+      const isPureGhee = fd.get('isPureGhee') === 'on';
+      const imgUrlVal = ((fd.get('image') as string) || '').trim();
+      const previewEl = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
+      const updatedImage = imgUrlVal || (previewEl ? previewEl.src : sweet.image);
+
+      sweet.name = name || sweet.name;
+      sweet.category = category;
+      sweet.unit = unit;
+      sweet.pricePerKg = price;
+      sweet.costPrice = cost;
+      sweet.stock = stock;
+      sweet.minStock = minStock;
+      sweet.isPureGhee = isPureGhee;
+      if (isPureGhee && (!sweet.badge || sweet.badge === 'In Stock')) {
+        sweet.badge = 'Pure Desi Ghee';
+      }
+      sweet.image = updatedImage;
+      sweet.fallbackImage = updatedImage;
+      sweet.description = (fd.get('description') as string) || sweet.description;
       sweet.stockStatus = sweet.stock <= sweet.minStock ? 'Low Stock' : 'In Stock';
+      
       state.showEditProductModal = false;
       state.editingSweet = null;
       saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
       saveState();
       renderApp();
-      showToast(`Updated ${sweet.name} details!`, 'success');
+      showToast(`✓ Updated ${sweet.name} details!`, 'success');
     }
   });
 
@@ -3616,7 +3872,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-delete-sweet');
       if (confirm('Are you sure you want to remove this sweet from catalog?')) {
-        state.sweets = state.sweets.filter(s => s.id !== id);
+        state.sweets = state.sweets.filter((s: any) => s.id !== id);
         state.showEditProductModal = false;
         state.editingSweet = null;
         saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
@@ -4295,6 +4551,131 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       localStorage.removeItem(STORAGE_KEY);
       window.location.reload();
     }
+  });
+
+  // Settings: Thermal Printer & Receipt Customization Studio
+  const sampleReceiptOrder = {
+    id: 'SA00129',
+    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', 10:28 AM',
+    customerName: 'Jignesh Shah (+91 98765 67890)',
+    paymentMethod: 'UPI',
+    items: [
+      { name: 'Kaju Katli (Pure Kaju)', qty: '0.5', unit: 'kg', rate: 450, total: 225 },
+      { name: 'Gulab Jamun (Desi Ghee)', qty: '1', unit: 'kg', rate: 180, total: 180 },
+      { name: 'Motichoor Ladoo', qty: '1', unit: 'kg', rate: 160, total: 160 }
+    ],
+    subtotal: 565,
+    discount: 0,
+    total: 565,
+    cashTendered: 600,
+    changeDue: 35
+  };
+
+  function extractReceiptSettingsFromForm(): any {
+    const form = document.getElementById('receipt-settings-form') as HTMLFormElement;
+    if (!form) return state.receiptSettings || defaultReceiptSettings;
+    const fd = new FormData(form);
+    return {
+      paperSize: (fd.get('paperSize') as string) || '80mm',
+      bottomFeedLines: Number(fd.get('bottomFeedLines') || 2),
+      showHeader: fd.get('showHeader') === 'on',
+      showShopName: fd.get('showShopName') === 'on',
+      showSubName: fd.get('showSubName') === 'on',
+      showAddress: fd.get('showAddress') === 'on',
+      showPhone: fd.get('showPhone') === 'on',
+      showGstin: fd.get('showGstin') === 'on',
+      showFssai: fd.get('showFssai') === 'on',
+      customHeaderNote: ((fd.get('customHeaderNote') as string) || '').trim(),
+      showInvoiceNo: fd.get('showInvoiceNo') === 'on',
+      showDateTime: fd.get('showDateTime') === 'on',
+      showCashier: fd.get('showCashier') === 'on',
+      showCustomerName: fd.get('showCustomerName') === 'on',
+      showPaymentMode: fd.get('showPaymentMode') === 'on',
+      showRateCol: fd.get('showRateCol') === 'on',
+      showQtyCol: fd.get('showQtyCol') === 'on',
+      showTotalCol: fd.get('showTotalCol') === 'on',
+      showSubtotal: fd.get('showSubtotal') === 'on',
+      showDiscount: fd.get('showDiscount') === 'on',
+      showTaxBreakdown: fd.get('showTaxBreakdown') === 'on',
+      showCashTendered: fd.get('showCashTendered') === 'on',
+      upiQrMode: (fd.get('upiQrMode') as string) || 'auto',
+      upiQrSize: (fd.get('upiQrSize') as string) || 'medium',
+      customUpiId: ((fd.get('customUpiId') as string) || '').trim(),
+      customUpiName: ((fd.get('customUpiName') as string) || '').trim(),
+      showUpiBrandBadge: fd.get('showUpiBrandBadge') === 'on',
+      showDevotionalMotto: fd.get('showDevotionalMotto') === 'on',
+      devotionalMotto: ((fd.get('devotionalMotto') as string) || '').trim(),
+      thankYouNote: ((fd.get('thankYouNote') as string) || '').trim(),
+      customFooterNote: ((fd.get('customFooterNote') as string) || '').trim(),
+      showBarcode: fd.get('showBarcode') === 'on'
+    };
+  }
+
+  function refreshSettingsReceiptLivePreview() {
+    const previewContainer = document.getElementById('settings-receipt-live-preview');
+    if (!previewContainer) return;
+    const currentSettings = extractReceiptSettingsFromForm();
+    previewContainer.innerHTML = renderReceiptSlipHtml(sampleReceiptOrder, state.shopInfo, currentSettings);
+  }
+
+  // Quick Preset Buttons
+  document.querySelectorAll('[data-receipt-preset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const preset = btn.getAttribute('data-receipt-preset');
+      const form = document.getElementById('receipt-settings-form') as HTMLFormElement;
+      if (!form) return;
+      if (preset === 'standard-80') {
+        const paperSel = form.querySelector('[name="paperSize"]') as HTMLSelectElement;
+        if (paperSel) paperSel.value = '80mm';
+        const qrSel = form.querySelector('[name="upiQrMode"]') as HTMLSelectElement;
+        if (qrSel) qrSel.value = 'auto';
+        const qrSize = form.querySelector('[name="upiQrSize"]') as HTMLSelectElement;
+        if (qrSize) qrSize.value = 'medium';
+        const feed = form.querySelector('[name="bottomFeedLines"]') as HTMLSelectElement;
+        if (feed) feed.value = '2';
+      } else if (preset === 'compact-58') {
+        const paperSel = form.querySelector('[name="paperSize"]') as HTMLSelectElement;
+        if (paperSel) paperSel.value = '58mm';
+        const qrSel = form.querySelector('[name="upiQrMode"]') as HTMLSelectElement;
+        if (qrSel) qrSel.value = 'auto';
+        const qrSize = form.querySelector('[name="upiQrSize"]') as HTMLSelectElement;
+        if (qrSize) qrSize.value = 'small';
+        const feed = form.querySelector('[name="bottomFeedLines"]') as HTMLSelectElement;
+        if (feed) feed.value = '1';
+      } else if (preset === 'always-qr') {
+        const qrSel = form.querySelector('[name="upiQrMode"]') as HTMLSelectElement;
+        if (qrSel) qrSel.value = 'always';
+        const qrSize = form.querySelector('[name="upiQrSize"]') as HTMLSelectElement;
+        if (qrSize) qrSize.value = 'medium';
+      }
+      refreshSettingsReceiptLivePreview();
+      showToast(`Preset "${preset}" applied to preview`, 'info');
+    });
+  });
+
+  const receiptSettingsForm = document.getElementById('receipt-settings-form');
+  if (receiptSettingsForm) {
+    receiptSettingsForm.addEventListener('input', refreshSettingsReceiptLivePreview);
+    receiptSettingsForm.addEventListener('change', refreshSettingsReceiptLivePreview);
+    receiptSettingsForm.addEventListener('submit', (e: any) => {
+      e.preventDefault();
+      const updatedSettings = extractReceiptSettingsFromForm();
+      state.receiptSettings = updatedSettings;
+      if (!state.shopInfo) state.shopInfo = {};
+      state.shopInfo.receiptSettings = updatedSettings;
+      saveBranchSettingsToCloud(state.currentBranchId, updatedSettings);
+      saveState();
+      renderApp();
+      showToast('✓ Thermal POS printer & receipt customization saved to Cloud!', 'success');
+    });
+  }
+
+  // Test Print Receipt Button
+  document.getElementById('test-print-receipt-btn')?.addEventListener('click', () => {
+    state.activeOrder = sampleReceiptOrder;
+    state.showThermalModal = true;
+    renderApp();
+    showToast('Opening Thermal Receipt Print Preview...', 'info');
   });
 
   // Banner & Catalog Navigation Shortcuts

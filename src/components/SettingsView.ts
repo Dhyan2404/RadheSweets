@@ -2,6 +2,7 @@
 // Tailored for Radhe Sweets Ahmedabad with full mobile and desktop responsiveness
 
 import { firestoreLiveState } from '../firebase.js';
+import { renderReceiptSlipHtml, defaultReceiptSettings } from './ThermalReceiptModal.ts';
 
 export function renderSettingsView(state: any) {
   const { 
@@ -9,13 +10,40 @@ export function renderSettingsView(state: any) {
     userRole = 'SUPER_ADMIN', 
     auditLogs = [], 
     branches = [], 
-    currentBranchId = 'br-1' 
+    currentBranchId = 'br-1',
+    receiptSettings: stateReceiptSettings = {}
   } = state;
 
   const currentUpiId = shopInfo.upiId || 'radhesweets@oksbi';
   const currentUpiName = shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
   const testQrData = `upi://pay?pa=${encodeURIComponent(currentUpiId)}&pn=${encodeURIComponent(currentUpiName)}&am=100&cu=INR`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(testQrData)}`;
+
+  const receiptSettings = {
+    ...defaultReceiptSettings,
+    ...(shopInfo.receiptSettings || {}),
+    ...stateReceiptSettings
+  };
+
+  const sampleOrder = {
+    id: 'SA00129',
+    date: '25 Sep 2026, 10:28 AM',
+    customerName: 'Jignesh Shah (+91 98765 67890)',
+    paymentMethod: 'UPI',
+    items: [
+      { name: 'Kaju Katli (Pure Kaju)', qty: '0.5', unit: 'kg', rate: 450, total: 225 },
+      { name: 'Gulab Jamun (Desi Ghee)', qty: '1', unit: 'kg', rate: 180, total: 180 },
+      { name: 'Motichoor Ladoo', qty: '1', unit: 'kg', rate: 160, total: 160 }
+    ],
+    subtotal: 565,
+    discount: 0,
+    total: 565,
+    cashTendered: 600,
+    changeDue: 35
+  };
+
+  const liveReceiptHtml = renderReceiptSlipHtml(sampleOrder, shopInfo, receiptSettings);
+
 
   return `
     <div class="space-y-6 max-w-4xl mx-auto pb-12" data-purpose="settings-view">
@@ -468,6 +496,338 @@ export function renderSettingsView(state: any) {
             </button>
           </div>
         </form>
+      </section>
+
+      <!-- 3.5. Pro-Level Thermal POS Printer & Receipt Customization Studio -->
+      <section class="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-6" id="printer-customizer-section">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-xl bg-stone-900 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                🖨️
+              </span>
+              <h3 class="text-base sm:text-lg font-black text-[var(--text-main)]">
+                Thermal POS Printer &amp; Receipt Customization (Pro Level)
+              </h3>
+            </div>
+            <p class="text-xs text-[var(--text-light)] mt-1">
+              Customize every detail printed on the thermal bill slip: paper size (80mm / 58mm), headers, taxes, UPI QR scannability, tear-off feed, and devotional mottos.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              id="test-print-receipt-btn"
+              class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-black shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+            >
+              <span>🖨️ Test Print Current Bill</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          <!-- Left: Customization Controls (7 cols) -->
+          <div class="lg:col-span-7 space-y-5">
+            <form id="receipt-settings-form" class="space-y-4">
+              
+              <!-- Quick Preset Buttons -->
+              <div class="flex flex-wrap items-center gap-2 pb-1">
+                <span class="text-xs font-bold text-stone-500">Quick Presets:</span>
+                <button type="button" data-receipt-preset="standard-80" class="px-2.5 py-1 bg-stone-100 hover:bg-amber-100/70 border border-stone-200 rounded-lg text-xs font-bold text-stone-700 hover:text-amber-900 transition-all cursor-pointer">
+                  Standard 80mm
+                </button>
+                <button type="button" data-receipt-preset="compact-58" class="px-2.5 py-1 bg-stone-100 hover:bg-amber-100/70 border border-stone-200 rounded-lg text-xs font-bold text-stone-700 hover:text-amber-900 transition-all cursor-pointer">
+                  Compact 58mm
+                </button>
+                <button type="button" data-receipt-preset="always-qr" class="px-2.5 py-1 bg-stone-100 hover:bg-amber-100/70 border border-stone-200 rounded-lg text-xs font-bold text-stone-700 hover:text-amber-900 transition-all cursor-pointer">
+                  Always Show UPI QR
+                </button>
+              </div>
+
+              <!-- 1. Paper Roll & Tear-off Feed -->
+              <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-3">
+                <h4 class="text-xs font-extrabold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📄</span> Paper Roll &amp; Feed Lines
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label class="block font-bold text-stone-700 mb-1">Paper Roll Width</label>
+                    <select name="paperSize" id="setting-paper-size" class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl font-bold text-stone-800 focus:outline-none focus:border-[#C86D3B]">
+                      <option value="80mm" ${receiptSettings.paperSize === '80mm' ? 'selected' : ''}>80mm (Standard 3-inch POS Roll)</option>
+                      <option value="58mm" ${receiptSettings.paperSize === '58mm' ? 'selected' : ''}>58mm (Compact 2-inch Mobile/Bluetooth)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-stone-700 mb-1">Bottom Tear-off Blank Lines</label>
+                    <select name="bottomFeedLines" id="setting-bottom-feed" class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl font-bold text-stone-800 focus:outline-none focus:border-[#C86D3B]">
+                      <option value="0" ${Number(receiptSettings.bottomFeedLines) === 0 ? 'selected' : ''}>0 lines (Immediate Cut)</option>
+                      <option value="1" ${Number(receiptSettings.bottomFeedLines) === 1 ? 'selected' : ''}>1 blank line</option>
+                      <option value="2" ${Number(receiptSettings.bottomFeedLines) === 2 ? 'selected' : ''}>2 blank lines (Recommended)</option>
+                      <option value="3" ${Number(receiptSettings.bottomFeedLines) === 3 ? 'selected' : ''}>3 blank lines</option>
+                      <option value="4" ${Number(receiptSettings.bottomFeedLines) === 4 ? 'selected' : ''}>4 blank lines (Auto-cutter friendly)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Header & Branding Section -->
+              <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-3">
+                <h4 class="text-xs font-extrabold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🏪</span> Shop Header &amp; Branding
+                </h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showHeader" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showHeader ? 'checked' : ''}>
+                    <span>Show Header</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showShopName" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showShopName ? 'checked' : ''}>
+                    <span>Shop Name</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showSubName" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showSubName ? 'checked' : ''}>
+                    <span>Sub-Title</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showAddress" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showAddress ? 'checked' : ''}>
+                    <span>Address</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showPhone" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showPhone ? 'checked' : ''}>
+                    <span>Phone Number</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showGstin" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showGstin ? 'checked' : ''}>
+                    <span>GSTIN</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showFssai" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showFssai ? 'checked' : ''}>
+                    <span>FSSAI License</span>
+                  </label>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-600 mb-1">Custom Header Sub-Note (Optional)</label>
+                  <input 
+                    type="text" 
+                    name="customHeaderNote" 
+                    value="${receiptSettings.customHeaderNote || ''}" 
+                    placeholder="e.g. Pure Shuddh Desi Ghee Confectionery" 
+                    class="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs text-stone-900 focus:outline-none focus:border-[#C86D3B]"
+                  />
+                </div>
+              </div>
+
+              <!-- 3. Bill Meta & Items Table Columns -->
+              <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-3">
+                <h4 class="text-xs font-extrabold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📋</span> Bill Meta &amp; Table Columns
+                </h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showInvoiceNo" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showInvoiceNo ? 'checked' : ''}>
+                    <span>Invoice #</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showDateTime" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showDateTime ? 'checked' : ''}>
+                    <span>Date &amp; Time</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showCashier" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showCashier ? 'checked' : ''}>
+                    <span>Cashier Name</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showCustomerName" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showCustomerName ? 'checked' : ''}>
+                    <span>Customer Name</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showPaymentMode" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showPaymentMode ? 'checked' : ''}>
+                    <span>Payment Mode</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showRateCol" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showRateCol ? 'checked' : ''}>
+                    <span>Rate (₹) Column</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showQtyCol" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showQtyCol ? 'checked' : ''}>
+                    <span>Qty Column</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showTotalCol" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showTotalCol ? 'checked' : ''}>
+                    <span>Total Column</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 4. Taxes & Financial Breakdown -->
+              <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-3">
+                <h4 class="text-xs font-extrabold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>💰</span> Taxes &amp; Financials
+                </h4>
+                <div class="grid grid-cols-2 sm:grid-cols-2 gap-2.5 text-xs">
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showSubtotal" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showSubtotal ? 'checked' : ''}>
+                    <span>Show Subtotal</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showDiscount" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showDiscount ? 'checked' : ''}>
+                    <span>Show Discount</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showTaxBreakdown" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showTaxBreakdown ? 'checked' : ''}>
+                    <span>Show CGST / SGST 2.5%</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showCashTendered" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showCashTendered ? 'checked' : ''}>
+                    <span>Cash Tendered &amp; Change</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 5. UPI QR Code Engine (Another Level!) -->
+              <div class="p-4 bg-gradient-to-br from-indigo-50/80 to-purple-50/80 border border-indigo-200 rounded-2xl space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📲</span> Scannable UPI QR Code Engine
+                  </h4>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                    PhonePe • GPay • Paytm
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label class="block font-bold text-stone-700 mb-1">QR Code Print Mode</label>
+                    <select name="upiQrMode" id="setting-upi-qr-mode" class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-indigo-500">
+                      <option value="auto" ${receiptSettings.upiQrMode === 'auto' ? 'selected' : ''}>Auto (Print QR only when UPI mode)</option>
+                      <option value="always" ${receiptSettings.upiQrMode === 'always' ? 'selected' : ''}>Always Print QR on every receipt</option>
+                      <option value="never" ${receiptSettings.upiQrMode === 'never' ? 'selected' : ''}>Never print QR Code</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-stone-700 mb-1">QR Code Display Size</label>
+                    <select name="upiQrSize" id="setting-upi-qr-size" class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-indigo-500">
+                      <option value="small" ${receiptSettings.upiQrSize === 'small' ? 'selected' : ''}>Compact (95px - Quick print)</option>
+                      <option value="medium" ${receiptSettings.upiQrSize === 'medium' ? 'selected' : ''}>Standard (118px - Optimal)</option>
+                      <option value="large" ${receiptSettings.upiQrSize === 'large' ? 'selected' : ''}>Large (140px - High scan distance)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                  <div>
+                    <label class="block font-bold text-stone-700 mb-1">Receipt Custom VPA / UPI ID (Optional)</label>
+                    <input 
+                      type="text" 
+                      name="customUpiId" 
+                      value="${receiptSettings.customUpiId || ''}" 
+                      placeholder="Leave empty to use store UPI (${currentUpiId})" 
+                      class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl font-mono text-xs font-bold text-stone-900 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label class="block font-bold text-stone-700 mb-1">Receipt Custom Payee Name (Optional)</label>
+                    <input 
+                      type="text" 
+                      name="customUpiName" 
+                      value="${receiptSettings.customUpiName || ''}" 
+                      placeholder="Leave empty to use ${currentUpiName}" 
+                      class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-4 text-xs pt-1">
+                  <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                    <input type="checkbox" name="showUpiBrandBadge" class="rounded text-indigo-600 focus:ring-indigo-500" ${receiptSettings.showUpiBrandBadge ? 'checked' : ''}>
+                    <span>Show GPay/PhonePe App Brand Line</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 6. Footer, Devotional & Barcode -->
+              <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-3">
+                <h4 class="text-xs font-extrabold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🙏</span> Devotional Footer &amp; Barcode
+                </h4>
+                <div class="space-y-2 text-xs">
+                  <div class="flex items-center gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none shrink-0">
+                      <input type="checkbox" name="showDevotionalMotto" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showDevotionalMotto ? 'checked' : ''}>
+                      <span>Motto:</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      name="devotionalMotto" 
+                      value="${receiptSettings.devotionalMotto || '🙏 JAI RADHE KRISHNA 🙏'}" 
+                      class="flex-1 px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#C86D3B]"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-stone-600 mb-1">Thank You Message</label>
+                    <input 
+                      type="text" 
+                      name="thankYouNote" 
+                      value="${receiptSettings.thankYouNote || 'Thank you! Please visit again!'}" 
+                      class="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs text-stone-900 focus:outline-none focus:border-[#C86D3B]"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-stone-600 mb-1">Return / Store Policy Note</label>
+                    <input 
+                      type="text" 
+                      name="customFooterNote" 
+                      value="${receiptSettings.customFooterNote || 'Sweet Moments... Better Together'}" 
+                      class="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs text-stone-900 focus:outline-none focus:border-[#C86D3B]"
+                    />
+                  </div>
+
+                  <div class="pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer font-semibold text-stone-700 select-none">
+                      <input type="checkbox" name="showBarcode" class="rounded text-[#C86D3B] focus:ring-[#C86D3B]" ${receiptSettings.showBarcode ? 'checked' : ''}>
+                      <span>Print Scannable Barcode at Bottom</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Save Printer Settings Button -->
+              <div class="pt-2 flex items-center justify-between">
+                <button 
+                  type="submit"
+                  class="px-6 py-3 bg-[#C86D3B] hover:bg-[#B25D2E] text-white font-black text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                >
+                  <span>💾 Save Printer Customization</span>
+                </button>
+                <span class="text-[11px] text-stone-500 italic">Auto-applies to all counter bills</span>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right: Live Synchronized Thermal Receipt Mockup (5 cols) -->
+          <div class="lg:col-span-5 sticky top-24 space-y-3">
+            <div class="flex items-center justify-between px-1">
+              <span class="text-xs font-black text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span>👁️</span> Live Slip Preview
+              </span>
+              <span class="text-[10px] font-mono font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">
+                Interactive
+              </span>
+            </div>
+
+            <div class="p-4 bg-stone-100/90 border border-stone-200 rounded-3xl shadow-inner flex justify-center overflow-x-auto min-h-[460px]">
+              <div id="settings-receipt-live-preview">
+                ${liveReceiptHtml}
+              </div>
+            </div>
+            <p class="text-[11px] text-stone-500 text-center">
+              Changes update immediately in preview. Click <strong>Test Print</strong> to check actual paper output.
+            </p>
+          </div>
+
+        </div>
       </section>
 
       <!-- 4. Security & Audit Trail Logs -->

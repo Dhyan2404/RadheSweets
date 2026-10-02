@@ -215,10 +215,22 @@ export function renderMobileDrawer(state: any) {
           </nav>
         </div>
 
-        <!-- Brand Footer at Bottom of Drawer -->
-        <div class="pt-4 border-t border-stone-200 mt-4 text-center space-y-0.5">
-          <p class="text-xs font-black text-[#C86D3B]">Jai Radhe Krishna</p>
-          <p class="text-[10px] text-stone-400 font-medium">Shuddh Desi Ghee Confectioners Since 1984</p>
+        <!-- Brand Footer at Bottom of Drawer with Sweet Moments Artwork -->
+        <div class="pt-3 border-t border-stone-200 mt-4 text-center space-y-2">
+          <div class="px-2">
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-amber-50/70 via-orange-50/40 to-white p-2 border border-amber-200/60 shadow-2xs">
+              <img 
+                src="/sweet_moments_dessert_bowl.png" 
+                alt="Sweet Moments Dessert Bowl" 
+                class="w-full h-auto max-h-24 object-contain mx-auto drop-shadow-sm"
+                loading="lazy"
+              />
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-black text-[#C86D3B]">Jai Radhe Krishna</p>
+            <p class="text-[10px] text-stone-400 font-medium">Sweet Moments... Better Together</p>
+          </div>
         </div>
       </div>
     </div>

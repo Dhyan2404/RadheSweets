@@ -109,6 +109,9 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
               <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="font-extrabold text-sm sm:text-base text-[var(--text-main)] truncate">${c.name}</span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-black font-mono bg-stone-100 text-stone-800 border border-stone-200">
+                    #${(c.id || 'CUST').toUpperCase()}
+                  </span>
                   <span class="text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
                     c.tier === 'VIP' ? 'bg-amber-500 text-white shadow-2xs' : 
                     c.tier === 'Corporate' ? 'bg-indigo-600 text-white shadow-2xs' : 
@@ -127,10 +130,6 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
                   <span class="font-bold text-amber-700">⭐ ${c.loyaltyPoints || 0} pts</span>
                   <span>•</span>
                   <span>Spent: ₹${c.totalSpent || 0}</span>
-                  ${(c.khataBalance || 0) > 0 ? `
-                    <span>•</span>
-                    <span class="text-rose-600 font-extrabold">Khata Due: ₹${c.khataBalance}</span>
-                  ` : ''}
                 </div>
               </div>
             </div>

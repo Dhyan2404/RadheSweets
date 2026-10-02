@@ -46,9 +46,9 @@ export function renderCheckoutModal(state: any) {
                 ` : ''}
               </div>
               <p class="text-[11px] text-[var(--text-muted)]">${selectedCustomer?.phone || 'OTC Instant Counter Delivery'}</p>
-              ${selectedCustomer && selectedCustomer?.khataBalance !== undefined ? `
-                <p class="text-[10px] text-stone-500">
-                  Khata Limit: ₹${selectedCustomer.creditLimit || 5000} | Current Due: <strong class="text-rose-600">₹${selectedCustomer.khataBalance}</strong>
+              ${selectedCustomer?.id ? `
+                <p class="text-[10px] text-stone-500 font-mono font-bold mt-0.5">
+                  Customer ID: <strong class="text-[#C86D3B]">#${selectedCustomer.id.toUpperCase()}</strong>
                 </p>
               ` : ''}
             </div>
@@ -220,18 +220,18 @@ export function renderCheckoutModal(state: any) {
             <span class="text-[10px] text-[var(--text-muted)] font-semibold">Select tender</span>
           </div>
 
-          <div class="grid grid-cols-4 gap-2">
-            ${['Cash', 'UPI', 'Card', 'Khata'].map(method => `
+          <div class="grid grid-cols-3 gap-2">
+            ${['Cash', 'UPI', 'Card'].map(method => `
               <button 
                 type="button"
                 data-select-payment="${method}"
-                class="payment-method-pill p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${
+                class="payment-method-pill p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer ${
                   paymentMethod === method 
                     ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-light)] text-[var(--brand-primary)] shadow-xs ring-2 ring-[var(--brand-primary)]/20' 
                     : 'border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:border-[var(--brand-primary)]'
                 }"
               >
-                ${method === 'Cash' ? '💵' : method === 'UPI' ? '📱' : method === 'Card' ? '💳' : '📒'}
+                ${method === 'Cash' ? '💵' : method === 'UPI' ? '📱' : '💳'}
                 <span class="block text-[11px] mt-0.5">${method}</span>
               </button>
             `).join('')}
@@ -313,7 +313,7 @@ export function renderCheckoutModal(state: any) {
                   <div class="pt-1">
                     <input 
                       type="text" 
-                      id="checkout-upi-utr-input"
+                      id="checkout-upi-utr-input" 
                       placeholder="Optional: UTR / Last 4 digits" 
                       class="w-full px-2.5 py-1 bg-stone-50 border border-stone-200 rounded-lg text-[11px] font-mono font-semibold focus:outline-none focus:border-indigo-500"
                     />
@@ -323,46 +323,18 @@ export function renderCheckoutModal(state: any) {
             </div>
           ` : ''}
 
-          <!-- 3. Customer Khata Credit Guard & Limit Check -->
-          ${paymentMethod === 'Khata' ? `
-            <div class="mt-3 p-3.5 ${
-              !selectedCustomer 
-                ? 'bg-rose-50 border-rose-300 text-rose-900' 
-                : ((selectedCustomer.khataBalance || 0) + totalPayable > (selectedCustomer.creditLimit || 5000))
-                ? 'bg-amber-50 border-amber-300 text-amber-950'
-                : 'bg-emerald-50 border-emerald-300 text-emerald-950'
-            } border rounded-2xl text-xs space-y-2 animate-fadeIn">
+          <!-- 3. Card Tender -->
+          ${paymentMethod === 'Card' ? `
+            <div class="mt-3 p-3.5 bg-sky-50/80 border border-sky-200 rounded-2xl text-xs space-y-2 animate-fadeIn">
               <div class="flex items-center justify-between">
-                <span class="font-extrabold flex items-center gap-1.5">
-                  <span>📒</span> Khata Credit Ledger
+                <span class="font-extrabold text-sky-950 flex items-center gap-1.5">
+                  <span>💳</span> Counter POS EDC Card Machine
                 </span>
-                <span class="text-[10px] font-bold">
-                  Limit: ₹${selectedCustomer?.creditLimit || 5000}
-                </span>
+                <span class="text-[10px] font-bold text-sky-800">Swipe / Tap / Chip</span>
               </div>
-
-              ${!selectedCustomer ? `
-                <div class="p-2 bg-white/90 rounded-xl border border-rose-200 text-rose-800 text-[11px] font-bold flex items-center gap-2">
-                  <span>⚠️</span>
-                  <span>Khata credit requires an attached customer! Please attach customer phone number above before continuing.</span>
-                </div>
-              ` : `
-                <div class="space-y-1 text-[11px]">
-                  <p>Customer: <strong>${selectedCustomer.name}</strong> (${selectedCustomer.phone})</p>
-                  <p>Current Outstanding Due: <strong class="text-rose-600">₹${selectedCustomer.khataBalance || 0}</strong></p>
-                  <p>New Balance After Bill: <strong class="${(selectedCustomer.khataBalance || 0) + totalPayable > (selectedCustomer.creditLimit || 5000) ? 'text-rose-600' : 'text-emerald-700'}">₹${(selectedCustomer.khataBalance || 0) + totalPayable}</strong></p>
-                </div>
-
-                ${(selectedCustomer.khataBalance || 0) + totalPayable > (selectedCustomer.creditLimit || 5000) ? `
-                  <div class="p-2.5 bg-rose-100/80 border border-rose-300 rounded-xl text-rose-900 text-[11px] space-y-1.5">
-                    <p class="font-extrabold">⚠️ Warning: Bill exceeds allowed credit limit by ₹${((selectedCustomer.khataBalance || 0) + totalPayable) - (selectedCustomer.creditLimit || 5000)}!</p>
-                    <label class="flex items-center gap-2 cursor-pointer font-bold select-none text-[10px]">
-                      <input type="checkbox" id="khata-override-checkbox" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-rose-300" />
-                      <span>Manager / Supervisor Override Authorization</span>
-                    </label>
-                  </div>
-                ` : ''}
-              `}
+              <p class="text-stone-600 text-[11px]">
+                Please process payment of <strong class="text-sky-950">₹${totalPayable}</strong> on the bank EDC terminal and confirm once approval receipt prints.
+              </p>
             </div>
           ` : ''}
         </div>
@@ -403,7 +375,7 @@ export function renderCheckoutModal(state: any) {
             height: 56,
             radius: 28,
             totalPayable,
-            disabled: posCart.length === 0 || (paymentMethod === 'Khata' && !selectedCustomer) || (paymentMethod === 'Khata' && selectedCustomer && (((selectedCustomer.khataBalance || 0) + totalPayable) > (selectedCustomer.creditLimit || 5000)) && !state.khataOverrideApproved)
+            disabled: posCart.length === 0
           })}
 
           <div class="flex items-center justify-between px-1 text-[11px] text-stone-500">

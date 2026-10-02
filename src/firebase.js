@@ -404,9 +404,9 @@ export function subscribeToBranchSweets(branchId, callback) {
   try {
     const branchDocRef = doc(db, "branches", branchId);
     return onSnapshot(branchDocRef, (snap) => {
-      if (snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
+      if (snap.exists() && snap.data()?.sweets && snap.data().sweets.length > 0) {
         updateStatus('synced');
-        callback(snap.data().sweets);
+        callback(snap.data().sweets, snap.data().categories, snap.data().receiptSettings);
       }
     }, (err) => {
       handleFirestoreError('Sweets listener', err);
@@ -414,6 +414,44 @@ export function subscribeToBranchSweets(branchId, callback) {
   } catch (e) {
     handleFirestoreError('Failed to subscribe to sweets', e);
     return () => {};
+  }
+}
+
+/**
+ * Save branch receipt settings & preferences to Cloud Firestore
+ */
+export async function saveBranchSettingsToCloud(branchId, settings) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await setDoc(branchDocRef, {
+      receiptSettings: settings,
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Branch ${branchId} settings sync`, error);
+    return false;
+  }
+}
+
+/**
+ * Save custom categories to Cloud Firestore
+ */
+export async function saveBranchCategoriesToCloud(branchId, categories) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await setDoc(branchDocRef, {
+      categories: categories,
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Branch ${branchId} categories sync`, error);
+    return false;
   }
 }
 
@@ -457,9 +495,9 @@ export async function saveBranchOrderToCloud(branchId, order, currentSweets = []
       }
     }
 
-    // 4. Update Customer details & Khata balance in Firestore
+    // 4. Update Customer details & loyalty points in Firestore
     if (order.customerId) {
-      await updateCustomerStatsInCloud(order.customerId, order.total, order.paymentMethod === 'Khata');
+      await updateCustomerStatsInCloud(order.customerId, order.total);
     }
 
     // 5. Update branch KPIs & Revenue in Firestore
@@ -559,7 +597,7 @@ export async function saveAllBranchCustomersToCloud(branchId, customers) {
 /**
  * Update Customer metrics in Firestore
  */
-export async function updateCustomerStatsInCloud(customerId, orderAmount, isKhataPayment) {
+export async function updateCustomerStatsInCloud(customerId, orderAmount) {
   if (!customerId) return;
   try {
     const custRef = doc(db, "customers", customerId);
@@ -568,13 +606,11 @@ export async function updateCustomerStatsInCloud(customerId, orderAmount, isKhat
       const data = snap.data();
       const newOrders = (data.totalOrders || 0) + 1;
       const newSpent = (data.totalSpent || 0) + orderAmount;
-      const newKhata = isKhataPayment ? ((data.khataBalance || 0) + orderAmount) : (data.khataBalance || 0);
       const newPoints = (data.loyaltyPoints || 0) + Math.floor(orderAmount / 100);
 
       await setDoc(custRef, {
         totalOrders: newOrders,
         totalSpent: newSpent,
-        khataBalance: newKhata,
         loyaltyPoints: newPoints,
         lastOrderDate: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -961,6 +997,16 @@ export async function syncAllToFirebaseCloud(state) {
     state.expenses.items.forEach(exp => {
       tasks.push(saveExpenseToCloud(exp, branchId));
     });
+  }
+
+  // 7. Categories into Firestore
+  if (state.categories && state.categories.length > 0) {
+    tasks.push(saveBranchCategoriesToCloud(branchId, state.categories));
+  }
+
+  // 8. Printer & Receipt Settings into Firestore
+  if (state.receiptSettings) {
+    tasks.push(saveBranchSettingsToCloud(branchId, state.receiptSettings));
   }
 
   const results = await Promise.allSettled(tasks);
