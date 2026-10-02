@@ -639,11 +639,11 @@ export function renderAddProductModal(state?: any) {
             />
           </div>
 
-          <!-- Photo Customizer -->
+          <!-- Photo Customizer (Upload or URL) -->
           <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
               <label class="block font-bold text-stone-800 text-xs">Mithai Photo / Picture</label>
-              <span class="text-[10px] text-stone-500 font-semibold">Upload, URL, or Gallery</span>
+              <span class="text-[10px] text-stone-500 font-semibold">Upload Photo or Paste Image URL</span>
             </div>
 
             <div class="flex items-center gap-3">
@@ -672,27 +672,10 @@ export function renderAddProductModal(state?: any) {
                   type="text" 
                   name="image" 
                   id="add-sweet-image-input" 
-                  placeholder="Or paste image URL (https://...)" 
+                  placeholder="Or paste direct image URL (https://...)" 
                   value="/assets/sweets/sw-1.png"
                   class="w-full px-3 py-1.5 bg-white border border-[#EFE7DE] rounded-xl text-xs font-mono text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
                 />
-              </div>
-            </div>
-
-            <!-- Quick Mithai Photo Gallery Picker -->
-            <div class="pt-1 border-t border-stone-200/60">
-              <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-1">Pick From Mithai Gallery:</span>
-              <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(num => `
-                  <button 
-                    type="button" 
-                    data-pick-gallery="/assets/sweets/sw-${num}.png"
-                    class="w-9 h-9 rounded-xl overflow-hidden border border-stone-200 hover:border-[#C86D3B] hover:scale-105 transition-all shrink-0 p-0.5 bg-white cursor-pointer shadow-2xs"
-                    title="Mithai Preset #${num}"
-                  >
-                    <img src="/assets/sweets/sw-${num}.png" class="w-full h-full object-cover rounded-lg" alt="Mithai ${num}" />
-                  </button>
-                `).join('')}
               </div>
             </div>
           </div>
@@ -872,11 +855,11 @@ export function renderEditProductModal(sweet: any, state?: any) {
             />
           </div>
 
-          <!-- Photo Customizer -->
+          <!-- Photo Customizer (Upload or URL) -->
           <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
               <label class="block font-bold text-stone-800 text-xs">Mithai Photo / Picture</label>
-              <span class="text-[10px] text-stone-500 font-semibold">Change, Upload, or Gallery</span>
+              <span class="text-[10px] text-stone-500 font-semibold">Upload Photo or Paste Image URL</span>
             </div>
 
             <div class="flex items-center gap-3">
@@ -906,27 +889,10 @@ export function renderEditProductModal(sweet: any, state?: any) {
                   type="text" 
                   name="image" 
                   id="edit-sweet-image-input" 
-                  placeholder="Or paste image URL (https://...)" 
+                  placeholder="Or paste direct image URL (https://...)" 
                   value="${sweetImg}" 
                   class="w-full px-3 py-1.5 bg-white border border-[#EFE7DE] rounded-xl text-xs font-mono text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
                 />
-              </div>
-            </div>
-
-            <!-- Quick Mithai Photo Gallery Picker -->
-            <div class="pt-1 border-t border-stone-200/60">
-              <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-1">Pick From Mithai Gallery:</span>
-              <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(num => `
-                  <button 
-                    type="button" 
-                    data-edit-pick-gallery="/assets/sweets/sw-${num}.png"
-                    class="w-9 h-9 rounded-xl overflow-hidden border border-stone-200 hover:border-[#C86D3B] hover:scale-105 transition-all shrink-0 p-0.5 bg-white cursor-pointer shadow-2xs"
-                    title="Mithai Preset #${num}"
-                  >
-                    <img src="/assets/sweets/sw-${num}.png" class="w-full h-full object-cover rounded-lg" alt="Mithai ${num}" />
-                  </button>
-                `).join('')}
               </div>
             </div>
           </div>

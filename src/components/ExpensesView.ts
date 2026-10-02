@@ -203,72 +203,151 @@ export function renderExpensesView(state: any) {
 }
 
 // Add Expense Modal
-export function renderAddExpenseModal() {
+export function renderAddExpenseModal(state?: any) {
+  const isSuccess = !!state?.expenseSavedSuccess;
+  const lastExpense = state?.lastSavedExpense;
+  const todayDate = new Date().toISOString().split('T')[0];
+
   return `
     <div class="modal-backdrop" id="add-expense-modal">
-      <div class="modal-content p-6 space-y-4 max-w-md">
+      <div class="modal-content p-6 space-y-4 max-w-md animate-fadeIn">
         <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-          <h3 class="text-base font-bold text-[var(--text-main)]">Record New Expense</h3>
-          <button id="close-add-expense-btn" class="text-[var(--text-light)] hover:text-[var(--text-main)] p-1">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-orange-100 text-[#C86D3B] flex items-center justify-center font-bold text-sm">
+              🧾
+            </span>
+            <div>
+              <h3 class="text-base font-bold text-[var(--text-main)]">
+                ${isSuccess ? 'Expense Recorded' : 'Record New Expense'}
+              </h3>
+              <p class="text-[11px] text-[var(--text-muted)]">
+                ${isSuccess ? 'Transaction saved in branch ledger' : 'Log raw material purchase, utility bill, or store cost'}
+              </p>
+            </div>
+          </div>
+          <button id="close-add-expense-btn" class="text-[var(--text-light)] hover:text-[var(--text-main)] p-1 rounded-lg hover:bg-stone-100 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
           </button>
         </div>
 
-        <form id="add-expense-form" class="space-y-3.5 text-xs">
-          <div>
-            <label class="block font-semibold text-[var(--text-muted)] mb-1">Description / Vendor *</label>
-            <input 
-              type="text" 
-              name="description" 
-              required 
-              placeholder="e.g. Pure Desi Ghee 50kg, Fresh Mawa & Khoya purchase" 
-              class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block font-semibold text-[var(--text-muted)] mb-1">Category</label>
-              <select 
-                name="category"
-                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none font-semibold"
-              >
-                <option value="Raw Materials" selected>🌾 Raw Materials</option>
-                <option value="Utilities">⚡ Utilities</option>
-                <option value="Staff Salary">👨‍🍳 Staff Salary</option>
-                <option value="Marketing">📢 Marketing</option>
-                <option value="Other">📦 Other / Packaging</option>
-              </select>
+        ${isSuccess ? `
+          <!-- Success Card shown right inside the popup dialog -->
+          <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 space-y-3 animate-slide-up">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-lg shadow-xs shrink-0">
+                ✓
+              </div>
+              <div>
+                <p class="text-xs font-bold text-emerald-950">Expense Saved Successfully!</p>
+                <p class="text-[11px] text-emerald-800">Added to branch operational spend &amp; ledger</p>
+              </div>
             </div>
+
+            <div class="bg-white/90 p-3 rounded-xl border border-emerald-100 text-xs space-y-1.5 shadow-2xs">
+              <div class="flex items-center justify-between">
+                <span class="text-stone-500 font-medium">Description:</span>
+                <span class="font-bold text-stone-900 truncate max-w-[200px]">${lastExpense?.description || 'Expense'}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-stone-500 font-medium">Category:</span>
+                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[10px] font-bold">${lastExpense?.category || 'General'}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-stone-500 font-medium">Date:</span>
+                <span class="font-mono text-stone-700 font-bold">${lastExpense?.date || todayDate}</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-stone-100">
+                <span class="font-extrabold text-stone-800">Amount Paid:</span>
+                <span class="font-mono font-black text-sm text-emerald-700">₹${(Number(lastExpense?.amount) || 0).toLocaleString()}</span>
+              </div>
+            </div>
+
+            <!-- Two action buttons: Add Another or Close -->
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+              <button 
+                type="button" 
+                id="add-another-expense-btn"
+                class="w-full py-2.5 px-3 bg-gradient-to-r from-[#B25D2E] to-[#C86D3B] hover:brightness-105 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>+</span>
+                <span>Add Another</span>
+              </button>
+              <button 
+                type="button" 
+                id="close-expense-success-btn"
+                class="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs rounded-xl transition-all cursor-pointer active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ` : `
+          <!-- New Expense Form -->
+          <form id="add-expense-form" class="space-y-3.5 text-xs">
             <div>
-              <label class="block font-semibold text-[var(--text-muted)] mb-1">Amount (₹) *</label>
+              <label class="block font-semibold text-[var(--text-muted)] mb-1">Description / Vendor *</label>
               <input 
-                type="number" 
-                name="amount" 
+                type="text" 
+                name="description" 
                 required 
-                placeholder="e.g. 12450" 
-                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none font-bold"
+                placeholder="e.g. Pure Desi Ghee 50kg, Fresh Mawa, Dairy delivery" 
+                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none"
               />
             </div>
-          </div>
 
-          <div>
-            <label class="block font-semibold text-[var(--text-muted)] mb-1">Date</label>
-            <input 
-              type="text" 
-              name="date" 
-              value="25 Sep" 
-              class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none"
-            />
-          </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-[var(--text-muted)] mb-1">Category</label>
+                <select 
+                  name="category"
+                  class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none font-semibold"
+                >
+                  <option value="Raw Materials" selected>🌾 Raw Materials</option>
+                  <option value="Utilities">⚡ Utilities</option>
+                  <option value="Staff Salary">👨‍🍳 Staff Salary</option>
+                  <option value="Marketing">📢 Marketing</option>
+                  <option value="Other">📦 Other / Packaging</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-[var(--text-muted)] mb-1">Amount (₹) *</label>
+                <input 
+                  type="number" 
+                  name="amount" 
+                  required 
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 12450" 
+                  class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none font-bold"
+                />
+              </div>
+            </div>
 
-          <button 
-            type="submit" 
-            class="w-full py-3 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-98"
-          >
-            Save Expense
-          </button>
-        </form>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-semibold text-[var(--text-muted)]">Expense Date</label>
+                <span class="text-[10px] text-stone-500 font-medium">Default: Current Day</span>
+              </div>
+              <input 
+                type="date" 
+                name="date" 
+                id="expense-date-input"
+                value="${todayDate}" 
+                class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] font-semibold focus:bg-[var(--bg-surface)] focus:border-[var(--brand-primary)] focus:outline-none"
+              />
+            </div>
+
+            <div class="pt-1">
+              <button 
+                type="submit" 
+                class="w-full py-2.5 bg-gradient-to-r from-[#B25D2E] to-[#C86D3B] hover:brightness-105 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>💾</span>
+                <span>Save Expense</span>
+              </button>
+            </div>
+          </form>
+        `}
       </div>
     </div>
   `;

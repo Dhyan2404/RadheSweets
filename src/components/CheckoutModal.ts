@@ -3,14 +3,17 @@
 import { renderSlideCommit } from './SlideCommit.ts';
 
 export function renderCheckoutModal(state: any) {
-  const { selectedCustomer, posCart, discountPercent = 0, paymentMethod = 'Cash', shopInfo = {} } = state;
+  const { selectedCustomer, posCart, discountPercent = 0, paymentMethod = 'Cash', shopInfo = {}, branches = [], currentBranchId = 'br-1' } = state;
+
+  const activeBranch = branches.find((b: any) => b.id === currentBranchId) || (branches.length > 0 ? branches[0] : null);
 
   const cartSubtotal = posCart.reduce((sum: number, item: any) => sum + (item.rate * item.qty), 0);
   const discountAmount = Math.round((cartSubtotal * (discountPercent || 0)) / 100);
   const totalPayable = Math.max(0, cartSubtotal - discountAmount);
 
-  const storeUpiId = shopInfo.upiId || 'radhesweets@oksbi';
-  const storeUpiName = shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
+  const storeUpiId = activeBranch?.upiId || shopInfo.upiId || 'radhesweets@oksbi';
+  const storeUpiName = activeBranch?.upiName || activeBranch?.name || shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
+  const branchAddress = activeBranch?.address || shopInfo.address || 'Ahmedabad, Gujarat';
   const upiQrUri = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=${storeUpiId}&pn=${encodeURIComponent(storeUpiName)}&am=${totalPayable}&cu=INR`)}`;
 
   return `

@@ -146,6 +146,51 @@ export function renderAddBranchModal(state: any) {
                 class="w-full px-3.5 py-2.5 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs"
               />
             </div>
+
+            <!-- Branch Specific UPI & Banking Settings -->
+            <div class="sm:col-span-2 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
+              <span class="text-[11px] font-black uppercase text-[#9A3412] tracking-wider flex items-center gap-1.5">
+                <span>📱</span> Branch Specific UPI &amp; Bill Printing Setup
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Store UPI ID / VPA</label>
+                  <input 
+                    type="text" 
+                    name="branchUpiId" 
+                    placeholder="e.g. radhesweets.branch@oksbi"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">UPI Payee Display Name</label>
+                  <input 
+                    type="text" 
+                    name="branchUpiName" 
+                    placeholder="e.g. Radhe Sweets Branch"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Branch GSTIN</label>
+                  <input 
+                    type="text" 
+                    name="branchGstin" 
+                    placeholder="e.g. 24AAACR1234F1Z4"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Branch FSSAI License No.</label>
+                  <input 
+                    type="text" 
+                    name="branchFssai" 
+                    placeholder="e.g. 10722026000414"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl flex items-center gap-2.5 text-xs text-amber-900">
@@ -325,6 +370,55 @@ export function renderEditBranchModal(state: any) {
                 placeholder="e.g. 34.0%"
                 class="w-full px-3.5 py-2.5 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs"
               />
+            </div>
+
+            <!-- Branch Specific UPI & Banking Settings -->
+            <div class="sm:col-span-2 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
+              <span class="text-[11px] font-black uppercase text-[#9A3412] tracking-wider flex items-center gap-1.5">
+                <span>📱</span> Branch Specific UPI &amp; Bill Printing Setup
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Store UPI ID / VPA</label>
+                  <input 
+                    type="text" 
+                    name="branchUpiId" 
+                    value="${branch.upiId || ''}"
+                    placeholder="e.g. radhesweets.branch@oksbi"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono font-bold text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">UPI Payee Display Name</label>
+                  <input 
+                    type="text" 
+                    name="branchUpiName" 
+                    value="${branch.upiName || branch.name || ''}"
+                    placeholder="e.g. Radhe Sweets Branch"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Branch GSTIN</label>
+                  <input 
+                    type="text" 
+                    name="branchGstin" 
+                    value="${branch.gstin || ''}"
+                    placeholder="e.g. 24AAACR1234F1Z1"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Branch FSSAI License No.</label>
+                  <input 
+                    type="text" 
+                    name="branchFssai" 
+                    value="${branch.fssai || ''}"
+                    placeholder="e.g. 10722026000411"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

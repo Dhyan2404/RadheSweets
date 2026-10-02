@@ -61,7 +61,8 @@ import { renderOrderDetailsModal } from './components/OrderDetailsModal.ts';
 import { 
   renderCustomersView, 
   renderAddCustomerModal, 
-  renderCustomerProfileModal 
+  renderCustomerProfileModal,
+  renderEditCustomerModal 
 } from './components/CustomersView.ts';
 import { 
   renderProductsView, 
@@ -201,6 +202,11 @@ const state = {
   showAddCustomerModal: false,
   showCustomerProfileModal: false,
   profileCustomer: null,
+  showEditCustomerModal: false,
+  editingCustomer: null as any,
+  customersSortBy: stored?.customersSortBy || 'most-spent',
+  expenseSavedSuccess: false,
+  lastSavedExpense: null as any,
   showAddProductModal: false,
   showEditProductModal: false,
   editingSweet: null,
@@ -901,7 +907,7 @@ export function renderApp() {
         <!-- Main Content Area with Persistent Scroll Container -->
         <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto w-full max-w-[100vw] overflow-x-hidden">
           <!-- Active Tab Body -->
-          <main id="main-tab-content" class="flex-1 p-2.5 sm:p-5 md:p-8 space-y-3 sm:space-y-6 pb-20 sm:pb-24 md:pb-8">
+          <main id="main-tab-content" class="flex-1 p-2.5 sm:p-5 md:p-8 space-y-3 sm:space-y-6 pb-16 sm:pb-20 md:pb-8">
             ${renderTabContent()}
           </main>
         </div>
@@ -1033,12 +1039,13 @@ function renderModals() {
     ${state.showOrderDetailsModal ? renderOrderDetailsModal(state.activeOrder) : ''}
     ${state.showAddCustomerModal ? renderAddCustomerModal(state) : ''}
     ${state.showCustomerProfileModal ? renderCustomerProfileModal(state.profileCustomer, state.orders) : ''}
+    ${state.showEditCustomerModal && state.editingCustomer ? renderEditCustomerModal(state.editingCustomer) : ''}
     ${state.showAddProductModal ? renderAddProductModal(state) : ''}
     ${state.showEditProductModal ? renderEditProductModal(state.editingSweet, state) : ''}
     ${state.showManageCategoriesModal ? renderManageCategoriesModal(state) : ''}
     ${state.showRestockBatchModal ? renderRestockBatchModal(state) : ''}
     ${state.showStockAdjustModal ? renderStockAdjustModal(state) : ''}
-    ${state.showAddExpenseModal ? renderAddExpenseModal() : ''}
+    ${state.showAddExpenseModal ? renderAddExpenseModal(state) : ''}
     ${state.showSplashModal ? renderSplashView({ isModal: true }) : ''}
     ${state.showCustomerDialerModal ? renderCustomerDialerModal(state) : ''}
     ${state.showMobileDrawer ? renderMobileDrawer(state) : ''}
@@ -1050,7 +1057,7 @@ function renderModals() {
     ${state.showRecordAdvanceModal ? renderRecordAdvanceModal(state) : ''}
     ${state.showAddBranchModal ? renderAddBranchModal(state) : ''}
     ${state.showEditBranchModal ? renderEditBranchModal(state) : ''}
-    ${state.showProfitModal ? renderProfitDetailsModal(state, state.profitSelectedMonth || 'Sep 2026') : ''}
+    ${state.showProfitModal ? renderProfitDetailsModal(state) : ''}
   `;
 }
 
@@ -1129,18 +1136,42 @@ function attachEventListeners() {
     }
   });
 
-  document.getElementById('profit-month-select')?.addEventListener('change', (e: any) => {
-    state.profitSelectedMonth = e.target.value;
-    renderApp();
+  // Profit Modal Timeframe Buttons
+  document.querySelectorAll('[data-profit-timeframe]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tf = btn.getAttribute('data-profit-timeframe');
+      if (tf) {
+        state.profitModalFilter = tf;
+        renderApp();
+      }
+    });
   });
 
-  document.querySelectorAll('[data-toggle-day-details]').forEach(btn => {
+  // Profit Modal Custom Date Range (From - To) Filter
+  document.getElementById('profit-apply-dates-btn')?.addEventListener('click', () => {
+    const fromInput = document.getElementById('profit-custom-from') as HTMLInputElement | null;
+    const toInput = document.getElementById('profit-custom-to') as HTMLInputElement | null;
+    if (fromInput?.value && toInput?.value) {
+      state.profitModalFilter = 'custom';
+      state.profitCustomFrom = fromInput.value;
+      state.profitCustomTo = toInput.value;
+      showToast(`Filtered profit: ${fromInput.value} to ${toInput.value}`, 'info');
+      renderApp();
+    }
+  });
+
+  // Profit Modal Per-Day Detail Toggle
+  document.querySelectorAll('.profit-toggle-detail-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const idx = btn.getAttribute('data-toggle-day-details');
-      const row = document.getElementById(`day-details-row-${idx}`);
-      if (row) {
-        row.classList.toggle('hidden');
+      const targetId = btn.getAttribute('data-target-row');
+      if (targetId) {
+        const row = document.getElementById(targetId);
+        if (row) {
+          row.classList.toggle('hidden');
+          const isHidden = row.classList.contains('hidden');
+          btn.innerHTML = isHidden ? '<span>View Buys ▼</span>' : '<span>Hide ▲</span>';
+        }
       }
     });
   });
@@ -1628,6 +1659,10 @@ function attachEventListeners() {
     const branchManager = (formData.get('branchManager') as string || '').trim();
     const branchTargetRevenue = parseFloat(formData.get('branchTargetRevenue') as string || '45000') || 45000;
     const branchMargin = (formData.get('branchMargin') as string || '34.0%').trim();
+    const branchUpiId = (formData.get('branchUpiId') as string || '').trim();
+    const branchUpiName = (formData.get('branchUpiName') as string || '').trim();
+    const branchGstin = (formData.get('branchGstin') as string || '').trim();
+    const branchFssai = (formData.get('branchFssai') as string || '').trim();
 
     if (!branchName) {
       showToast('Please enter a branch store name', 'warning');
@@ -1643,6 +1678,10 @@ function attachEventListeners() {
       address: branchAddress,
       phone: branchPhone,
       manager: branchManager,
+      upiId: branchUpiId || `radhesweets.${(branchCode || 'branch').toLowerCase()}@oksbi`,
+      upiName: branchUpiName || branchName,
+      gstin: branchGstin || '24AAACR1234F1Z1',
+      fssai: branchFssai || '10722026000411',
       revenue: 0,
       orders: 0,
       margin: branchMargin,
@@ -1717,6 +1756,10 @@ function attachEventListeners() {
     const branchManager = (formData.get('branchManager') as string || '').trim();
     const branchTargetRevenue = parseFloat(formData.get('branchTargetRevenue') as string || '50000') || 50000;
     const branchMargin = (formData.get('branchMargin') as string || '34.0%').trim();
+    const branchUpiId = (formData.get('branchUpiId') as string || '').trim();
+    const branchUpiName = (formData.get('branchUpiName') as string || '').trim();
+    const branchGstin = (formData.get('branchGstin') as string || '').trim();
+    const branchFssai = (formData.get('branchFssai') as string || '').trim();
 
     const targetBranch = state.branches.find((b: any) => b.id === branchId);
     if (!targetBranch) return;
@@ -1731,6 +1774,10 @@ function attachEventListeners() {
     targetBranch.targetDailySales = branchTargetRevenue;
     targetBranch.margin = branchMargin;
     targetBranch.targetMargin = branchMargin;
+    if (branchUpiId) targetBranch.upiId = branchUpiId;
+    if (branchUpiName) targetBranch.upiName = branchUpiName;
+    if (branchGstin) targetBranch.gstin = branchGstin;
+    if (branchFssai) targetBranch.fssai = branchFssai;
     targetBranch.updatedAt = new Date().toISOString();
 
     state.showEditBranchModal = false;
@@ -1935,7 +1982,8 @@ function attachEventListeners() {
     const val = (e.target as HTMLSelectElement).value;
     state.timeFilter = val;
     saveState();
-    showToast(`Time period updated: ${val}`, 'info');
+    showToast(`Time period updated: ${val.toUpperCase()}`, 'info');
+    renderApp();
   });
 
   // Brand Logo Click -> Go to Dashboard
@@ -2705,9 +2753,17 @@ function attachEventListeners() {
       const changeReturned = state.paymentMethod === 'Cash' ? Math.max(0, (state.cashTendered || totalPayable) - totalPayable) : null;
       const gstAmount = Math.round((totalPayable * 0.05) / 1.05);
 
+      const activeBranch = state.branches.find((b: any) => b.id === state.currentBranchId) || state.branches[0] || {};
       const newOrder = {
         id: `SA00${orderNum}`,
         branchId: state.currentBranchId,
+        branchName: activeBranch.name || state.shopInfo?.name || 'Radhe Sweets',
+        branchAddress: activeBranch.address || state.shopInfo?.address || 'Ahmedabad, Gujarat',
+        branchPhone: activeBranch.phone || state.shopInfo?.phone || '+91 98250 12345',
+        branchUpiId: activeBranch.upiId || state.shopInfo?.upiId || 'radhesweets@oksbi',
+        branchUpiName: activeBranch.upiName || activeBranch.name || state.shopInfo?.upiName || 'Radhe Sweets',
+        branchGstin: activeBranch.gstin || state.shopInfo?.gstin || '24AAACR1234F1Z8',
+        branchFssai: activeBranch.fssai || state.shopInfo?.fssai || '10722026000412',
         date: `25 Sep 2026, ${timeStr}`,
         customerId: state.selectedCustomer?.id || `walkin-${Date.now()}`,
         customerName: state.selectedCustomer?.name || 'Walk-in Counter Customer',
@@ -3188,6 +3244,84 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     renderApp();
   });
 
+  // Customer Sort Select
+  document.getElementById('customers-sort-select')?.addEventListener('change', (e: any) => {
+    state.customersSortBy = e.target.value;
+    saveState();
+    renderApp();
+  });
+
+  // Edit Customer Modal Triggers
+  document.querySelectorAll('[data-edit-customer]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-edit-customer');
+      const cust = state.customers.find((c: any) => c.id === id);
+      if (cust) {
+        state.editingCustomer = { ...cust };
+        state.showEditCustomerModal = true;
+        renderApp();
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-edit-profile-customer]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-edit-profile-customer');
+      const cust = state.customers.find((c: any) => c.id === id);
+      if (cust) {
+        state.editingCustomer = { ...cust };
+        state.showEditCustomerModal = true;
+        state.showCustomerProfileModal = false;
+        renderApp();
+      }
+    });
+  });
+
+  const closeEditCustomer = () => {
+    state.showEditCustomerModal = false;
+    state.editingCustomer = null;
+    renderApp();
+  };
+  document.getElementById('close-edit-customer-btn')?.addEventListener('click', closeEditCustomer);
+  document.getElementById('cancel-edit-customer-btn')?.addEventListener('click', closeEditCustomer);
+  document.getElementById('edit-customer-modal')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'edit-customer-modal') closeEditCustomer();
+  });
+
+  document.getElementById('edit-customer-form')?.addEventListener('submit', (e: any) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const custId = fd.get('customerId') as string;
+    const targetCust = state.customers.find((c: any) => c.id === custId);
+    if (!targetCust) return;
+
+    targetCust.name = (fd.get('name') as string || targetCust.name).trim();
+    targetCust.phone = (fd.get('phone') as string || targetCust.phone).trim();
+    targetCust.email = (fd.get('email') as string || targetCust.email).trim();
+    targetCust.address = (fd.get('address') as string || targetCust.address).trim();
+    targetCust.tier = (fd.get('tier') as string) || targetCust.tier || 'Regular';
+    targetCust.type = targetCust.tier;
+    targetCust.loyaltyPoints = Number(fd.get('loyaltyPoints')) >= 0 ? Number(fd.get('loyaltyPoints')) : (targetCust.loyaltyPoints || 0);
+    targetCust.notes = (fd.get('notes') as string || targetCust.notes || '').trim();
+
+    if (state.profileCustomer?.id === custId) {
+      state.profileCustomer = { ...targetCust };
+    }
+    if (state.selectedCustomer?.id === custId) {
+      state.selectedCustomer = { ...targetCust };
+    }
+
+    state.showEditCustomerModal = false;
+    state.editingCustomer = null;
+    saveCustomerToCloud(targetCust, state.currentBranchId, state.customers);
+    saveBranchSnapshot(state.currentBranchId);
+    saveState();
+    renderApp();
+    showToast(`✓ Updated customer details for ${targetCust.name}`, 'success');
+  });
+
   document.querySelectorAll('[data-select-for-pos]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-select-for-pos');
@@ -3471,51 +3605,53 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   });
 
   // Client-side image upload & compression for Add Product
+  const updateAddSweetPreview = (src: string) => {
+    const preview = (document.getElementById('add-sweet-preview-img') || document.getElementById('add-sweet-img-preview')) as HTMLImageElement | null;
+    if (preview) preview.src = src;
+    const urlInput = (document.getElementById('add-sweet-image-input') || document.getElementById('add-sweet-image-url')) as HTMLInputElement | null;
+    if (urlInput) urlInput.value = src;
+  };
+
   document.getElementById('add-sweet-file-input')?.addEventListener('change', async (e: any) => {
     const file = e.target?.files?.[0];
     if (file) {
-      showToast('Compressing photo...', 'info');
+      showToast('Processing photo...', 'info');
       try {
-        const compressed = await compressImageFile(file, 500, 0.82);
-        const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
-        if (preview) preview.src = compressed;
-        const urlInput = document.getElementById('add-sweet-image-url') as HTMLInputElement;
-        if (urlInput) urlInput.value = compressed;
-        showToast('✓ Photo attached & compressed!', 'success');
+        let finalDataUrl = '';
+        try {
+          finalDataUrl = await compressImageFile(file, 600, 0.85);
+        } catch (_) {
+          // Fallback to FileReader if compressor fails
+          finalDataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }
+        updateAddSweetPreview(finalDataUrl);
+        showToast('✓ Sweet photo uploaded successfully!', 'success');
       } catch (err) {
-        showToast('Could not process photo', 'error');
+        showToast('Could not process photo file', 'error');
       }
     }
   });
 
   // URL input preview for Add Product
-  document.getElementById('add-sweet-image-url')?.addEventListener('input', (e: any) => {
-    const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
-    if (preview && e.target.value) preview.src = e.target.value;
-  });
-
-  // Gallery Picker chips for Add Product
-  document.querySelectorAll('[data-pick-gallery]').forEach(btn => {
-    btn.addEventListener('click', (e: any) => {
-      e.preventDefault();
-      const imgPath = btn.getAttribute('data-pick-gallery');
-      if (imgPath) {
-        const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
-        if (preview) preview.src = imgPath;
-        const urlInput = document.getElementById('add-sweet-image-url') as HTMLInputElement;
-        if (urlInput) urlInput.value = imgPath;
-        showToast('Preset photo selected', 'info');
-      }
-    });
-  });
+  const handleAddSweetUrlInput = (e: any) => {
+    const val = (e.target.value || '').trim();
+    if (val) {
+      const preview = (document.getElementById('add-sweet-preview-img') || document.getElementById('add-sweet-img-preview')) as HTMLImageElement | null;
+      if (preview) preview.src = val;
+    }
+  };
+  document.getElementById('add-sweet-image-input')?.addEventListener('input', handleAddSweetUrlInput);
+  document.getElementById('add-sweet-image-url')?.addEventListener('input', handleAddSweetUrlInput);
 
   // Clear Image for Add Product
   document.getElementById('add-sweet-clear-img-btn')?.addEventListener('click', () => {
-    const preview = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
-    if (preview) preview.src = '/assets/sweets/sw-1.png';
-    const urlInput = document.getElementById('add-sweet-image-url') as HTMLInputElement;
-    if (urlInput) urlInput.value = '';
-    const fileInput = document.getElementById('add-sweet-file-input') as HTMLInputElement;
+    updateAddSweetPreview('/assets/sweets/sw-1.png');
+    const fileInput = document.getElementById('add-sweet-file-input') as HTMLInputElement | null;
     if (fileInput) fileInput.value = '';
   });
 
@@ -3546,7 +3682,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
     const isPureGhee = fd.get('isPureGhee') === 'on';
     const imgUrlVal = ((fd.get('image') as string) || '').trim();
-    const previewEl = document.getElementById('add-sweet-img-preview') as HTMLImageElement;
+    const previewEl = (document.getElementById('add-sweet-preview-img') || document.getElementById('add-sweet-img-preview')) as HTMLImageElement | null;
     const finalImage = imgUrlVal || (previewEl ? previewEl.src : '/assets/sweets/sw-1.png');
 
     const newSweet = {
@@ -3607,55 +3743,53 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   });
 
   // Client-side image upload & compression for Edit Product
+  const updateEditSweetPreview = (src: string) => {
+    const preview = (document.getElementById('edit-sweet-preview-img') || document.getElementById('edit-sweet-img-preview')) as HTMLImageElement | null;
+    if (preview) preview.src = src;
+    const urlInput = (document.getElementById('edit-sweet-image-input') || document.getElementById('edit-sweet-image-url')) as HTMLInputElement | null;
+    if (urlInput) urlInput.value = src;
+  };
+
   document.getElementById('edit-sweet-file-input')?.addEventListener('change', async (e: any) => {
     const file = e.target?.files?.[0];
     if (file) {
-      showToast('Compressing photo...', 'info');
+      showToast('Processing photo...', 'info');
       try {
-        const compressed = await compressImageFile(file, 500, 0.82);
-        const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
-        if (preview) preview.src = compressed;
-        const urlInput = document.getElementById('edit-sweet-image-url') as HTMLInputElement;
-        if (urlInput) urlInput.value = compressed;
-        showToast('✓ Photo attached & compressed!', 'success');
+        let finalDataUrl = '';
+        try {
+          finalDataUrl = await compressImageFile(file, 600, 0.85);
+        } catch (_) {
+          finalDataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }
+        updateEditSweetPreview(finalDataUrl);
+        showToast('✓ New mithai photo uploaded successfully!', 'success');
       } catch (err) {
-        showToast('Could not process photo', 'error');
+        showToast('Could not process photo file', 'error');
       }
     }
   });
 
   // URL input preview for Edit Product
-  document.getElementById('edit-sweet-image-url')?.addEventListener('input', (e: any) => {
-    const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
-    if (preview && e.target.value) preview.src = e.target.value;
-  });
-
-  // Gallery Picker chips for Edit Product
-  document.querySelectorAll('[data-edit-pick-gallery]').forEach(btn => {
-    btn.addEventListener('click', (e: any) => {
-      e.preventDefault();
-      const imgPath = btn.getAttribute('data-edit-pick-gallery');
-      if (imgPath) {
-        const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
-        if (preview) preview.src = imgPath;
-        const urlInput = document.getElementById('edit-sweet-image-url') as HTMLInputElement;
-        if (urlInput) urlInput.value = imgPath;
-        showToast('Preset photo selected', 'info');
-      }
-    });
-  });
-
-  // Reset Image for Edit Product
-  document.getElementById('edit-sweet-reset-img-btn')?.addEventListener('click', () => {
-    if (state.editingSweet) {
-      const orig = state.editingSweet.image || `/assets/sweets/${state.editingSweet.id}.png`;
-      const preview = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
-      if (preview) preview.src = orig;
-      const urlInput = document.getElementById('edit-sweet-image-url') as HTMLInputElement;
-      if (urlInput) urlInput.value = orig;
-      const fileInput = document.getElementById('edit-sweet-file-input') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
+  const handleEditSweetUrlInput = (e: any) => {
+    const val = (e.target.value || '').trim();
+    if (val) {
+      const preview = (document.getElementById('edit-sweet-preview-img') || document.getElementById('edit-sweet-img-preview')) as HTMLImageElement | null;
+      if (preview) preview.src = val;
     }
+  };
+  document.getElementById('edit-sweet-image-input')?.addEventListener('input', handleEditSweetUrlInput);
+  document.getElementById('edit-sweet-image-url')?.addEventListener('input', handleEditSweetUrlInput);
+
+  document.getElementById('edit-sweet-reset-img-btn')?.addEventListener('click', (e: any) => {
+    const defSrc = e.currentTarget.getAttribute('data-default-src') || (state.editingSweet ? (state.editingSweet.image || `/assets/sweets/${state.editingSweet.id}.png`) : '/assets/sweets/sw-1.png');
+    updateEditSweetPreview(defSrc);
+    const fileInput = document.getElementById('edit-sweet-file-input') as HTMLInputElement | null;
+    if (fileInput) fileInput.value = '';
   });
 
   // Edit Product Form Submit
@@ -3673,8 +3807,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       const stock = Number(fd.get('stock'));
       const minStock = Number(fd.get('minStock'));
       const isPureGhee = fd.get('isPureGhee') === 'on';
-      const imgUrlVal = ((fd.get('image') as string) || '').trim();
-      const previewEl = document.getElementById('edit-sweet-img-preview') as HTMLImageElement;
+      const previewEl = (document.getElementById('edit-sweet-preview-img') || document.getElementById('edit-sweet-img-preview')) as HTMLImageElement | null;
       const updatedImage = imgUrlVal || (previewEl ? previewEl.src : sweet.image);
 
       sweet.name = name || sweet.name;
@@ -3819,10 +3952,14 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   // Expenses View Handlers
   document.getElementById('open-add-expense-modal-btn')?.addEventListener('click', () => {
     state.showAddExpenseModal = true;
+    state.expenseSavedSuccess = false;
+    state.lastSavedExpense = null;
     renderApp();
   });
   document.getElementById('close-add-expense-btn')?.addEventListener('click', () => {
     state.showAddExpenseModal = false;
+    state.expenseSavedSuccess = false;
+    state.lastSavedExpense = null;
     renderApp();
   });
 
@@ -3830,11 +3967,12 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     e.preventDefault();
     const fd = new FormData(e.target);
     const amount = Number(fd.get('amount'));
-    const category = fd.get('category');
+    const category = fd.get('category') as string;
+    const dateVal = (fd.get('date') as string) || new Date().toISOString().split('T')[0];
     const newExp = {
       id: `exp-${Date.now()}`,
-      date: fd.get('date') || '25 Sep',
-      description: fd.get('description'),
+      date: dateVal,
+      description: (fd.get('description') as string || 'Expense').trim(),
       category: category,
       amount: amount,
       status: 'Paid'
@@ -3852,9 +3990,26 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
     state.kpis.cost.value += amount;
     state.kpis.cost.formatted = `₹${state.kpis.cost.value.toLocaleString()}`;
-    state.showAddExpenseModal = false;
+    
+    // User requested: "when i save expanse dilog dont go away make it and when saved popup expensee is saved then in popup there is button close or add onther"
+    state.expenseSavedSuccess = true;
+    state.lastSavedExpense = newExp;
     saveExpenseToCloud(newExp, state.currentBranchId, state.expenses);
     saveState();
+    renderApp();
+    showToast(`✓ Recorded expense ₹${amount.toLocaleString()} for ${newExp.description}`, 'success');
+  });
+
+  // Action buttons inside post-save confirmation
+  document.getElementById('add-another-expense-btn')?.addEventListener('click', () => {
+    state.expenseSavedSuccess = false;
+    state.lastSavedExpense = null;
+    renderApp();
+  });
+  document.getElementById('close-expense-success-btn')?.addEventListener('click', () => {
+    state.showAddExpenseModal = false;
+    state.expenseSavedSuccess = false;
+    state.lastSavedExpense = null;
     renderApp();
   });
 
@@ -4307,6 +4462,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     e.preventDefault();
     const fd = new FormData(e.target);
     
+    const branchId = (fd.get('branchId') as string) || state.currentBranchId;
     const upiId = (fd.get('upiId') as string || '').trim();
     const upiName = (fd.get('upiName') as string || '').trim();
     const name = (fd.get('name') as string || '').trim();
@@ -4339,17 +4495,31 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.shopInfo.freeDeliveryAbove = freeDeliveryAbove;
     state.shopInfo.deliveryFee = deliveryFee;
 
+    // Explicitly update branch properties so each branch has its own address, UPI ID & settings
+    const targetBranch = state.branches.find((b: any) => b.id === branchId);
+    if (targetBranch) {
+      targetBranch.name = name || targetBranch.name;
+      targetBranch.address = address || targetBranch.address;
+      targetBranch.phone = phone || targetBranch.phone;
+      targetBranch.upiId = upiId || targetBranch.upiId;
+      targetBranch.upiName = upiName || targetBranch.upiName;
+      targetBranch.gstin = gstin || targetBranch.gstin;
+      targetBranch.fssai = fssai || targetBranch.fssai;
+      targetBranch.manager = owner || targetBranch.manager;
+      saveBranchToCloud(targetBranch, state.branches);
+    }
+
     // Log update in audit logs
     if (!state.auditLogs) state.auditLogs = [];
     state.auditLogs.unshift({
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       user: state.shopInfo.owner || 'Admin',
       action: 'Store & UPI Settings Updated',
-      details: `VPA set to: ${state.shopInfo.upiId} (${state.shopInfo.name})`
+      details: `VPA set to: ${upiId || state.shopInfo.upiId} for ${targetBranch?.name || state.shopInfo.name}`
     });
 
     saveState();
-    showToast(`✓ Store details & UPI ID (${state.shopInfo.upiId}) saved!`, 'success');
+    showToast(`✓ Settings & UPI (${upiId || state.shopInfo.upiId}) saved for ${targetBranch?.name || 'store'}!`, 'success');
     renderApp();
   });
 

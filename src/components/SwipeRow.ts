@@ -274,11 +274,11 @@ export function initSwipeRow(
       let targetX = currentX + dx;
       if (targetX > 0) {
         // Rubber-band forward drag
-        targetX = rubber(targetX, 100, 0.3);
+        targetX = rubber(targetX, 60, 0.2);
       } else if (Math.abs(targetX) > totalDrawerWidth) {
-        // Full swipe territory
+        // Controlled drag: rubber band slightly past actions so buttons are clear
         const over = Math.abs(targetX) - totalDrawerWidth;
-        targetX = -(totalDrawerWidth + rubber(over, rowElement.offsetWidth, 0.7));
+        targetX = -(totalDrawerWidth + rubber(over, 40, 0.15));
       }
       applyOffset(targetX, false);
     }
@@ -293,18 +293,10 @@ export function initSwipeRow(
 
     const dx = e.clientX - startX;
     const finalOffset = currentX + dx;
-    const thresholdCommit = rowElement.offsetWidth * 0.58;
 
-    // Check for full swipe commit (Delete)
-    if (finalOffset < -thresholdCommit) {
-      if (navigator.vibrate) navigator.vibrate(12);
-      collapseAndRemove('delete');
-      return;
-    }
-
-    // Check if opened past half drawer
-    if (finalOffset < -actionWidth * 0.8) {
-      // Snap open to reveal actions
+    // Never auto-delete on dragging: only snap open the 3 actions or snap closed
+    if (finalOffset < -35) {
+      // Snap open cleanly to reveal all 3 buttons: WhatsApp, View/Edit, and Delete
       currentX = -totalDrawerWidth;
       applyOffset(currentX, true);
     } else {
@@ -313,6 +305,14 @@ export function initSwipeRow(
       applyOffset(0, true);
     }
   };
+
+  // Tapping surface when open snaps it closed
+  surface.addEventListener('click', () => {
+    if (currentX < 0) {
+      currentX = 0;
+      applyOffset(0, true);
+    }
+  });
 
   surface.addEventListener('pointerdown', onPointerDown);
   surface.addEventListener('pointermove', onPointerMove);

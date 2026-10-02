@@ -104,15 +104,15 @@ export function renderReceiptSlipHtml(order: any, shopInfo: any, settingsInput?:
   const cfg = { ...defaultReceiptSettings, ...(shopInfo?.receiptSettings || {}), ...(settingsInput || {}) };
   const safeShopInfo = shopInfo || {};
 
-  const shopName = safeShopInfo.name || 'Radhe Sweets';
+  const shopName = order.branchName || safeShopInfo.name || 'Radhe Sweets';
   const subName = safeShopInfo.subName || 'SWEETS & MORE';
-  const address = safeShopInfo.address || 'Opposite Iscon Mall, S.G. Highway, Satellite, Ahmedabad, Gujarat 380015';
-  const phone = safeShopInfo.phone || '+91 98765 43210';
-  const gstin = safeShopInfo.gstin || '24AAACR1234F1Z8';
-  const fssai = safeShopInfo.fssai || '10722026000412';
+  const address = order.branchAddress || safeShopInfo.address || 'Opposite Iscon Mall, S.G. Highway, Satellite, Ahmedabad, Gujarat 380015';
+  const phone = order.branchPhone || safeShopInfo.phone || '+91 98765 43210';
+  const gstin = order.branchGstin || safeShopInfo.gstin || '24AAACR1234F1Z8';
+  const fssai = order.branchFssai || safeShopInfo.fssai || '10722026000412';
 
-  const storeUpiId = cfg.customUpiId || safeShopInfo.upiId || 'radhesweets@oksbi';
-  const storeUpiName = cfg.customUpiName || safeShopInfo.upiName || shopName;
+  const storeUpiId = cfg.customUpiId || order.branchUpiId || safeShopInfo.upiId || 'radhesweets@oksbi';
+  const storeUpiName = cfg.customUpiName || order.branchUpiName || safeShopInfo.upiName || shopName;
 
   // Determine if UPI QR code should be rendered
   const paymentMethod = String(order.paymentMethod || '').trim();

@@ -10,21 +10,54 @@ import { renderCounter } from './Counter.ts';
 
 export function renderDashboardView(state: any) {
   const { kpis = {}, quickCart = [], orders = [], sweets = [], customers = [] } = state;
+  const timeFilter = state.timeFilter || 'month';
 
-  const customersVal = kpis.customers?.value ?? customers.length ?? 0;
-  const salesVal = kpis.sales?.value ?? orders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
-  const ordersVal = kpis.orders?.value ?? orders.length ?? 0;
-  
-  // Dynamic profit: if kpis.profit is set, use it; otherwise compute based on branch margin or 0
-  const profitVal = kpis.profit?.value ?? (salesVal > 0 ? Math.round(salesVal * 0.341) : 0);
+  let filteredOrders = [...orders];
+  let periodMultiplier = 1;
+  let periodLabel = 'This Month';
+
+  if (timeFilter === 'today') {
+    periodLabel = 'Today';
+    const latestDate = orders[0]?.date?.split(',')?.[0]?.trim() || '25 Sep 2026';
+    const todayOrders = orders.filter((o: any) => o.date && o.date.includes(latestDate));
+    filteredOrders = todayOrders.length > 0 ? todayOrders : orders.slice(0, 3);
+  } else if (timeFilter === 'week') {
+    periodLabel = 'This Week';
+    filteredOrders = orders.slice(0, Math.min(orders.length, 12));
+    periodMultiplier = 1.35;
+  } else if (timeFilter === 'quarter') {
+    periodLabel = 'Quarterly';
+    periodMultiplier = 2.95;
+  } else {
+    periodLabel = 'This Month';
+    // Full monthly dataset
+  }
+
+  const baseSales = filteredOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+  const baseCost = filteredOrders.reduce((sum: number, o: any) => {
+    let orderCost = 0;
+    if (o.items && Array.isArray(o.items)) {
+      o.items.forEach((item: any) => {
+        const sw = sweets.find((s: any) => s.id === item.id || s.name === item.name);
+        const unitCost = sw?.costPrice || (item.rate ? Math.round(item.rate * 0.60) : 0);
+        orderCost += (Number(item.quantity) || 1) * unitCost;
+      });
+    }
+    return sum + (orderCost > 0 ? orderCost : Math.round((o.total || 0) * 0.62));
+  }, 0);
+
+  // Timeframe adaptive values
+  const salesVal = Math.round((timeFilter === 'month' ? (kpis.sales?.value || baseSales) : baseSales) * periodMultiplier);
+  const costVal = Math.round((timeFilter === 'month' ? (kpis.cost?.value || baseCost) : baseCost) * periodMultiplier);
+  const profitVal = Math.max(0, salesVal - costVal);
   const profitMarginStr = salesVal > 0 ? `${((profitVal / salesVal) * 100).toFixed(1)}% margin` : '0.0% margin';
-  
-  // Dynamic cost: if kpis.cost is set, use it; otherwise cost = sales - profit
-  const costVal = kpis.cost?.value ?? (salesVal > 0 ? Math.max(0, salesVal - profitVal) : 0);
   const costPercentStr = salesVal > 0 ? `${((costVal / salesVal) * 100).toFixed(1)}%` : '0.0%';
 
+  const ordersVal = Math.round((timeFilter === 'month' ? (kpis.orders?.value || filteredOrders.length) : filteredOrders.length) * periodMultiplier);
+  const customersVal = timeFilter === 'today' ? filteredOrders.length : Math.round((timeFilter === 'month' ? (kpis.customers?.value || customers.length) : customers.length) * (timeFilter === 'quarter' ? 1.5 : 1));
+
   // Dynamic returning: 
-  const returningVal = kpis.returningCustomers?.value ?? (customersVal > 0 ? Math.round(customersVal * 0.41) : 0);
+  const returningVal = Math.round(customersVal * 0.42);
   const returningPercentStr = customersVal > 0 ? `${Math.min(100, Math.round((returningVal / customersVal) * 100))}%` : '0.0%';
 
   const items = quickCart || [];
@@ -32,10 +65,10 @@ export function renderDashboardView(state: any) {
   const totalPayable = subtotal;
 
   // Donut chart status calculations
-  const totalOrders = orders.length;
-  const completedOrders = state.orderStatusCounts?.completed ?? orders.filter((o: any) => o.status === 'Completed').length;
-  const advanceOrders = state.orderStatusCounts?.advance ?? orders.filter((o: any) => o.status === 'Advance Booking').length;
-  const kitchenOrders = state.orderStatusCounts?.kitchen ?? orders.filter((o: any) => o.status === 'Kitchen Packing').length;
+  const totalOrders = ordersVal;
+  const completedOrders = Math.round(totalOrders * 0.88);
+  const advanceOrders = Math.round(totalOrders * 0.08);
+  const kitchenOrders = Math.max(0, totalOrders - completedOrders - advanceOrders);
 
   const completedPct = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
   const advancePct = totalOrders > 0 ? Math.round((advanceOrders / totalOrders) * 100) : 0;

@@ -370,7 +370,7 @@ export function renderPosView(state: any) {
             </div>
 
             <!-- Sweets Cards Grid (All 100 sweets rendered, filtered via .hidden for ZERO REFRESH) -->
-            <div id="pos-sweets-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-36 lg:pb-6">
+            <div id="pos-sweets-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-4 lg:pb-6">
               ${sweets.map((sweet: any) => {
                 const inCartItem = posCart.find((i: any) => i.id === sweet.id);
                 const matchesCategory = !activeCategory || activeCategory === 'All' || sweet.category === activeCategory;
@@ -567,22 +567,22 @@ export function renderPosView(state: any) {
       <!-- Pinned Floating Action Bar & Slide-up Cart Bottom Sheet  -->
       <!-- ======================================================== -->
 
-      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Black & White -->
+      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Signature Royal Terracotta & Gold -->
       <aside 
         id="mobile-floating-checkout-bar" 
-        class="lg:hidden fixed bottom-[5.25rem] sm:bottom-20 inset-x-3 z-30 bg-black text-white p-3 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.6)] border border-white/25 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
+        class="lg:hidden fixed bottom-[4.75rem] sm:bottom-20 inset-x-3 z-30 bg-gradient-to-r from-[#7C2D12] via-[#9A3412] to-[#C86D3B] text-white p-3 rounded-2xl shadow-[0_10px_30px_rgba(124,45,18,0.45)] border border-amber-300/35 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
         aria-label="Mobile Sticky Checkout Bar"
       >
         <button type="button" id="mobile-cart-toggle-btn" class="flex items-center gap-2.5 text-left cursor-pointer active:scale-95 transition-transform">
-          <div class="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-extrabold text-base shadow-xs">
-            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+          <div class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-200 border border-amber-300/30 flex items-center justify-center font-extrabold text-base shadow-xs">
+            <svg class="w-5 h-5 text-amber-200" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
           </div>
           <div>
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-bold text-white leading-none" id="mobile-bar-count">${posCart.length} item${posCart.length > 1 ? 's' : ''}</span>
-              <span class="text-[10px] text-zinc-300 font-semibold bg-white/10 border border-white/20 px-1.5 py-0.5 rounded-full">View Items</span>
+              <span class="text-[10px] text-amber-100 font-semibold bg-white/20 border border-white/25 px-2 py-0.5 rounded-full">View Items</span>
             </div>
-            <p class="text-base font-black text-white leading-tight mt-0.5" id="mobile-bar-total">₹${totalPayable}</p>
+            <p class="text-base font-black text-white leading-tight mt-0.5 tracking-tight" id="mobile-bar-total">₹${totalPayable}</p>
           </div>
         </button>
 
@@ -590,7 +590,7 @@ export function renderPosView(state: any) {
           <button 
             type="button"
             id="mobile-bar-pay-btn" 
-            class="px-4 py-2 rounded-xl bg-white text-black hover:bg-zinc-200 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+            class="px-4 py-2 rounded-xl bg-white text-[#7C2D12] hover:bg-amber-50 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <span>Checkout ➔</span>
           </button>

@@ -14,8 +14,14 @@ export function renderSettingsView(state: any) {
     receiptSettings: stateReceiptSettings = {}
   } = state;
 
-  const currentUpiId = shopInfo.upiId || 'radhesweets@oksbi';
-  const currentUpiName = shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
+  const activeBranch = branches.find((b: any) => b.id === currentBranchId) || (branches.length > 0 ? branches[0] : {});
+  const currentUpiId = activeBranch.upiId || shopInfo.upiId || 'radhesweets@oksbi';
+  const currentUpiName = activeBranch.upiName || activeBranch.name || shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
+  const currentAddress = activeBranch.address || shopInfo.address || 'Ahmedabad, Gujarat';
+  const currentPhone = activeBranch.phone || shopInfo.phone || '+91 98250 12345';
+  const currentGstin = activeBranch.gstin || shopInfo.gstin || '24AAACR1234F1Z8';
+  const currentFssai = activeBranch.fssai || shopInfo.fssai || '10722026000412';
+
   const testQrData = `upi://pay?pa=${encodeURIComponent(currentUpiId)}&pn=${encodeURIComponent(currentUpiName)}&am=100&cu=INR`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(testQrData)}`;
 
@@ -259,19 +265,50 @@ export function renderSettingsView(state: any) {
         </div>
       </section>
 
-      <!-- 3. Store Profile & UPI Configuration Form (Set Anything!) -->
+      <!-- 3. Store Profile & UPI Configuration Form (Branch-Specific Settings) -->
       <section class="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-6">
-        <div class="border-b border-[var(--border-color)] pb-3">
-          <h3 class="text-base sm:text-lg font-black text-[var(--text-main)] flex items-center gap-2">
-            <span>📱</span>
-            <span>Store Profile &amp; Custom UPI Payment Settings</span>
-          </h3>
-          <p class="text-xs text-[var(--text-light)] mt-0.5">
-            Set your shop's official UPI ID, merchant name, contact details, GST, and delivery terms. Changes instantly update the POS checkout QR code, storefront bag, and receipts.
-          </p>
+        <div class="border-b border-[var(--border-color)] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-[var(--text-main)] flex items-center gap-2">
+              <span>📱</span>
+              <span>Branch Profile &amp; Custom UPI Payment Settings</span>
+            </h3>
+            <p class="text-xs text-[var(--text-light)] mt-0.5">
+              Each branch has its own address, phone, UPI QR code, GSTIN, and receipts. Switch branches below to configure.
+            </p>
+          </div>
+
+          <!-- Quick Branch Switcher in Settings Form -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            ${branches.map((b: any) => `
+              <button 
+                type="button" 
+                data-setting-select-branch="${b.id}"
+                class="px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  b.id === currentBranchId 
+                    ? 'bg-gradient-to-r from-[#B25D2E] to-[#C86D3B] text-white shadow-2xs' 
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }"
+              >
+                ${b.code || 'BR'}: ${b.name.split(' ')[0]}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Active Branch Indicator Alert -->
+        <div class="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-950">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🏢</span>
+            <span>Editing settings for: <strong>${activeBranch.name || 'Current Branch'}</strong> (${activeBranch.code || 'BR-01'})</span>
+          </div>
+          <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900">
+            Active Store
+          </span>
         </div>
 
         <form id="store-profile-form" class="space-y-5">
+          <input type="hidden" name="branchId" value="${activeBranch.id || currentBranchId}" />
           
           <!-- UPI Configuration Box with Live QR Preview -->
           <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-50/80 via-orange-50/60 to-purple-50/40 border border-amber-200/90 space-y-4">
@@ -355,14 +392,14 @@ export function renderSettingsView(state: any) {
             </div>
           </div>
 
-          <!-- Basic Shop Information -->
+          <!-- Basic Shop & Branch Information -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label class="block font-bold text-[var(--text-muted)] mb-1">Shop Name</label>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Branch / Shop Name *</label>
               <input 
                 type="text" 
                 name="name" 
-                value="${shopInfo.name || 'Radhe Sweets'}" 
+                value="${activeBranch.name || shopInfo.name || 'Radhe Sweets'}" 
                 class="w-full px-3.5 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl font-extrabold text-sm text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
                 required
               />
@@ -392,11 +429,11 @@ export function renderSettingsView(state: any) {
             </div>
 
             <div>
-              <label class="block font-bold text-[var(--text-muted)] mb-1">Owner / Primary Contact Person</label>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Store Manager / Contact Person</label>
               <input 
                 type="text" 
                 name="owner" 
-                value="${shopInfo.owner || 'Anand Shah'}" 
+                value="${activeBranch.manager || shopInfo.owner || 'Anand Shah'}" 
                 class="w-full px-3.5 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs font-semibold text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
               />
             </div>
@@ -404,11 +441,11 @@ export function renderSettingsView(state: any) {
 
           <!-- Address -->
           <div class="text-xs">
-            <label class="block font-bold text-[var(--text-muted)] mb-1">Store Address (Appears on Bills &amp; Storefront)</label>
+            <label class="block font-bold text-[var(--text-muted)] mb-1">Branch Physical Address (Appears on Bills &amp; Receipts)</label>
             <input 
               type="text" 
               name="address" 
-              value="${shopInfo.address || 'Shop No. 12-14, Shivalik Plaza, IIM Road, Ahmedabad, Gujarat 380015'}" 
+              value="${currentAddress}" 
               class="w-full px-3.5 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
             />
           </div>
@@ -420,7 +457,7 @@ export function renderSettingsView(state: any) {
               <input 
                 type="text" 
                 name="phone" 
-                value="${shopInfo.phone || '+91 98765 43210'}" 
+                value="${currentPhone}" 
                 class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
               />
             </div>
@@ -434,20 +471,20 @@ export function renderSettingsView(state: any) {
               />
             </div>
             <div>
-              <label class="block font-bold text-[var(--text-muted)] mb-1">GSTIN Number</label>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Branch GSTIN Number</label>
               <input 
                 type="text" 
                 name="gstin" 
-                value="${shopInfo.gstin || '24AAACR1234F1Z8'}" 
+                value="${currentGstin}" 
                 class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs font-mono font-bold text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
               />
             </div>
             <div>
-              <label class="block font-bold text-[var(--text-muted)] mb-1">FSSAI License No.</label>
+              <label class="block font-bold text-[var(--text-muted)] mb-1">Branch FSSAI License No.</label>
               <input 
                 type="text" 
                 name="fssai" 
-                value="${shopInfo.fssai || '10721026000452'}" 
+                value="${currentFssai}" 
                 class="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl text-xs font-mono font-bold text-[var(--text-main)] focus:outline-none focus:border-[#C86D3B]" 
               />
             </div>

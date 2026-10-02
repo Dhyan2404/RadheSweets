@@ -17,9 +17,54 @@ export const initialData = {
   },
 
   branches: [
-    { id: "br-1", code: "BR-NAV-01", name: "Navrangpura Flagship", city: "Ahmedabad", revenue: 42850, orders: 126, margin: "34.1%" },
-    { id: "br-2", code: "BR-SAT-02", name: "Satellite Luxury Boutique", city: "Ahmedabad", revenue: 0, orders: 0, margin: "0.0%" },
-    { id: "br-3", code: "BR-SGH-03", name: "SG Highway Central Kitchen", city: "Ahmedabad", revenue: 0, orders: 0, margin: "0.0%" }
+    { 
+      id: "br-1", 
+      code: "BR-NAV-01", 
+      name: "Navrangpura Flagship", 
+      city: "Ahmedabad", 
+      address: "Shop No. 12-14, Shivalik Plaza, IIM Road, Navrangpura, Ahmedabad 380015",
+      phone: "+91 98765 43210",
+      email: "navrangpura@radhesweets.com",
+      upiId: "radhesweets.navrangpura@oksbi",
+      upiName: "Radhe Sweets Navrangpura",
+      gstin: "24AAACR1234F1Z8",
+      fssai: "10721026000452",
+      revenue: 42850, 
+      orders: 126, 
+      margin: "34.1%" 
+    },
+    { 
+      id: "br-2", 
+      code: "BR-SAT-02", 
+      name: "Satellite Luxury Boutique", 
+      city: "Ahmedabad", 
+      address: "GF-04, Titanium City Center, Anandnagar Road, Satellite, Ahmedabad 380015",
+      phone: "+91 98765 88990",
+      email: "satellite@radhesweets.com",
+      upiId: "radhesweets.satellite@okaxis",
+      upiName: "Radhe Sweets Satellite",
+      gstin: "24AAACR1234F2Z7",
+      fssai: "10721026000453",
+      revenue: 0, 
+      orders: 0, 
+      margin: "0.0%" 
+    },
+    { 
+      id: "br-3", 
+      code: "BR-SGH-03", 
+      name: "SG Highway Central Kitchen", 
+      city: "Ahmedabad", 
+      address: "Block B, Beside Iskcon Temple, S.G. Highway, Bodakdev, Ahmedabad 380054",
+      phone: "+91 98765 22110",
+      email: "sghighway@radhesweets.com",
+      upiId: "radhesweets.sghighway@okicici",
+      upiName: "Radhe Sweets SG Highway",
+      gstin: "24AAACR1234F3Z6",
+      fssai: "10721026000454",
+      revenue: 0, 
+      orders: 0, 
+      margin: "0.0%" 
+    }
   ],
   parkedBills: [
     { id: "park-1", label: "Token #14 (Mr. Patel)", time: "10:15 AM", itemsCount: 2, total: 360, items: [
