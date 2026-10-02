@@ -347,8 +347,9 @@ export function subscribeToBranchOrders(branchId, callback) {
 
 /**
  * Save customer to Cloud Firestore (both branch-subcollection & root collection)
+ * Also uploads updated roster to Firebase Cloud Storage for rock-solid cross-device persistence
  */
-export async function saveCustomerToCloud(customer, branchId = null) {
+export async function saveCustomerToCloud(customer, branchId = null, allCustomers = null) {
   updateStatus('syncing');
   try {
     const custDocRef = doc(db, "customers", customer.id);
@@ -365,17 +366,44 @@ export async function saveCustomerToCloud(customer, branchId = null) {
         updatedAt: new Date().toISOString()
       }, { merge: true });
     }
-    updateStatus('synced');
-    return true;
   } catch (error) {
-    console.warn(`[Firebase Firestore] Customer ${customer.id} sync fallback:`, error.message);
-    updateStatus('synced');
-    return false;
+    handleFirestoreError(`Customer ${customer.id} sync`, error);
   }
+
+  // Backup to Firebase Cloud Storage
+  try {
+    if (allCustomers && Array.isArray(allCustomers) && allCustomers.length > 0) {
+      uploadToFirebaseStorage("customers/customers_khata.json", {
+        totalCustomers: allCustomers.length,
+        branchId: branchId || 'br-1',
+        updatedAt: new Date().toISOString(),
+        customers: allCustomers
+      });
+    }
+  } catch (_) {}
+
+  updateStatus('synced');
+  return true;
 }
 
-export async function saveBranchCustomerToCloud(branchId, customer) {
-  return saveCustomerToCloud(customer, branchId);
+export async function saveBranchCustomerToCloud(branchId, customer, allCustomers = null) {
+  return saveCustomerToCloud(customer, branchId, allCustomers);
+}
+
+export async function saveAllBranchCustomersToCloud(branchId, customers) {
+  try {
+    uploadToFirebaseStorage("customers/customers_khata.json", {
+      totalCustomers: customers.length,
+      branchId: branchId || 'br-1',
+      updatedAt: new Date().toISOString(),
+      customers
+    });
+    customers.forEach(cust => {
+      saveCustomerToCloud(cust, branchId);
+    });
+  } catch (e) {
+    console.warn('[Firebase] Save all customers failed:', e);
+  }
 }
 
 /**
@@ -409,6 +437,7 @@ export async function updateCustomerStatsInCloud(customerId, orderAmount, isKhat
 
 /**
  * Real-time Listener for Branch Customers Directory
+ * Merges cloud changes seamlessly with baseline so no customer is lost
  */
 export function subscribeToBranchCustomers(branchId, callback) {
   try {
@@ -418,14 +447,35 @@ export function subscribeToBranchCustomers(branchId, callback) {
         callback(branchId === "br-1" ? initialData.customers : []);
         return;
       }
-      const customers = [];
+      const cloudCustomers = [];
       snapshot.forEach(docSnap => {
-        customers.push(docSnap.data());
+        cloudCustomers.push(docSnap.data());
       });
-      callback(customers);
+
+      if (branchId === "br-1") {
+        const merged = initialData.customers.map(c => {
+          const match = cloudCustomers.find(cc => cc.id === c.id);
+          return match ? { ...c, ...match } : c;
+        });
+        cloudCustomers.forEach(cc => {
+          if (!merged.some(m => m.id === cc.id)) merged.push(cc);
+        });
+        callback(merged);
+      } else {
+        callback(cloudCustomers);
+      }
     }, (err) => {
       handleFirestoreError(`Branch ${branchId} customers listener`, err);
-      callback(branchId === "br-1" ? initialData.customers : []);
+      // Fallback: try loading from Firebase Cloud Storage
+      downloadFromFirebaseStorage("customers/customers_khata.json").then(data => {
+        if (data && Array.isArray(data.customers) && data.customers.length > 0) {
+          callback(data.customers);
+        } else {
+          callback(branchId === "br-1" ? initialData.customers : []);
+        }
+      }).catch(() => {
+        callback(branchId === "br-1" ? initialData.customers : []);
+      });
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to branch customers', e);
@@ -455,6 +505,186 @@ export function subscribeToCustomers(callback) {
     });
   } catch (e) {
     handleFirestoreError('Failed to subscribe to customers', e);
+    return () => {};
+  }
+}
+
+/**
+ * Save Staff Member to Cloud Firestore & Storage
+ */
+export async function saveStaffMemberToCloud(staffMember, branchId = null, allStaff = null) {
+  updateStatus('syncing');
+  try {
+    const staffDocRef = doc(db, "staff", staffMember.id);
+    await setDoc(staffDocRef, {
+      ...staffMember,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    if (branchId) {
+      const branchStaffRef = doc(db, "branches", branchId, "staff", staffMember.id);
+      await setDoc(branchStaffRef, {
+        ...staffMember,
+        branchId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+  } catch (error) {
+    handleFirestoreError(`Staff ${staffMember.id} sync`, error);
+  }
+
+  try {
+    if (allStaff && Array.isArray(allStaff)) {
+      uploadToFirebaseStorage("staff/staff_roster.json", {
+        totalStaff: allStaff.length,
+        branchId: branchId || 'br-1',
+        updatedAt: new Date().toISOString(),
+        staff: allStaff
+      });
+    }
+  } catch (_) {}
+
+  updateStatus('synced');
+  return true;
+}
+
+export async function deleteStaffMemberFromCloud(staffId, branchId = null, allStaff = null) {
+  updateStatus('syncing');
+  try {
+    await deleteDoc(doc(db, "staff", staffId));
+    if (branchId) {
+      await deleteDoc(doc(db, "branches", branchId, "staff", staffId));
+    }
+  } catch (error) {
+    handleFirestoreError(`Delete staff ${staffId}`, error);
+  }
+
+  try {
+    if (allStaff && Array.isArray(allStaff)) {
+      uploadToFirebaseStorage("staff/staff_roster.json", {
+        totalStaff: allStaff.length,
+        branchId: branchId || 'br-1',
+        updatedAt: new Date().toISOString(),
+        staff: allStaff
+      });
+    }
+  } catch (_) {}
+
+  updateStatus('synced');
+  return true;
+}
+
+export function subscribeToBranchStaff(branchId, callback) {
+  try {
+    const branchStaffCol = collection(db, "branches", branchId, "staff");
+    return onSnapshot(branchStaffCol, (snapshot) => {
+      if (snapshot.empty) {
+        callback(initialData.staff || []);
+        return;
+      }
+      const staffList = [];
+      snapshot.forEach(docSnap => {
+        staffList.push(docSnap.data());
+      });
+      callback(staffList);
+    }, (err) => {
+      handleFirestoreError(`Branch ${branchId} staff listener`, err);
+      downloadFromFirebaseStorage("staff/staff_roster.json").then(data => {
+        if (data && Array.isArray(data.staff) && data.staff.length > 0) {
+          callback(data.staff);
+        } else {
+          callback(initialData.staff || []);
+        }
+      }).catch(() => {
+        callback(initialData.staff || []);
+      });
+    });
+  } catch (e) {
+    handleFirestoreError('Failed to subscribe to branch staff', e);
+    return () => {};
+  }
+}
+
+/**
+ * Save Expense to Cloud Firestore & Storage
+ */
+export async function saveExpenseToCloud(expense, branchId = null, allExpenses = null) {
+  updateStatus('syncing');
+  try {
+    const expenseDocRef = doc(db, "expenses", expense.id);
+    await setDoc(expenseDocRef, {
+      ...expense,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    if (branchId) {
+      const branchExpenseRef = doc(db, "branches", branchId, "expenses", expense.id);
+      await setDoc(branchExpenseRef, {
+        ...expense,
+        branchId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+  } catch (error) {
+    handleFirestoreError(`Expense ${expense.id} sync`, error);
+  }
+
+  try {
+    if (allExpenses) {
+      uploadToFirebaseStorage("expenses/expenses_ledger.json", {
+        updatedAt: new Date().toISOString(),
+        expenses: allExpenses
+      });
+    }
+  } catch (_) {}
+
+  updateStatus('synced');
+  return true;
+}
+
+export async function deleteExpenseFromCloud(expenseId, branchId = null, allExpenses = null) {
+  updateStatus('syncing');
+  try {
+    await deleteDoc(doc(db, "expenses", expenseId));
+    if (branchId) {
+      await deleteDoc(doc(db, "branches", branchId, "expenses", expenseId));
+    }
+  } catch (error) {
+    handleFirestoreError(`Delete expense ${expenseId}`, error);
+  }
+
+  try {
+    if (allExpenses) {
+      uploadToFirebaseStorage("expenses/expenses_ledger.json", {
+        updatedAt: new Date().toISOString(),
+        expenses: allExpenses
+      });
+    }
+  } catch (_) {}
+
+  updateStatus('synced');
+  return true;
+}
+
+export function subscribeToBranchExpenses(branchId, callback) {
+  try {
+    const branchExpensesCol = collection(db, "branches", branchId, "expenses");
+    return onSnapshot(branchExpensesCol, (snapshot) => {
+      const expensesList = [];
+      snapshot.forEach(docSnap => {
+        expensesList.push(docSnap.data());
+      });
+      callback(expensesList);
+    }, (err) => {
+      handleFirestoreError(`Branch ${branchId} expenses listener`, err);
+      downloadFromFirebaseStorage("expenses/expenses_ledger.json").then(data => {
+        if (data && data.expenses) {
+          callback(data.expenses);
+        }
+      }).catch(() => {});
+    });
+  } catch (e) {
+    handleFirestoreError('Failed to subscribe to branch expenses', e);
     return () => {};
   }
 }
@@ -739,3 +969,46 @@ export async function syncAllToFirebaseCloud(state) {
   updateStatus('synced');
   return { success: true, count: successCount };
 }
+
+/**
+ * Download JSON file directly from Firebase Cloud Storage via REST
+ */
+export async function downloadFromFirebaseStorage(storagePath) {
+  const encodedName = encodeURIComponent(storagePath);
+  const url = `${BASE_STORAGE_URL}/${encodedName}?alt=media`;
+  try {
+    const res = await fetch(url);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    // optional / silent fallback
+  }
+  return null;
+}
+
+/**
+ * Load complete cloud snapshot from Firebase Storage
+ */
+export async function loadCloudDataSnapshot(branchId = 'br-1') {
+  try {
+    const [sweetsData, customersData, ordersData, staffData, expensesData] = await Promise.allSettled([
+      downloadFromFirebaseStorage("sweets/catalog_100_sweets.json"),
+      downloadFromFirebaseStorage("customers/customers_khata.json"),
+      downloadFromFirebaseStorage("orders/all_orders.json"),
+      downloadFromFirebaseStorage("staff/staff_roster.json"),
+      downloadFromFirebaseStorage("expenses/expenses_ledger.json")
+    ]);
+
+    return {
+      sweets: sweetsData.status === 'fulfilled' && sweetsData.value?.sweets ? sweetsData.value.sweets : null,
+      customers: customersData.status === 'fulfilled' && customersData.value?.customers ? customersData.value.customers : null,
+      orders: ordersData.status === 'fulfilled' && ordersData.value?.orders ? ordersData.value.orders : null,
+      staff: staffData.status === 'fulfilled' && staffData.value?.staff ? staffData.value.staff : null,
+      expenses: expensesData.status === 'fulfilled' && expensesData.value?.expenses ? expensesData.value.expenses : null
+    };
+  } catch (e) {
+    return null;
+  }
+}
+

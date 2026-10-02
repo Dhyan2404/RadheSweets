@@ -7,6 +7,7 @@ import {
   saveBranchKpisToCloud, 
   saveCustomerToCloud, 
   saveBranchCustomerToCloud,
+  saveAllBranchCustomersToCloud,
   loadBranchDataFromCloud,
   uploadOrderToStorage,
   syncAllToFirebaseCloud,
@@ -15,9 +16,16 @@ import {
   subscribeToBranchCustomers,
   subscribeToBranchSweets,
   subscribeToBranchKpis,
+  subscribeToBranchStaff,
+  saveStaffMemberToCloud,
+  deleteStaffMemberFromCloud,
+  subscribeToBranchExpenses,
+  saveExpenseToCloud,
+  deleteExpenseFromCloud,
   subscribeToActiveCheckout,
   saveActiveCheckoutToCloud,
   clearActiveCheckoutInCloud,
+  loadCloudDataSnapshot,
   firestoreLiveState,
   onFirestoreStatusChange,
   getBranchDefaultCatalog
@@ -256,7 +264,7 @@ function saveState() {
       customerAddress: state.customerAddress
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-    broadcastPeerSync('STATE_SAVED');
+    broadcastPeerSync('STATE_SAVED', toSave);
   } catch (e) {
     console.error('Failed to save state:', e);
   }
@@ -265,61 +273,114 @@ function saveState() {
 // Real-time Peer Bus for Multi-Tab & Device Viewport Synchronization
 const peerSyncBus = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('radhe_sweets_peer_bus') : null;
 
-function broadcastPeerSync(type = 'STATE_SAVED') {
+function broadcastPeerSync(type = 'STATE_SAVED', payload?: any) {
   try {
     peerSyncBus?.postMessage({
       type,
       branchId: state.currentBranchId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      payload: payload || {
+        customers: state.customers,
+        orders: state.orders,
+        sweets: state.sweets,
+        staff: state.staff,
+        expenses: state.expenses,
+        kpis: state.kpis,
+        orderStatusCounts: state.orderStatusCounts,
+        auditLogs: state.auditLogs
+      }
     });
   } catch (_) {}
 }
 
-function handleIncomingPeerSync() {
+function handleIncomingPeerSync(incomingData?: any) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const fresh = JSON.parse(raw);
+    let fresh = incomingData;
+    if (!fresh) {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      fresh = JSON.parse(raw);
+    }
     if (!fresh) return;
 
-    let hasSignificantUpdate = false;
+    let hasUpdate = false;
 
-    // Synchronize orders if changed
-    if (Array.isArray(fresh.orders) && fresh.orders.length !== state.orders.length) {
-      state.orders = fresh.orders;
-      state.orderStatusCounts = fresh.orderStatusCounts || state.orderStatusCounts;
-      hasSignificantUpdate = true;
+    // 1. Synchronize customers & Khata dues (Checks actual content, not just length!)
+    if (Array.isArray(fresh.customers) && fresh.customers.length > 0) {
+      const isDiff = JSON.stringify(fresh.customers) !== JSON.stringify(state.customers);
+      if (isDiff) {
+        state.customers = fresh.customers;
+        hasUpdate = true;
+      }
     }
 
-    // Synchronize sweets stock
+    // 2. Synchronize orders & statuses
+    if (Array.isArray(fresh.orders)) {
+      const isDiff = JSON.stringify(fresh.orders) !== JSON.stringify(state.orders);
+      if (isDiff) {
+        state.orders = fresh.orders;
+        state.orderStatusCounts = fresh.orderStatusCounts || {
+          total: state.orders.length,
+          completed: state.orders.filter((o: any) => o.status === 'Completed').length,
+          advance: state.orders.filter((o: any) => o.status === 'Advance Booking').length,
+          kitchen: state.orders.filter((o: any) => o.status === 'Kitchen Packing').length
+        };
+        hasUpdate = true;
+      }
+    }
+
+    // 3. Synchronize sweets stock & catalog
     if (Array.isArray(fresh.sweets) && fresh.sweets.length >= 50) {
-      state.sweets = fresh.sweets;
-      hasSignificantUpdate = true;
+      const isDiff = JSON.stringify(fresh.sweets) !== JSON.stringify(state.sweets);
+      if (isDiff) {
+        state.sweets = fresh.sweets;
+        hasUpdate = true;
+      }
     }
 
-    // Synchronize customers
-    if (Array.isArray(fresh.customers) && fresh.customers.length !== state.customers.length) {
-      state.customers = fresh.customers;
-      hasSignificantUpdate = true;
+    // 4. Synchronize staff roster, salary & attendance
+    if (Array.isArray(fresh.staff)) {
+      const isDiff = JSON.stringify(fresh.staff) !== JSON.stringify(state.staff);
+      if (isDiff) {
+        state.staff = fresh.staff;
+        hasUpdate = true;
+      }
     }
 
-    // Synchronize KPIs
+    // 5. Synchronize expenses & expense items
+    if (fresh.expenses) {
+      const isDiff = JSON.stringify(fresh.expenses) !== JSON.stringify(state.expenses);
+      if (isDiff) {
+        state.expenses = fresh.expenses;
+        hasUpdate = true;
+      }
+    }
+
+    // 6. Synchronize KPIs & profit totals
     if (fresh.kpis) {
-      state.kpis = fresh.kpis;
-      hasSignificantUpdate = true;
+      const isDiff = JSON.stringify(fresh.kpis) !== JSON.stringify(state.kpis);
+      if (isDiff) {
+        state.kpis = { ...state.kpis, ...fresh.kpis };
+        hasUpdate = true;
+      }
     }
 
-    // Synchronize audit logs
+    // 7. Synchronize audit logs
     if (Array.isArray(fresh.auditLogs)) {
       state.auditLogs = fresh.auditLogs;
     }
 
-    // Synchronize parked bills
+    // 8. Synchronize parked bills
     if (Array.isArray(fresh.parkedBills)) {
       state.parkedBills = fresh.parkedBills;
     }
 
-    if (hasSignificantUpdate && shouldBackgroundSyncRender()) {
+    // 9. Synchronize shop info
+    if (fresh.shopInfo) {
+      state.shopInfo = { ...state.shopInfo, ...fresh.shopInfo };
+    }
+
+    if (hasUpdate && shouldBackgroundSyncRender()) {
       renderApp();
     }
   } catch (err) {
@@ -330,14 +391,17 @@ function handleIncomingPeerSync() {
 if (peerSyncBus) {
   peerSyncBus.onmessage = (event) => {
     if (event.data?.type === 'STATE_SAVED') {
-      handleIncomingPeerSync();
+      handleIncomingPeerSync(event.data?.payload);
     }
   };
 }
 
 window.addEventListener('storage', (e) => {
   if (e.key === STORAGE_KEY && e.newValue) {
-    handleIncomingPeerSync();
+    try {
+      const fresh = JSON.parse(e.newValue);
+      handleIncomingPeerSync(fresh);
+    } catch (_) {}
   }
 });
 
@@ -498,22 +562,61 @@ export function setupBranchFirestoreListeners(branchId: string) {
   activeSubscriptions.push(unsubKpis);
 
   // 4. Live Branch Customers Listener (Branch-isolated patrons & Khata)
+  // 4. Live Branch Customers Listener (Branch-isolated patrons & Khata)
   const unsubCusts = subscribeToBranchCustomers(branchId, (cloudCustomers: any[]) => {
     if (branchId !== state.currentBranchId) return;
-    if (branchId === 'br-1') {
-      state.customers = (cloudCustomers && cloudCustomers.length > 0) ? cloudCustomers : [...initialData.customers];
+    if (cloudCustomers && cloudCustomers.length > 0) {
+      if (branchId === 'br-1') {
+        const merged = initialData.customers.map((c: any) => {
+          const match = cloudCustomers.find((cc: any) => cc.id === c.id);
+          return match ? { ...c, ...match } : c;
+        });
+        cloudCustomers.forEach((cc: any) => {
+          if (!merged.some((m: any) => m.id === cc.id)) merged.push(cc);
+        });
+        state.customers = merged;
+      } else {
+        state.customers = cloudCustomers;
+      }
     } else {
-      state.customers = cloudCustomers || [];
+      const snap = getBranchLocalSnapshot(branchId);
+      if (snap?.customers) state.customers = snap.customers;
     }
     state.kpis.customers = state.kpis.customers || { value: 0 };
     state.kpis.customers.value = state.customers.length;
     state.kpis.customers.formatted = String(state.customers.length);
     saveState();
-    if (['customers', 'pos'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
+    if (['customers', 'pos', 'dashboard'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
       renderApp();
     }
   });
   activeSubscriptions.push(unsubCusts);
+
+  // 5. Live Branch Staff & Payroll Listener
+  const unsubStaff = subscribeToBranchStaff(branchId, (cloudStaff: any[]) => {
+    if (branchId !== state.currentBranchId) return;
+    if (cloudStaff && cloudStaff.length > 0) {
+      state.staff = cloudStaff;
+      saveState();
+      if (['staff', 'dashboard'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
+        renderApp();
+      }
+    }
+  });
+  activeSubscriptions.push(unsubStaff);
+
+  // 6. Live Branch Expenses Ledger Listener
+  const unsubExpenses = subscribeToBranchExpenses(branchId, (cloudExpenses: any) => {
+    if (branchId !== state.currentBranchId) return;
+    if (cloudExpenses && Array.isArray(cloudExpenses.items)) {
+      state.expenses = cloudExpenses;
+      saveState();
+      if (['expenses', 'dashboard'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
+        renderApp();
+      }
+    }
+  });
+  activeSubscriptions.push(unsubExpenses);
 }
 
 // Master Branch Switch Handler: Switches stock, catalog, customers, orders, and resets profit/metrics to 0
@@ -2441,7 +2544,7 @@ function attachEventListeners() {
             cust.khataBalance = (cust.khataBalance || 0) + totalPayable;
           }
           cust.loyaltyPoints = (cust.loyaltyPoints || 0) + Math.floor(totalPayable / 100);
-          saveCustomerToCloud(cust, state.currentBranchId);
+          saveCustomerToCloud(cust, state.currentBranchId, state.customers);
         }
       }
 
@@ -2680,7 +2783,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         cust.khataBalance = Math.max(0, (cust.khataBalance || 0) - (order.total || 0));
         cust.totalSpent = Math.max(0, (cust.totalSpent || 0) - (order.total || 0));
         cust.totalOrders = Math.max(0, (cust.totalOrders || 0) - 1);
-        saveCustomerToCloud(cust, state.currentBranchId);
+        saveCustomerToCloud(cust, state.currentBranchId, state.customers);
       }
     }
 
@@ -2963,7 +3066,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     });
 
     // Save to Firebase Firestore cloud & local storage
-    saveCustomerToCloud(cust, state.currentBranchId);
+    saveCustomerToCloud(cust, state.currentBranchId, state.customers);
     saveBranchSnapshot(state.currentBranchId);
 
     state.showSettleKhataModal = false;
@@ -3015,7 +3118,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.customers.unshift(newCust);
     state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
     state.kpis.customers.formatted = String(state.kpis.customers.value);
-    saveCustomerToCloud(newCust, state.currentBranchId);
+    saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
     saveBranchSnapshot(state.currentBranchId);
     completeCustomerSelection(newCust);
   });
@@ -3379,6 +3482,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.kpis.cost.value += amount;
     state.kpis.cost.formatted = `₹${state.kpis.cost.value.toLocaleString()}`;
     state.showAddExpenseModal = false;
+    saveExpenseToCloud(newExp, state.currentBranchId, state.expenses);
     saveState();
     renderApp();
   });
@@ -3390,6 +3494,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       if (item) {
         state.expenses.total = Math.max(0, state.expenses.total - item.amount);
         state.expenses.items = state.expenses.items.filter((i: any) => i.id !== id);
+        deleteExpenseFromCloud(id, state.currentBranchId, state.expenses);
         saveState();
         renderApp();
       }
@@ -3545,6 +3650,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         member.joiningDate = joining;
         member.emergencyContact = emergency;
         member.aadharNumber = aadhar;
+        saveStaffMemberToCloud(member, state.currentBranchId, state.staff);
         showToast(`Updated ${name} (${salaryType === 'Daily' ? `₹${salaryRate}/day` : `₹${baseSalary.toLocaleString()}/mo`})`, 'success');
       }
     } else {
@@ -3575,6 +3681,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         salaryHistory: []
       };
       state.staff.unshift(newStaff);
+      saveStaffMemberToCloud(newStaff, state.currentBranchId, state.staff);
       showToast(`Added ${name} (${salaryType === 'Daily' ? `₹${salaryRate}/day` : `₹${baseSalary.toLocaleString()}/mo`})`, 'success');
     }
 
@@ -3588,6 +3695,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   const removeStaffMember = (staffId: string, staffName: string) => {
     if (confirm(`Are you sure you want to remove "${staffName}" from the staff roster?\n\nThis will remove their shift records and attendance profile.`)) {
       state.staff = state.staff.filter((s: any) => s.id !== staffId);
+      deleteStaffMemberFromCloud(staffId, state.currentBranchId, state.staff);
       state.showAddStaffModal = false;
       state.editingStaff = null;
       saveState();
@@ -3621,6 +3729,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       const member = state.staff.find((s: any) => s.id === id);
       if (member && status) {
         member.attendanceToday = status;
+        saveStaffMemberToCloud(member, state.currentBranchId, state.staff);
         saveState();
         showToast(`Marked ${member.name} as ${status}`, 'success');
         renderApp();
@@ -4069,7 +4178,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
       state.kpis.customers.formatted = String(state.kpis.customers.value);
     }
-    saveCustomerToCloud(newCustomer, state.currentBranchId);
+    saveCustomerToCloud(newCustomer, state.currentBranchId, state.customers);
     saveBranchSnapshot(state.currentBranchId);
     completeCustomerSelection(newCustomer);
   };
@@ -4684,7 +4793,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
             state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
             state.kpis.customers.formatted = String(state.kpis.customers.value);
           }
-          saveCustomerToCloud(newCustomer, state.currentBranchId);
+          saveCustomerToCloud(newCustomer, state.currentBranchId, state.customers);
           saveBranchSnapshot(state.currentBranchId);
           completeCustomerSelection(newCustomer);
         }
@@ -4753,7 +4862,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
             notes: 'Registered via Phone Dialer'
           };
           state.customers.unshift(newCust);
-          saveCustomerToCloud(newCust, state.currentBranchId);
+          saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
           saveBranchSnapshot(state.currentBranchId);
           completeCustomerSelection(newCust);
         });
@@ -4833,7 +4942,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
           state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
           state.kpis.customers.formatted = String(state.kpis.customers.value);
         }
-        saveCustomerToCloud(newCust, state.currentBranchId);
+        saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
         saveBranchSnapshot(state.currentBranchId);
         completeCustomerSelection(newCust);
       }
@@ -4926,6 +5035,50 @@ function initApp() {
       renderApp();
     }
   }).catch(() => {});
+
+  // 4. Initial Sync with Cloud Storage (Customers, Orders, Sweets, Staff, Expenses)
+  loadCloudDataSnapshot(state.currentBranchId).then((cloudSnapshot: any) => {
+    if (!cloudSnapshot) return;
+    let hasCloudUpdate = false;
+    if (cloudSnapshot.customers && Array.isArray(cloudSnapshot.customers) && cloudSnapshot.customers.length > 0) {
+      if (JSON.stringify(cloudSnapshot.customers) !== JSON.stringify(state.customers)) {
+        state.customers = cloudSnapshot.customers;
+        hasCloudUpdate = true;
+      }
+    }
+    if (cloudSnapshot.staff && Array.isArray(cloudSnapshot.staff) && cloudSnapshot.staff.length > 0) {
+      if (JSON.stringify(cloudSnapshot.staff) !== JSON.stringify(state.staff)) {
+        state.staff = cloudSnapshot.staff;
+        hasCloudUpdate = true;
+      }
+    }
+    if (cloudSnapshot.orders && Array.isArray(cloudSnapshot.orders) && cloudSnapshot.orders.length > 0) {
+      if (JSON.stringify(cloudSnapshot.orders) !== JSON.stringify(state.orders)) {
+        state.orders = cloudSnapshot.orders;
+        hasCloudUpdate = true;
+      }
+    }
+    if (cloudSnapshot.expenses && cloudSnapshot.expenses.items) {
+      if (JSON.stringify(cloudSnapshot.expenses) !== JSON.stringify(state.expenses)) {
+        state.expenses = cloudSnapshot.expenses;
+        hasCloudUpdate = true;
+      }
+    }
+    if (hasCloudUpdate && shouldBackgroundSyncRender()) {
+      saveState();
+      renderApp();
+    }
+  }).catch(() => {});
+
+  // 5. Multi-Tab & Device Auto-Sync on Tab Focus
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      handleIncomingPeerSync();
+    }
+  });
+  window.addEventListener('focus', () => {
+    handleIncomingPeerSync();
+  });
 }
 
 if (document.readyState === 'loading') {
