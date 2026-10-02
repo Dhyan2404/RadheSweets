@@ -206,7 +206,7 @@ export function renderPosView(state: any) {
             Add Sweets (${posCart.length})
           </span>
           <span class="text-[var(--text-light)]">→</span>
-          <button id="pos-header-checkout-btn" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${posCart.length > 0 ? 'bg-[var(--brand-primary)] text-white shadow-xs cursor-pointer active:scale-95' : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed'} transition-all">
+          <button id="pos-header-checkout-btn" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${posCart.length > 0 ? 'bg-black hover:bg-stone-900 text-white shadow-xs cursor-pointer active:scale-95' : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed'} transition-all">
             <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">3</span>
             Checkout
           </button>
@@ -548,7 +548,7 @@ export function renderPosView(state: any) {
             type="button"
             id="pos-proceed-checkout-btn"
             ${posCart.length === 0 ? 'disabled' : ''}
-            class="w-full mt-4 py-3 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer"
+            class="w-full mt-4 py-3 px-4 bg-black hover:bg-stone-900 border border-stone-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer"
           >
             <span>Proceed to Checkout</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -561,20 +561,20 @@ export function renderPosView(state: any) {
       <!-- Pinned Floating Action Bar & Slide-up Cart Bottom Sheet  -->
       <!-- ======================================================== -->
 
-      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Signature Royal Terracotta & Gold -->
+      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Sleek Premium Black -->
       <aside 
         id="mobile-floating-checkout-bar" 
-        class="lg:hidden fixed bottom-[4.75rem] sm:bottom-20 inset-x-3 z-30 bg-gradient-to-r from-[#7C2D12] via-[#9A3412] to-[#C86D3B] text-white p-3 rounded-2xl shadow-[0_10px_30px_rgba(124,45,18,0.45)] border border-amber-300/35 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
+        class="lg:hidden fixed bottom-[4.75rem] sm:bottom-20 inset-x-3 z-30 bg-black text-white p-3 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.65)] border border-stone-800 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
         aria-label="Mobile Sticky Checkout Bar"
       >
         <button type="button" id="mobile-cart-toggle-btn" class="flex items-center gap-2.5 text-left cursor-pointer active:scale-95 transition-transform">
-          <div class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-200 border border-amber-300/30 flex items-center justify-center font-extrabold text-base shadow-xs">
-            <svg class="w-5 h-5 text-amber-200" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+          <div class="w-9 h-9 rounded-xl bg-stone-900 text-white border border-stone-700 flex items-center justify-center font-extrabold text-base shadow-xs">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
           </div>
           <div>
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-bold text-white leading-none" id="mobile-bar-count">${posCart.length} item${posCart.length > 1 ? 's' : ''}</span>
-              <span class="text-[10px] text-amber-100 font-semibold bg-white/20 border border-white/25 px-2 py-0.5 rounded-full">View Items</span>
+              <span class="text-[10px] text-stone-300 font-semibold bg-stone-800 border border-stone-700 px-2 py-0.5 rounded-full">View Items</span>
             </div>
             <p class="text-base font-black text-white leading-tight mt-0.5 tracking-tight" id="mobile-bar-total">₹${totalPayable}</p>
           </div>
@@ -584,7 +584,7 @@ export function renderPosView(state: any) {
           <button 
             type="button"
             id="mobile-bar-pay-btn" 
-            class="px-4 py-2 rounded-xl bg-white text-[#7C2D12] hover:bg-amber-50 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+            class="px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-black text-white border border-stone-700 ring-1 ring-white/20 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <span>Checkout ➔</span>
           </button>
@@ -599,7 +599,7 @@ export function renderPosView(state: any) {
             <div class="p-4 border-b border-stone-100 flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-base font-extrabold text-[#2A1F1D]">Active Cart</span>
-                <span id="mobile-sheet-count-badge" class="px-2 py-0.5 rounded-full bg-orange-100 text-[#C86D3B] font-bold text-xs">
+                <span id="mobile-sheet-count-badge" class="px-2 py-0.5 rounded-full bg-stone-100 text-stone-900 font-bold text-xs border border-stone-200">
                   ${posCart.length} items
                 </span>
               </div>
@@ -625,14 +625,14 @@ export function renderPosView(state: any) {
               </div>
               <div class="border-t border-stone-200 pt-2 flex justify-between font-extrabold text-base text-stone-900">
                 <span>Total Payable</span>
-                <span class="text-[#C86D3B]" id="mobile-sheet-total">₹${totalPayable}</span>
+                <span class="text-black font-black" id="mobile-sheet-total">₹${totalPayable}</span>
               </div>
 
               <button 
                 type="button"
                 id="mobile-sheet-proceed-checkout-btn"
                 ${posCart.length === 0 ? 'disabled' : ''}
-                class="w-full py-3.5 px-4 bg-[#C86D3B] hover:bg-[#A84C1C] disabled:opacity-50 text-white font-extrabold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+                class="w-full py-3.5 px-4 bg-black hover:bg-stone-900 disabled:opacity-50 text-white font-extrabold text-sm rounded-xl shadow-lg border border-stone-800 transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
               >
                 <span>Proceed to Pay ₹${totalPayable}</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path></svg>

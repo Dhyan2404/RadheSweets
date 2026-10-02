@@ -2124,6 +2124,11 @@ function attachEventListeners() {
     const headerCheckoutBtn = document.getElementById('pos-header-checkout-btn') as HTMLButtonElement | null;
     if (headerCheckoutBtn) {
       headerCheckoutBtn.disabled = state.posCart.length === 0;
+      if (state.posCart.length > 0) {
+        headerCheckoutBtn.className = "flex items-center gap-1.5 px-3 py-1 rounded-full bg-black hover:bg-stone-900 text-white shadow-xs cursor-pointer active:scale-95 transition-all";
+      } else {
+        headerCheckoutBtn.className = "flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed transition-all";
+      }
       headerCheckoutBtn.innerHTML = `
         <span>Proceed to Checkout</span>
         <span class="text-xs opacity-90">(₹${totalPayable.toLocaleString()})</span>
