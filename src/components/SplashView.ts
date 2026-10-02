@@ -39,12 +39,11 @@ export function renderSplashView(options: { isModal?: boolean; progress?: number
         <div class="flex items-center space-x-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
           <span class="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-stone-600">
-            Navrangpura Flagship • Shuddh Desi Ghee
+            Authentic Indian Mithai • Shuddh Desi Ghee
           </span>
         </div>
 
         <div class="flex items-center space-x-2 text-[11px] sm:text-xs font-semibold text-amber-900 bg-amber-50/80 border border-amber-200/80 px-3 py-1 rounded-full shadow-2xs">
-          <span>🙏</span>
           <span>Jai Radhe Krishna</span>
         </div>
       </div>

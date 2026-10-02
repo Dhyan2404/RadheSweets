@@ -35,10 +35,10 @@ export function renderTopBar(state: any) {
           <div class="leading-tight">
             <div class="flex items-center gap-1.5">
               <span class="font-black text-sm sm:text-base tracking-tight text-[#2A1F1D]">Radhe Sweets</span>
-              <span class="hidden sm:inline px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-orange-100 text-[#C86D3B]">Ahmedabad</span>
+              <span class="hidden sm:inline px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-orange-100 text-[#C86D3B]">Est. 1984</span>
             </div>
-            <p class="text-[9px] font-bold text-[#C86D3B] tracking-wider truncate max-w-[140px] sm:max-w-none">
-              ${currentBranch.name}
+            <p class="text-[9px] font-bold text-[#C86D3B] tracking-wider uppercase">
+              Sweets &amp; More
             </p>
           </div>
         </div>
@@ -101,32 +101,6 @@ export function renderTopBar(state: any) {
         <div class="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] font-extrabold shadow-2xs">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>Live POS</span>
-        </div>
-
-        <!-- Desktop Branch Selector Pill (Hidden on Mobile per user instruction) -->
-        <div class="hidden md:flex items-center">
-          <div class="relative flex items-center bg-amber-50/90 hover:bg-amber-100/80 border border-amber-200/90 rounded-full pl-3 pr-2 py-1 shadow-2xs transition-all">
-            <svg class="w-3.5 h-3.5 text-[#C86D3B] mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <select 
-              id="topbar-branch-select"
-              class="bg-transparent text-xs font-bold text-[#C86D3B] cursor-pointer border-0 outline-none pr-5 py-0 appearance-none truncate"
-              title="Switch Active Store Branch"
-            >
-              ${branches.map((b: any) => `
-                <option value="${b.id}" ${b.id === currentBranchId ? 'selected' : ''} class="text-[#2A1F1D] bg-white font-semibold">
-                  ${b.name}
-                </option>
-              `).join('')}
-            </select>
-            <span class="pointer-events-none -ml-4 flex items-center text-[#C86D3B]">
-              <svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </span>
-          </div>
         </div>
 
         <!-- Notifications Bell -->

@@ -156,7 +156,7 @@ export function renderMobileDrawer(state: any) {
               </div>
               <div>
                 <h3 class="font-extrabold text-base text-[#2A1F1D] tracking-tight">Radhe Sweets</h3>
-                <p class="text-[9px] font-black text-[#C86D3B] tracking-widest uppercase">Ahmedabad • Est. 1984</p>
+                <p class="text-[9px] font-black text-[#C86D3B] tracking-widest uppercase">Sweets &amp; More • Est. 1984</p>
               </div>
             </div>
             <button 
@@ -169,19 +169,7 @@ export function renderMobileDrawer(state: any) {
             </button>
           </div>
 
-          <!-- Active Branch Banner with Quick Switch -->
-          <div class="my-4 p-3 bg-stone-50 rounded-2xl border border-stone-200 flex items-center justify-between">
-            <div>
-              <p class="text-[10px] text-stone-400 font-extrabold uppercase tracking-wider">Active Branch</p>
-              <p class="text-xs font-black text-stone-800 flex items-center gap-1.5 mt-0.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                ${currentBranch?.name || 'Navrangpura Flagship'}
-              </p>
-            </div>
-            <button type="button" data-tab="settings" class="text-xs text-[#C86D3B] font-bold hover:underline py-1 px-2 cursor-pointer">
-              Switch
-            </button>
-          </div>
+          <div class="my-3"></div>
 
           <!-- Spotlight Search Trigger Button -->
           <button 

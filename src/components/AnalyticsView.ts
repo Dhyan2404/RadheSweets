@@ -107,7 +107,7 @@ export function renderAnalyticsView(state) {
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
           <div>
             <h3 class="text-sm font-bold text-[var(--text-main)]">
-              Branch-Level P&L: ${currentBranch.name}
+              Shop Net Profit &amp; Loss Statement (P&amp;L)
             </h3>
             <p class="text-[11px] text-[var(--text-light)] font-mono">
               Net Profit = Gross Revenue - (Raw Material + Packaging + Labor + Utilities + Rent + Taxes)

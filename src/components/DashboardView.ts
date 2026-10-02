@@ -557,7 +557,7 @@ export function renderDashboardView(state: any) {
           <section id="section-order-status" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="order-status-card">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-base font-bold text-[#2A1F1D]">Order Status</h3>
-              <span class="text-xs text-stone-400">Active Branch</span>
+              <span class="text-xs text-stone-400">Live Today</span>
             </div>
 
             <div class="flex flex-col sm:flex-row items-center justify-between pt-2">

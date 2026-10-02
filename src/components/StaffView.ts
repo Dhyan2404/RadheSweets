@@ -270,7 +270,7 @@ export function renderStaffView(state: any) {
                       <div>
                         <h3 class="text-sm sm:text-base font-extrabold text-[#2A1F1D] leading-tight">${person.name}</h3>
                         <p class="text-xs font-bold text-[#C86D3B] mt-0.5">${person.role}</p>
-                        <p class="text-[11px] text-stone-400 font-medium">${person.branchName || 'Flagship Store'}</p>
+                        <p class="text-[11px] text-stone-400 font-medium">${person.department || 'Active Staff'}</p>
                       </div>
                     </div>
 
