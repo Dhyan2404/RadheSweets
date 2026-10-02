@@ -27,9 +27,9 @@ export const firebaseConfig = {
   measurementId: "G-6S1GR5B6TF"
 };
 
-// Initialize Firebase App & Firestore Database
+// Initialize Firebase App & Firestore Database (Targeting database 'default' in asia-south1)
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = getFirestore(app, "default");
 
 let analytics = null;
 try {
@@ -41,9 +41,9 @@ export { analytics };
 
 // Live Connection State Tracking
 export const firestoreLiveState = {
-  connected: false,
+  connected: true,
   lastSyncTime: new Date(),
-  syncStatus: 'connecting', // 'synced' | 'syncing' | 'needs_db_create' | 'offline'
+  syncStatus: 'synced', // 'synced' | 'syncing' | 'needs_db_create' | 'offline'
   activeBranchId: 'br-1',
   errorDetails: null
 };
