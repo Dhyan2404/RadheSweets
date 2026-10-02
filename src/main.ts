@@ -110,6 +110,7 @@ import {
   renderAddBranchModal, 
   renderEditBranchModal 
 } from './components/BranchModals.ts';
+import { renderInsidersView } from './components/InsidersView.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 
@@ -872,6 +873,10 @@ function updatePageSeoMetadata(activeTab: string) {
     settings: {
       title: 'Store Configuration & Multi-Branch Management | Radhe Sweets',
       desc: 'Manage SG Highway and Satellite sweet branch profiles, thermal printer configurations, taxes and system preferences.'
+    },
+    insiders: {
+      title: 'Confidential ERP & POS Blueprint | Radhe Sweets Insiders',
+      desc: 'Architecture blueprint, complete module breakdown, daily operational flows and technical specs for Radhe Sweets confectionery ERP.'
     }
   };
 
@@ -1043,6 +1048,8 @@ function renderTabContent() {
       return renderStaffView(state);
     case 'settings':
       return renderSettingsView(state);
+    case 'insiders':
+      return renderInsidersView(state);
     default:
       return renderDashboardView(state);
   }
@@ -6029,7 +6036,11 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 // Initialize with Google Deep Linking & Cloud Sync
 function initApp() {
   const initialHash = window.location.hash.replace('#/', '').replace('#', '');
-  if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(initialHash)) {
+  const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '');
+
+  if (pathname === 'insiders' || initialHash === 'insiders') {
+    state.activeTab = 'insiders';
+  } else if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings', 'insiders'].includes(initialHash)) {
     state.activeTab = initialHash;
   }
   renderApp();
@@ -6089,7 +6100,7 @@ if (document.readyState === 'loading') {
 // Google Sitemap Deep Linking - Listen for browser URL hash changes
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#/', '').replace('#', '');
-  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(hash) && state.activeTab !== hash) {
+  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings', 'insiders'].includes(hash) && state.activeTab !== hash) {
     state.activeTab = hash;
     saveState();
     renderApp();
