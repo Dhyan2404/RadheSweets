@@ -6,6 +6,7 @@ import {
   deleteBranchOrderFromCloud,
   saveBranchKpisToCloud, 
   saveCustomerToCloud, 
+  deleteCustomerFromCloud,
   saveBranchCustomerToCloud,
   saveAllBranchCustomersToCloud,
   loadBranchDataFromCloud,
@@ -47,6 +48,14 @@ import {
   renderMobileCartItemsHtml 
 } from './components/PosView.ts';
 import { renderCheckoutModal } from './components/CheckoutModal.ts';
+import { renderHeldCartsModal } from './components/HeldCartsModal.ts';
+import { 
+  enqueueOfflineOrder, 
+  dequeueOfflineOrder,
+  syncOfflineOrdersQueue, 
+  getPendingOfflineOrdersCount, 
+  isNetworkOnline 
+} from './offlineQueue.ts';
 import { initSlideCommit } from './components/SlideCommit.ts';
 import { initAllSwipeRows } from './components/SwipeRow.ts';
 import { initAllCounters } from './components/Counter.ts';
@@ -211,6 +220,7 @@ const state = {
   showAddAdvanceModal: false,
   showEditAdvanceModal: false,
   editingAdvanceOrder: null as any,
+  showHeldCartsModal: false,
   customersSortBy: stored?.customersSortBy || 'most-spent',
   expenseSavedSuccess: false,
   lastSavedExpense: null as any,
@@ -1041,6 +1051,7 @@ function renderTabContent() {
 function renderModals() {
   return `
     ${state.showCheckoutModal ? renderCheckoutModal(state) : ''}
+    ${state.showHeldCartsModal ? renderHeldCartsModal(state) : ''}
     ${state.showSuccessModal ? renderOrderSuccessModal(state.lastPlacedOrder) : ''}
     ${state.showThermalModal ? renderThermalReceiptModal(state.activeOrder || state.lastPlacedOrder, state.shopInfo, state.receiptSettings) : ''}
     ${state.showOrderDetailsModal ? renderOrderDetailsModal(state.activeOrder) : ''}
@@ -1288,7 +1299,7 @@ function attachEventListeners() {
           state.quickCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
         }
         saveState();
-        showToast(`Added ${sweetName} (1 kg) to POS Counter Cart!`, 'success');
+        playBeep('add');
       });
     });
 
@@ -1454,7 +1465,7 @@ function attachEventListeners() {
             state.quickCart.push({ ...foundSweet, qty: 1, rate: price, total: price, unit: 'kg' });
           }
           saveState();
-          showToast(`Added ${sweetName} (1 kg) to POS Counter Cart!`, 'success');
+          playBeep('add');
         });
       });
 
@@ -2279,7 +2290,6 @@ function attachEventListeners() {
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
           playBeep('add');
-          showToast(`Added ${sweet.name} to counter cart!`, 'success');
         }
         return;
       }
@@ -2363,8 +2373,6 @@ function attachEventListeners() {
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
           playBeep('add');
-          const displayLabel = weight >= 1 ? `${weight}kg` : `${Math.round(weight * 1000)}g`;
-          showToast(`${sweet.name} set to ${displayLabel} (₹${Math.round(weight * sweet.pricePerKg)})`, 'success');
         }
         return;
       }
@@ -2855,20 +2863,37 @@ function attachEventListeners() {
         }
       }
 
-      // Save branch snapshot locally & to Cloud Firestore
-      saveBranchSnapshot(state.currentBranchId);
-      saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers);
-      saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
-      saveBranchKpisToCloud(state.currentBranchId, state.kpis);
-      clearActiveCheckoutInCloud(state.currentBranchId);
+      // 1. Offline-First: Enqueue order locally immediately so billing NEVER fails
+      enqueueOfflineOrder(newOrder, state.currentBranchId);
 
-      // Update customer stats in Firestore
+      // Save branch snapshot locally
+      saveBranchSnapshot(state.currentBranchId);
+
+      // 2. If online, attempt background sync right away
+      if (isNetworkOnline()) {
+        saveBranchOrderToCloud(state.currentBranchId, newOrder, state.sweets, state.customers).then((synced) => {
+          if (synced) {
+            dequeueOfflineOrder(newOrder.id);
+          }
+        }).catch((err) => {
+          console.warn('[Offline-First] Auto-sync queued for background:', err);
+        });
+        saveBranchSweetsToCloud(state.currentBranchId, state.sweets);
+        saveBranchKpisToCloud(state.currentBranchId, state.kpis);
+        clearActiveCheckoutInCloud(state.currentBranchId);
+      } else {
+        showToast(`✓ Order #${newOrder.id} saved in 100% Offline Mode! Will auto-sync when online.`, 'info');
+      }
+
+      // Update customer stats in Firestore if online
       if (state.selectedCustomer) {
         const cust = state.customers.find((c: any) => c.id === state.selectedCustomer.id);
         if (cust) {
           cust.totalOrders = (cust.totalOrders || 0) + 1;
           cust.totalSpent = (cust.totalSpent || 0) + totalPayable;
-          saveCustomerToCloud(cust, state.currentBranchId, state.customers);
+          if (isNetworkOnline()) {
+            saveCustomerToCloud(cust, state.currentBranchId, state.customers);
+          }
         }
       }
 
@@ -3332,6 +3357,37 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     showToast(`✓ Updated customer details for ${targetCust.name}`, 'success');
   });
 
+  // Delete Customer Handler
+  document.querySelectorAll('[data-delete-customer]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-delete-customer');
+      const targetCust = state.customers.find((c: any) => c.id === id);
+      if (!targetCust) return;
+
+      if (!confirm(`Are you sure you want to permanently delete customer "${targetCust.name}" (${targetCust.phone})?`)) {
+        return;
+      }
+
+      state.customers = state.customers.filter((c: any) => c.id !== id);
+      if (state.selectedCustomer?.id === id) {
+        state.selectedCustomer = null;
+      }
+      if (state.profileCustomer?.id === id) {
+        state.profileCustomer = null;
+        state.showCustomerProfileModal = false;
+      }
+      state.showEditCustomerModal = false;
+      state.editingCustomer = null;
+
+      deleteCustomerFromCloud(id, state.currentBranchId);
+      saveBranchSnapshot(state.currentBranchId);
+      saveState();
+      renderApp();
+      showToast(`✓ Customer ${targetCust.name} deleted`, 'info');
+    });
+  });
+
   document.querySelectorAll('[data-select-for-pos]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-select-for-pos');
@@ -3621,7 +3677,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         }
         state.quickCart = [...state.posCart];
         saveState();
-        showToast(`Added 1 ${sweet.unit} ${sweet.name} to POS Cart!`, 'success');
+        playBeep('add');
       }
     });
   });
@@ -4882,59 +4938,200 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     renderApp();
   });
 
-  // Hold / Park Bill during counter rush
-  document.getElementById('pos-hold-bill-btn')?.addEventListener('click', () => {
-    if (state.posCart.length === 0) return;
+  // Helper to hold current active counter cart
+  const holdCurrentActiveCart = () => {
+    if (state.posCart.length === 0) {
+      showToast('Counter cart is empty, nothing to hold.', 'warning');
+      return;
+    }
     const parkId = `park-${Date.now()}`;
-    const parkSubtotal = state.posCart.reduce((sum, item) => sum + (item.rate * item.qty), 0);
+    const parkSubtotal = state.posCart.reduce((sum: number, it: any) => sum + (it.rate * it.qty), 0);
+    const parkDiscount = Math.round((parkSubtotal * (state.discountPercent || 0)) / 100);
+    const parkTotal = Math.max(0, parkSubtotal - parkDiscount);
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
+    const customerLabel = state.selectedCustomer?.name || 'Walk-in (OTC)';
+
+    state.parkedBills = state.parkedBills || [];
     state.parkedBills.unshift({
       id: parkId,
-      label: `Token #${10 + state.parkedBills.length} (${state.selectedCustomer?.name || 'Walk-in'})`,
+      label: `Token #${10 + state.parkedBills.length} (${customerLabel})`,
       time: timeStr,
       itemsCount: state.posCart.length,
-      total: parkSubtotal,
-      customer: state.selectedCustomer,
+      total: parkTotal,
+      discountPercent: state.discountPercent || 0,
+      orderNote: (document.getElementById('pos-order-note') as HTMLInputElement)?.value || '',
+      customer: state.selectedCustomer ? { ...state.selectedCustomer } : null,
       items: [...state.posCart]
     });
 
     state.auditLogs.unshift({
       time: timeStr,
-      user: state.shopInfo.owner,
+      user: state.shopInfo.owner || 'Counter Executive',
       action: 'Bill Parked',
-      details: `Parked ${state.posCart.length} items (₹${parkSubtotal}) for ${state.selectedCustomer?.name || 'Walk-in'}`
+      details: `Parked ${state.posCart.length} items (₹${parkTotal}) for ${customerLabel}`
     });
 
     state.posCart = [];
     state.quickCart = [];
+    state.selectedCustomer = null;
+    state.discountPercent = 0;
+    state.showHeldCartsModal = false;
     saveState();
     playBeep('add');
-    showToast(`✓ Bill parked with Token #${10 + state.parkedBills.length - 1}`, 'success');
+    showToast(`✓ Cart on hold as Token #${10 + state.parkedBills.length - 1} (${customerLabel})`, 'success');
     renderApp();
+  };
+
+  // Triggers for Holding Current Cart (Desktop & Mobile)
+  document.getElementById('pos-hold-bill-btn')?.addEventListener('click', holdCurrentActiveCart);
+  document.getElementById('mobile-bar-hold-btn')?.addEventListener('click', holdCurrentActiveCart);
+  document.getElementById('mobile-sheet-hold-cart-btn')?.addEventListener('click', holdCurrentActiveCart);
+  document.getElementById('modal-hold-current-cart-btn')?.addEventListener('click', holdCurrentActiveCart);
+
+  // Triggers for Opening Held Carts Queue Modal
+  const openHeldCartsModal = () => {
+    state.showHeldCartsModal = true;
+    renderApp();
+  };
+  document.getElementById('open-held-carts-btn')?.addEventListener('click', openHeldCartsModal);
+  document.getElementById('toggle-parked-bills-btn')?.addEventListener('click', openHeldCartsModal);
+  document.getElementById('view-held-carts-desktop-btn')?.addEventListener('click', openHeldCartsModal);
+  document.getElementById('mobile-sheet-view-held-btn')?.addEventListener('click', openHeldCartsModal);
+
+  // Close Held Carts Modal
+  const closeHeldCartsModal = () => {
+    state.showHeldCartsModal = false;
+    renderApp();
+  };
+  document.getElementById('close-held-carts-btn')?.addEventListener('click', closeHeldCartsModal);
+  document.getElementById('close-held-carts-bottom-btn')?.addEventListener('click', closeHeldCartsModal);
+  document.getElementById('held-carts-modal')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'held-carts-modal') closeHeldCartsModal();
   });
 
-  // Resume Parked Bill
-  document.getElementById('toggle-parked-bills-btn')?.addEventListener('click', () => {
-    if (state.parkedBills.length === 0) return;
-    const billToResume = state.parkedBills.shift();
-    if (billToResume) {
+  // Resume a specific held cart from the modal
+  document.querySelectorAll('[data-resume-parked-bill]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-resume-parked-bill');
+      const billIndex = (state.parkedBills || []).findIndex((b: any) => b.id === id);
+      if (billIndex === -1) return;
+      const billToResume = state.parkedBills[billIndex];
+
+      // Safe swap: If active cart currently has items, park current first so nothing is lost!
+      if (state.posCart.length > 0) {
+        const currentParkId = `park-${Date.now()}`;
+        const currentSub = state.posCart.reduce((s: number, it: any) => s + (it.rate * it.qty), 0);
+        const currentDisc = Math.round((currentSub * (state.discountPercent || 0)) / 100);
+        state.parkedBills.push({
+          id: currentParkId,
+          label: `Token #${10 + state.parkedBills.length} (${state.selectedCustomer?.name || 'Walk-in'})`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          itemsCount: state.posCart.length,
+          total: Math.max(0, currentSub - currentDisc),
+          discountPercent: state.discountPercent || 0,
+          customer: state.selectedCustomer ? { ...state.selectedCustomer } : null,
+          items: [...state.posCart]
+        });
+      }
+
+      // Remove recalled cart from parkedBills
+      state.parkedBills.splice(billIndex, 1);
+
+      // Restore recalled cart into active POS
       state.posCart = billToResume.items || [];
       state.quickCart = [...state.posCart];
-      if (billToResume.customer) {
-        state.selectedCustomer = billToResume.customer;
-      }
-      state.auditLogs.unshift({
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        user: state.shopInfo.owner,
-        action: 'Bill Resumed',
-        details: `Resumed parked bill: ${billToResume.label}`
-      });
+      state.selectedCustomer = billToResume.customer || null;
+      state.discountPercent = billToResume.discountPercent || 0;
+      state.showHeldCartsModal = false;
+
       saveState();
       playBeep('add');
-      showToast(`✓ Resumed parked bill: ${billToResume.label}`, 'info');
+      showToast(`✓ Recalled ${billToResume.label}`, 'success');
       renderApp();
+    });
+  });
+
+  // Discard a specific held cart
+  document.querySelectorAll('[data-discard-parked-bill]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-discard-parked-bill');
+      const bill = (state.parkedBills || []).find((b: any) => b.id === id);
+      if (!bill) return;
+
+      if (!confirm(`Are you sure you want to discard held cart "${bill.label || 'Walk-in'}"?`)) {
+        return;
+      }
+
+      state.parkedBills = state.parkedBills.filter((b: any) => b.id !== id);
+      saveState();
+      renderApp();
+      showToast('✓ Held cart discarded', 'info');
+    });
+  });
+
+  // Offline-First Network Status & Background Auto-Sync
+  const updateOfflineSyncUI = () => {
+    const online = isNetworkOnline();
+    const pendingCount = getPendingOfflineOrdersCount();
+    const badge = document.getElementById('pos-offline-sync-badge');
+    const dot = document.getElementById('pos-sync-status-dot');
+    const text = document.getElementById('pos-sync-status-text');
+    const syncBtn = document.getElementById('pos-manual-sync-btn');
+
+    if (!text || !dot) return;
+
+    if (!online) {
+      dot.className = "w-1.5 h-1.5 rounded-full bg-amber-500";
+      text.textContent = pendingCount > 0 ? `Offline Mode • ${pendingCount} Queued` : 'Offline Mode • Local Ready';
+      if (badge) badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-300";
+      if (syncBtn) syncBtn.classList.add('hidden');
+    } else if (pendingCount > 0) {
+      dot.className = "w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse";
+      text.textContent = `Auto-Syncing (${pendingCount} Queued)`;
+      if (badge) badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-300";
+      if (syncBtn) syncBtn.classList.remove('hidden');
+    } else {
+      dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse";
+      text.textContent = `Online • Auto-Sync Active`;
+      if (badge) badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200";
+      if (syncBtn) syncBtn.classList.add('hidden');
     }
+  };
+
+  updateOfflineSyncUI();
+
+  // Manual Sync Button
+  document.getElementById('pos-manual-sync-btn')?.addEventListener('click', async () => {
+    showToast('Auto-syncing queued offline bills to Cloud Firestore...', 'info');
+    const res = await syncOfflineOrdersQueue(saveBranchOrderToCloud, state.sweets, state.customers);
+    updateOfflineSyncUI();
+    if (res.synced > 0) {
+      showToast(`✓ Successfully synced ${res.synced} offline bill(s) to Cloud Firestore!`, 'success');
+    } else if (!isNetworkOnline()) {
+      showToast('Device is still offline. Orders remain safe in local queue.', 'warning');
+    }
+  });
+
+  // Listen to network change events
+  window.addEventListener('online', async () => {
+    updateOfflineSyncUI();
+    showToast('📶 Internet connection restored! Auto-syncing offline bills...', 'info');
+    const res = await syncOfflineOrdersQueue(saveBranchOrderToCloud, state.sweets, state.customers);
+    updateOfflineSyncUI();
+    if (res.synced > 0) {
+      showToast(`✓ Auto-synced ${res.synced} offline bill(s) to Cloud Firestore!`, 'success');
+    }
+  });
+
+  window.addEventListener('offline', () => {
+    updateOfflineSyncUI();
+    showToast('⚠️ Switched to 100% Offline Mode. Billing continues without interruption!', 'info');
+  });
+
+  window.addEventListener('radhe-offline-queue-changed', () => {
+    updateOfflineSyncUI();
   });
 
 

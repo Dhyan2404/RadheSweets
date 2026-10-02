@@ -584,6 +584,24 @@ export async function saveCustomerToCloud(customer, branchId = null) {
   }
 }
 
+export async function deleteCustomerFromCloud(customerId, branchId = null) {
+  updateStatus('syncing');
+  try {
+    const custDocRef = doc(db, "customers", customerId);
+    await deleteDoc(custDocRef);
+
+    if (branchId) {
+      const branchCustRef = doc(db, "branches", branchId, "customers", customerId);
+      await deleteDoc(branchCustRef);
+    }
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Customer ${customerId} delete`, error);
+    return false;
+  }
+}
+
 export async function saveBranchCustomerToCloud(branchId, customer) {
   return saveCustomerToCloud(customer, branchId);
 }

@@ -183,33 +183,57 @@ export function renderPosView(state: any) {
     <div class="space-y-5 select-none relative" data-purpose="pos-master-container">
       <!-- POS Top Header with Status & Stepper Progress -->
       <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-4">
-        <div>
-          <div class="flex items-center gap-2.5">
-            <h2 class="text-2xl font-bold text-[var(--text-main)] tracking-tight">Counter POS &amp; Billing</h2>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live Sync (${sweets.length} Mithais)
-            </span>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-2xl font-bold text-[var(--text-main)] tracking-tight">Counter POS &amp; Billing</h2>
+              <!-- Offline / Online Auto-Sync Badge -->
+              <span id="pos-offline-sync-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span id="pos-sync-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="pos-sync-status-text">Online • Auto-Sync Active</span>
+              </span>
+              <button type="button" id="pos-manual-sync-btn" class="hidden text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 transition-all cursor-pointer" title="Auto-sync queued offline bills to Cloud Firestore">
+                Sync Now 🔄
+              </button>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mt-0.5">High-speed dual-unit billing with 100 traditional mithais • 100% Offline-First</p>
           </div>
-          <p class="text-xs text-[var(--text-muted)] mt-0.5">High-speed dual-unit billing with 100 traditional mithais</p>
-        </div>
 
-        <!-- 3-Step Breadcrumb Flow -->
-        <div class="flex items-center space-x-2 text-xs font-semibold">
-          <span id="pos-header-step1-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${selectedCustomer ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-stone-100 text-stone-700 border border-stone-200'}">
-            <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">1</span>
-            ${selectedCustomer ? selectedCustomer.name.split(' ')[0] : 'Walk-in (OTC)'}
-          </span>
-          <span class="text-[var(--text-light)]">→</span>
-          <span id="pos-header-step2-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${posCart.length > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)]'}">
-            <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">2</span>
-            Add Sweets (${posCart.length})
-          </span>
-          <span class="text-[var(--text-light)]">→</span>
-          <button id="pos-header-checkout-btn" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${posCart.length > 0 ? 'bg-black hover:bg-stone-900 text-white shadow-xs cursor-pointer active:scale-95' : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed'} transition-all">
-            <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">3</span>
-            Checkout
-          </button>
+          <!-- Top Action Badges: Held Carts & Stepper Flow -->
+          <div class="flex items-center space-x-2 text-xs font-semibold flex-wrap justify-end gap-y-2">
+            <!-- Held Carts Queue Trigger Button -->
+            <button 
+              type="button" 
+              id="open-held-carts-btn" 
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                parkedBills.length > 0 
+                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 shadow-2xs active:scale-95' 
+                  : 'bg-stone-100 hover:bg-stone-200 text-stone-600 border border-stone-200'
+              }"
+              title="View & recall multiple parked carts"
+            >
+              <span>⏸️</span>
+              <span>Held Carts</span>
+              <span id="pos-held-carts-count" class="w-4 h-4 rounded-full ${parkedBills.length > 0 ? 'bg-amber-600 text-white' : 'bg-stone-300 text-stone-700'} flex items-center justify-center text-[10px] font-black">${parkedBills.length}</span>
+            </button>
+
+            <span class="text-[var(--text-light)] hidden sm:inline">|</span>
+
+            <span id="pos-header-step1-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${selectedCustomer ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-stone-100 text-stone-700 border border-stone-200'}">
+              <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">1</span>
+              ${selectedCustomer ? selectedCustomer.name.split(' ')[0] : 'Walk-in (OTC)'}
+            </span>
+            <span class="text-[var(--text-light)]">→</span>
+            <span id="pos-header-step2-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${posCart.length > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)]'}">
+              <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">2</span>
+              Add Sweets (${posCart.length})
+            </span>
+            <span class="text-[var(--text-light)]">→</span>
+            <button id="pos-header-checkout-btn" class="flex items-center gap-1.5 px-3 py-1 rounded-full ${posCart.length > 0 ? 'bg-black hover:bg-stone-900 text-white shadow-xs cursor-pointer active:scale-95' : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed'} transition-all">
+              <span class="w-4 h-4 rounded-full bg-current/20 flex items-center justify-center text-[10px]">3</span>
+              Checkout
+            </button>
+          </div>
         </div>
       </section>
 
@@ -477,8 +501,8 @@ export function renderPosView(state: any) {
                 </div>
                 <div id="pos-desktop-cart-actions" class="flex items-center gap-2">
                   ${posCart.length > 0 ? `
-                    <button type="button" id="pos-hold-bill-btn" class="text-xs font-semibold px-2 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-all flex items-center gap-1 cursor-pointer" title="Park current bill for rush orders">
-                      <span>⏸️</span> Hold
+                    <button type="button" id="pos-hold-bill-btn" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 transition-all flex items-center gap-1 cursor-pointer" title="Park current bill to serve next customer">
+                      <span>⏸️</span> Hold Cart
                     </button>
                     <button type="button" id="clear-pos-cart-btn" class="text-xs font-semibold text-rose-500 hover:underline cursor-pointer">Clear</button>
                   ` : ''}
@@ -487,12 +511,12 @@ export function renderPosView(state: any) {
 
               <!-- Parked Bills Status Bar (Rush Queue) -->
               ${parkedBills.length > 0 ? `
-                <div class="flex items-center justify-between bg-amber-50/60 p-2 rounded-xl border border-amber-200 text-xs">
-                  <span class="text-amber-900 font-semibold flex items-center gap-1">
-                    <span>📌</span> <strong>${parkedBills.length}</strong> Parked Bill(s)
+                <div class="flex items-center justify-between bg-amber-50/80 p-2.5 rounded-xl border border-amber-300/80 text-xs">
+                  <span class="text-amber-950 font-bold flex items-center gap-1.5">
+                    <span>⏸️</span> <strong>${parkedBills.length}</strong> Cart(s) on Hold
                   </span>
-                  <button type="button" id="toggle-parked-bills-btn" class="text-xs font-bold text-[var(--brand-primary)] hover:underline cursor-pointer">
-                    Resume Order ↗
+                  <button type="button" id="toggle-parked-bills-btn" class="text-xs font-black text-[#C86D3B] hover:text-[#A84C1C] hover:underline cursor-pointer flex items-center gap-1">
+                    <span>Recall Carts ↗</span>
                   </button>
                 </div>
               ` : ''}
@@ -561,20 +585,20 @@ export function renderPosView(state: any) {
       <!-- Pinned Floating Action Bar & Slide-up Cart Bottom Sheet  -->
       <!-- ======================================================== -->
 
-      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Sleek Premium Black -->
+      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Sleek Translucent Black Glass -->
       <aside 
         id="mobile-floating-checkout-bar" 
-        class="lg:hidden fixed bottom-[4.75rem] sm:bottom-20 inset-x-3 z-30 bg-black text-white p-3 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.65)] border border-stone-800 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
+        class="md:hidden fixed bottom-18 sm:bottom-20 inset-x-3 z-30 bg-black/85 backdrop-blur-xl text-white p-3 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.65)] border border-white/15 flex items-center justify-between transition-all duration-200 transform-gpu ${posCart.length > 0 ? '' : 'hidden'}"
         aria-label="Mobile Sticky Checkout Bar"
       >
         <button type="button" id="mobile-cart-toggle-btn" class="flex items-center gap-2.5 text-left cursor-pointer active:scale-95 transition-transform">
-          <div class="w-9 h-9 rounded-xl bg-stone-900 text-white border border-stone-700 flex items-center justify-center font-extrabold text-base shadow-xs">
+          <div class="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md text-white border border-white/20 flex items-center justify-center font-extrabold text-base shadow-2xs">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
           </div>
           <div>
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-bold text-white leading-none" id="mobile-bar-count">${posCart.length} item${posCart.length > 1 ? 's' : ''}</span>
-              <span class="text-[10px] text-stone-300 font-semibold bg-stone-800 border border-stone-700 px-2 py-0.5 rounded-full">View Items</span>
+              <span class="text-[10px] text-stone-200 font-semibold bg-white/15 backdrop-blur-xs border border-white/20 px-2 py-0.5 rounded-full">View Items</span>
             </div>
             <p class="text-base font-black text-white leading-tight mt-0.5 tracking-tight" id="mobile-bar-total">₹${totalPayable}</p>
           </div>
@@ -582,9 +606,17 @@ export function renderPosView(state: any) {
 
         <div class="flex items-center gap-2">
           <button 
+            type="button" 
+            id="mobile-bar-hold-btn" 
+            class="px-2.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center" 
+            title="Hold current cart"
+          >
+            <span>⏸️</span>
+          </button>
+          <button 
             type="button"
             id="mobile-bar-pay-btn" 
-            class="px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-black text-white border border-stone-700 ring-1 ring-white/20 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+            class="px-4 py-2.5 rounded-xl bg-white text-black hover:bg-stone-100 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <span>Checkout ➔</span>
           </button>
@@ -626,6 +658,23 @@ export function renderPosView(state: any) {
               <div class="border-t border-stone-200 pt-2 flex justify-between font-extrabold text-base text-stone-900">
                 <span>Total Payable</span>
                 <span class="text-black font-black" id="mobile-sheet-total">₹${totalPayable}</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button 
+                  type="button"
+                  id="mobile-sheet-hold-cart-btn"
+                  class="flex-1 py-3 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-98 cursor-pointer"
+                >
+                  <span>⏸️ Hold Cart</span>
+                </button>
+                <button 
+                  type="button"
+                  id="mobile-sheet-view-held-btn"
+                  class="flex-1 py-3 px-3 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-98 cursor-pointer"
+                >
+                  <span>📋 Held Carts (${parkedBills.length})</span>
+                </button>
               </div>
 
               <button 

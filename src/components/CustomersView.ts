@@ -253,6 +253,14 @@ export function renderCustomersView(state: any) {
                     >
                       ✏️ Edit
                     </button>
+                    <button 
+                      type="button" 
+                      data-delete-customer="${cust.id}" 
+                      class="p-1.5 bg-stone-100 hover:bg-rose-50 text-stone-400 hover:text-rose-600 text-[11px] font-bold rounded-xl transition-all cursor-pointer"
+                      title="Delete Customer"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               `;
@@ -508,14 +516,24 @@ export function renderCustomersView(state: any) {
                     </div>
                   </div>
 
-                  <button 
-                    type="button" 
-                    data-edit-customer="${customer.id}"
-                    class="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
-                    title="Edit Customer"
-                  >
-                    ✏️
-                  </button>
+                  <div class="flex items-center gap-1">
+                    <button 
+                      type="button" 
+                      data-edit-customer="${customer.id}"
+                      class="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+                      title="Edit Customer"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      type="button" 
+                      data-delete-customer="${customer.id}"
+                      class="p-2 rounded-xl text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Delete Customer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Customer Details & Preferences -->
@@ -681,13 +699,24 @@ export function renderCustomerProfileModal(customer: any, orders: any[] = []) {
 
         <!-- Modal Footer Actions -->
         <div class="pt-3 border-t border-[#F4EFE9] flex items-center justify-between">
-          <button 
-            type="button" 
-            id="close-customer-profile-bottom-btn" 
-            class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2] text-xs cursor-pointer"
-          >
-            Close
-          </button>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              id="close-customer-profile-bottom-btn" 
+              class="px-4 py-2 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2] text-xs cursor-pointer"
+            >
+              Close
+            </button>
+            <button 
+              type="button" 
+              data-delete-customer="${customer.id}"
+              class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-2xl font-bold transition-all text-xs cursor-pointer flex items-center gap-1"
+              title="Delete Customer Profile"
+            >
+              <span>🗑️</span>
+              <span>Delete</span>
+            </button>
+          </div>
 
           <button 
             data-select-for-pos="${customer.id}"
@@ -798,20 +827,30 @@ export function renderEditCustomerModal(customer: any) {
             />
           </div>
 
-          <div class="pt-3 border-t border-[#F4EFE9] flex items-center justify-end gap-3">
+          <div class="pt-3 border-t border-[#F4EFE9] flex items-center justify-between gap-3">
             <button 
               type="button" 
-              id="cancel-edit-customer-btn" 
-              class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2] cursor-pointer"
+              data-delete-customer="${customer.id}"
+              class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-2xl font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
             >
-              Cancel
+              <span>🗑️</span>
+              <span>Delete Customer</span>
             </button>
-            <button 
-              type="submit" 
-              class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-            >
-              Save Changes
-            </button>
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                id="cancel-edit-customer-btn" 
+                class="px-5 py-2.5 border border-[#E0D7CC] text-[#7C7267] hover:text-[#2A1F1D] rounded-2xl font-bold transition-all hover:bg-[#FAF7F2] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                class="px-6 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white rounded-2xl font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
 
         </form>
