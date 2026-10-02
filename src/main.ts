@@ -2857,13 +2857,12 @@ function attachEventListeners() {
       saveBranchKpisToCloud(state.currentBranchId, state.kpis);
       clearActiveCheckoutInCloud(state.currentBranchId);
 
-      // Update customer stats & loyalty points in Firestore
+      // Update customer stats in Firestore
       if (state.selectedCustomer) {
         const cust = state.customers.find((c: any) => c.id === state.selectedCustomer.id);
         if (cust) {
           cust.totalOrders = (cust.totalOrders || 0) + 1;
           cust.totalSpent = (cust.totalSpent || 0) + totalPayable;
-          cust.loyaltyPoints = (cust.loyaltyPoints || 0) + Math.floor(totalPayable / 100);
           saveCustomerToCloud(cust, state.currentBranchId, state.customers);
         }
       }
@@ -3310,9 +3309,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     targetCust.phone = (fd.get('phone') as string || targetCust.phone).trim();
     targetCust.email = (fd.get('email') as string || targetCust.email).trim();
     targetCust.address = (fd.get('address') as string || targetCust.address).trim();
-    targetCust.tier = (fd.get('tier') as string) || targetCust.tier || 'Regular';
-    targetCust.type = targetCust.tier;
-    targetCust.loyaltyPoints = Number(fd.get('loyaltyPoints')) >= 0 ? Number(fd.get('loyaltyPoints')) : (targetCust.loyaltyPoints || 0);
     targetCust.notes = (fd.get('notes') as string || targetCust.notes || '').trim();
 
     if (state.profileCustomer?.id === custId) {
@@ -3404,7 +3400,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const assignedId = customIdRaw ? customIdRaw : `CUST-${1000 + state.customers.length + 1}`;
     const rawPhone = (fd.get('phone') as string || '').replace(/\D/g, '');
     const formattedPhone = rawPhone.length === 10 ? `+91 ${rawPhone.slice(0, 5)} ${rawPhone.slice(5)}` : `+91 ${fd.get('phone')}`;
-    const loyaltyPts = Number(fd.get('loyaltyPoints')) >= 0 ? Number(fd.get('loyaltyPoints')) : 50;
 
     const newCust = {
       id: assignedId,
@@ -3412,9 +3407,9 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       phone: formattedPhone,
       email: (fd.get('email') as string || '').trim(),
       address: (fd.get('address') as string || 'Ahmedabad, Gujarat').trim(),
-      type: (fd.get('tier') as string) || 'Regular',
-      tier: (fd.get('tier') as string) || 'Regular',
-      loyaltyPoints: loyaltyPts,
+      type: 'Regular',
+      tier: 'Regular',
+      loyaltyPoints: 0,
       totalOrders: 0,
       totalSpent: 0,
       notes: (fd.get('notes') as string || '').trim()
@@ -3429,6 +3424,136 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     saveBranchSnapshot(state.currentBranchId);
     showToast(`✓ Registered patron ${newCust.name} (ID: #${newCust.id.toUpperCase()})`, 'success');
     completeCustomerSelection(newCust);
+  });
+
+  // Advance Bulk & Event Order Handlers
+  const handleOpenAddAdvanceModal = () => {
+    state.showAddAdvanceModal = true;
+    renderApp();
+  };
+  document.getElementById('open-add-advance-modal-btn')?.addEventListener('click', handleOpenAddAdvanceModal);
+  document.getElementById('open-add-advance-modal-empty-btn')?.addEventListener('click', handleOpenAddAdvanceModal);
+
+  const handleCloseAddAdvanceModal = () => {
+    state.showAddAdvanceModal = false;
+    renderApp();
+  };
+  document.getElementById('close-add-advance-modal-btn')?.addEventListener('click', handleCloseAddAdvanceModal);
+  document.getElementById('cancel-add-advance-modal-btn')?.addEventListener('click', handleCloseAddAdvanceModal);
+  document.getElementById('add-advance-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'add-advance-modal-backdrop') handleCloseAddAdvanceModal();
+  });
+
+  document.getElementById('add-advance-order-form')?.addEventListener('submit', (e: any) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const totalAmount = Number(fd.get('totalAmount')) || 0;
+    const depositPaid = Number(fd.get('depositPaid')) || 0;
+    const balanceDue = Math.max(0, totalAmount - depositPaid);
+    const newAdvOrder = {
+      id: `ADV-${Date.now().toString().slice(-4)}`,
+      customerName: (fd.get('customerName') as string || 'Valued Patron').trim(),
+      customerPhone: (fd.get('customerPhone') as string || '').trim(),
+      eventDate: (fd.get('eventDate') as string) || new Date().toISOString().split('T')[0],
+      eventType: (fd.get('eventType') as string) || 'Wedding Catering',
+      itemsSummary: (fd.get('itemsSummary') as string || '').trim(),
+      totalAmount,
+      depositPaid,
+      balanceDue,
+      status: (fd.get('status') as string) || 'Confirmed',
+      createdAt: new Date().toISOString()
+    };
+
+    if (!state.advanceOrders) state.advanceOrders = [];
+    state.advanceOrders.unshift(newAdvOrder);
+    state.showAddAdvanceModal = false;
+    saveBranchSnapshot(state.currentBranchId);
+    saveState();
+    renderApp();
+    showToast(`✓ Booked advance order #${newAdvOrder.id} for ${newAdvOrder.customerName}`, 'success');
+  });
+
+  // Edit Advance Order Handlers
+  document.querySelectorAll('[data-edit-advance-order]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const orderId = btn.getAttribute('data-edit-advance-order');
+      const order = (state.advanceOrders || []).find((o: any) => o.id === orderId);
+      if (order) {
+        state.editingAdvanceOrder = order;
+        state.showEditAdvanceModal = true;
+        renderApp();
+      }
+    });
+  });
+
+  const handleCloseEditAdvanceModal = () => {
+    state.showEditAdvanceModal = false;
+    state.editingAdvanceOrder = null;
+    renderApp();
+  };
+  document.getElementById('close-edit-advance-modal-btn')?.addEventListener('click', handleCloseEditAdvanceModal);
+  document.getElementById('cancel-edit-advance-modal-btn')?.addEventListener('click', handleCloseEditAdvanceModal);
+  document.getElementById('edit-advance-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'edit-advance-modal-backdrop') handleCloseEditAdvanceModal();
+  });
+
+  document.getElementById('edit-advance-order-form')?.addEventListener('submit', (e: any) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const orderId = fd.get('orderId') as string;
+    const target = (state.advanceOrders || []).find((o: any) => o.id === orderId);
+    if (target) {
+      target.customerName = (fd.get('customerName') as string || target.customerName).trim();
+      target.customerPhone = (fd.get('customerPhone') as string || target.customerPhone).trim();
+      target.eventDate = (fd.get('eventDate') as string) || target.eventDate;
+      target.eventType = (fd.get('eventType') as string) || target.eventType;
+      target.itemsSummary = (fd.get('itemsSummary') as string || target.itemsSummary).trim();
+      target.totalAmount = Number(fd.get('totalAmount')) || 0;
+      target.depositPaid = Number(fd.get('depositPaid')) || 0;
+      target.balanceDue = Math.max(0, target.totalAmount - target.depositPaid);
+      target.status = (fd.get('status') as string) || target.status;
+
+      state.showEditAdvanceModal = false;
+      state.editingAdvanceOrder = null;
+      saveBranchSnapshot(state.currentBranchId);
+      saveState();
+      renderApp();
+      showToast(`✓ Updated advance order #${orderId}`, 'success');
+    }
+  });
+
+  // Toggle Advance Order Status
+  document.querySelectorAll('[data-toggle-advance-status]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const orderId = btn.getAttribute('data-toggle-advance-status');
+      const target = (state.advanceOrders || []).find((o: any) => o.id === orderId);
+      if (target) {
+        const statuses = ['Confirmed', 'In Preparation', 'Ready', 'Completed'];
+        const currentIdx = statuses.indexOf(target.status || 'Confirmed');
+        const nextStatus = statuses[(currentIdx + 1) % statuses.length];
+        target.status = nextStatus;
+        saveBranchSnapshot(state.currentBranchId);
+        saveState();
+        renderApp();
+        showToast(`Order #${orderId} status set to ${nextStatus}`, 'info');
+      }
+    });
+  });
+
+  // Delete Advance Order
+  document.querySelectorAll('[data-delete-advance-order]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const orderId = btn.getAttribute('data-delete-advance-order');
+      if (orderId && confirm(`Are you sure you want to cancel advance order #${orderId}?`)) {
+        state.advanceOrders = (state.advanceOrders || []).filter((o: any) => o.id !== orderId);
+        saveBranchSnapshot(state.currentBranchId);
+        saveState();
+        renderApp();
+        showToast(`✓ Advance order #${orderId} deleted`, 'info');
+      }
+    });
   });
 
   // Products & Confectionery Inventory Management Handlers
@@ -3816,6 +3941,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       const stock = Number(fd.get('stock'));
       const minStock = Number(fd.get('minStock'));
       const isPureGhee = fd.get('isPureGhee') === 'on';
+      const imgUrlVal = ((fd.get('image') as string) || '').trim();
       const previewEl = (document.getElementById('edit-sweet-preview-img') || document.getElementById('edit-sweet-img-preview')) as HTMLImageElement | null;
       const updatedImage = imgUrlVal || (previewEl ? previewEl.src : sweet.image);
 
