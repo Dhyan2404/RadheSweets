@@ -80,7 +80,7 @@ export function renderDashboardView(state: any) {
             <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <span class="text-stone-600 font-semibold">Search sweets, customers, bills...</span>
           </span>
-          <span class="px-2.5 py-1 rounded-xl bg-orange-50 text-[#C86D3B] text-[10px] font-bold border border-orange-200/60 shadow-2xs">🔍 Search</span>
+          <span class="px-2.5 py-1 rounded-xl bg-orange-50 text-[#C86D3B] text-[10px] font-bold border border-orange-200/60 shadow-2xs">Search</span>
         </button>
       </div>
 
@@ -423,8 +423,8 @@ export function renderDashboardView(state: any) {
             </div>
 
             <!-- SVG Line & Area Graph (1:1 with Stitch reference) -->
-            <div class="relative w-full h-56 pt-3">
-              <svg class="w-full h-full overflow-visible" viewBox="0 0 700 200" preserveAspectRatio="none">
+            <div class="relative w-full h-56 pt-3 overflow-hidden">
+              <svg class="w-full h-full overflow-hidden" viewBox="0 0 700 200" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#C86D3B" stop-opacity="0.25"></stop>
@@ -672,8 +672,8 @@ export function renderDashboardView(state: any) {
                   `).join('')}
                 </div>
               ` : `
-                <div class="py-5 text-center text-stone-400 space-y-1 border border-dashed border-stone-200 rounded-xl mb-4 bg-stone-50/60">
-                  <span class="text-lg">🛒</span>
+                <div class="py-5 text-center text-stone-400 space-y-1 border border-dashed border-stone-200 rounded-xl mb-4 bg-stone-50/60 flex flex-col items-center justify-center">
+                  <svg class="w-6 h-6 text-stone-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                   <p class="text-xs font-semibold text-stone-600">Quick Cart is Empty</p>
                   <p class="text-[10px] text-stone-400">Click '+ Add' on sweets to create a quick sale</p>
                 </div>

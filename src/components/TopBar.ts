@@ -25,8 +25,12 @@ export function renderTopBar(state: any) {
 
         <!-- Brand Identity -->
         <div class="flex items-center gap-2 cursor-pointer" data-tab="dashboard" title="Go to Dashboard">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-[#C86D3B] text-white flex items-center justify-center shadow-xs hover:scale-105 transition-transform shrink-0">
-            <span class="text-base">🪔</span>
+          <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/70 flex items-center justify-center text-[#C86D3B] shadow-xs hover:scale-105 transition-transform shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24">
+              <path d="M12 3c1.5 3.5 4 6 8 7-2 4-5 6-8 11-3-5-6-7-8-11 4-1 6.5-3.5 8-7Z"></path>
+              <path d="M12 10c0 4 2 7 5 9"></path>
+              <path d="M12 10c0 4-2 7-5 9"></path>
+            </svg>
           </div>
           <div class="leading-tight">
             <div class="flex items-center gap-1.5">
@@ -77,7 +81,7 @@ export function renderTopBar(state: any) {
         </div>
       </div>
 
-      <!-- Right: Quick Branch, Mobile Search, Notifications & Actions -->
+      <!-- Right: Mobile Search, Notifications & Actions -->
       <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         
         <!-- Mobile Search Trigger Icon (Compact) -->
@@ -99,13 +103,16 @@ export function renderTopBar(state: any) {
           <span>Live POS</span>
         </div>
 
-        <!-- Branch Selector Pill -->
-        <div class="flex items-center">
-          <div class="relative flex items-center bg-amber-50/90 hover:bg-amber-100/80 border border-amber-200/90 rounded-full pl-2.5 sm:pl-3 pr-2 py-1 shadow-2xs transition-all">
-            <span class="text-xs mr-1 select-none">📍</span>
+        <!-- Desktop Branch Selector Pill (Hidden on Mobile per user instruction) -->
+        <div class="hidden md:flex items-center">
+          <div class="relative flex items-center bg-amber-50/90 hover:bg-amber-100/80 border border-amber-200/90 rounded-full pl-3 pr-2 py-1 shadow-2xs transition-all">
+            <svg class="w-3.5 h-3.5 text-[#C86D3B] mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
             <select 
               id="topbar-branch-select"
-              class="bg-transparent text-xs font-bold text-[#C86D3B] cursor-pointer border-0 outline-none pr-5 py-0 appearance-none max-w-[90px] sm:max-w-none truncate"
+              class="bg-transparent text-xs font-bold text-[#C86D3B] cursor-pointer border-0 outline-none pr-5 py-0 appearance-none truncate"
               title="Switch Active Store Branch"
             >
               ${branches.map((b: any) => `

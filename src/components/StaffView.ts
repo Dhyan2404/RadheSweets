@@ -1,5 +1,5 @@
 // Staff, Attendance, Salary & Leaves Management Component
-// Radhe Sweets - Shop Manager & Live Kitchen Console
+// Radhe Sweets - Shop Manager & Live Kitchen Console (Clean PC & Mobile Interface)
 
 export function renderStaffView(state: any) {
   const { 
@@ -11,11 +11,19 @@ export function renderStaffView(state: any) {
     selectedBranchId = 'all'
   } = state;
 
-  // Filter tabs counts
+  // Filter tabs counts & payroll calculation (handles both Monthly and Daily Wage)
   const presentCount = staff.filter((s: any) => s.attendanceToday === 'Present').length;
   const onLeaveCount = staff.filter((s: any) => s.attendanceToday === 'On Leave' || s.attendanceToday === 'Absent').length;
-  const totalPayroll = staff.reduce((sum: number, s: any) => sum + (Number(s.baseSalary) || 0), 0);
-  const paidPayroll = staff.filter((s: any) => s.salaryStatus === 'Paid').reduce((sum: number, s: any) => sum + (Number(s.baseSalary) || 0), 0);
+  
+  const getStaffMonthlyEst = (s: any) => {
+    if (s.salaryType === 'Daily') {
+      return (Number(s.salaryRate) || Math.round((Number(s.baseSalary) || 21000) / 30)) * 30;
+    }
+    return Number(s.baseSalary) || 0;
+  };
+
+  const totalPayroll = staff.reduce((sum: number, s: any) => sum + getStaffMonthlyEst(s), 0);
+  const paidPayroll = staff.filter((s: any) => s.salaryStatus === 'Paid').reduce((sum: number, s: any) => sum + getStaffMonthlyEst(s), 0);
   const pendingPayroll = totalPayroll - paidPayroll;
   const totalAdvances = staff.reduce((sum: number, s: any) => sum + (Number(s.advancesTaken) || 0), 0);
 
@@ -62,24 +70,26 @@ export function renderStaffView(state: any) {
               Live Shift Roster Active
             </span>
           </div>
-          <p class="text-xs sm:text-sm text-[#7C7267] mt-1 font-medium">Manage master halwais, counter cashiers, attendance, monthly salary payout &amp; leaves</p>
+          <p class="text-xs sm:text-sm text-[#7C7267] mt-1 font-medium">Manage master halwais, counter staff, attendance, daily/monthly wages &amp; leaves</p>
         </div>
 
-        <!-- Quick Top Action Buttons -->
+        <!-- Quick Top Action Buttons (Clean PC Icons) -->
         <div class="flex items-center gap-2 flex-wrap">
           <button 
             id="open-record-leave-btn"
             class="px-3.5 py-2.5 bg-white border border-[#F0ECE4] text-[#2A1F1D] hover:bg-stone-50 text-xs font-bold rounded-2xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            title="Record Staff Leave"
           >
-            <span>🏖️</span>
+            <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <span>Record Leave</span>
           </button>
 
           <button 
             id="open-record-advance-btn"
             class="px-3.5 py-2.5 bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 text-xs font-bold rounded-2xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            title="Disburse Staff Advance"
           >
-            <span>💵</span>
+            <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span>Staff Advance</span>
           </button>
 
@@ -87,13 +97,13 @@ export function renderStaffView(state: any) {
             id="open-add-staff-modal-btn" 
             class="px-4 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white text-xs font-bold rounded-2xl shadow-sm transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
           >
-            <span class="text-base leading-none">+</span>
+            <span class="text-base leading-none font-black">+</span>
             <span>Add New Staff</span>
           </button>
         </div>
       </section>
 
-      <!-- 4 Staff & Payroll KPI Stat Cards -->
+      <!-- 4 Staff & Payroll KPI Stat Cards (No amateur emojis) -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         
         <!-- CARD 1: Total Staff & Shifts -->
@@ -101,7 +111,7 @@ export function renderStaffView(state: any) {
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-[#7C7267]">Active Staff Team</span>
             <span class="w-8 h-8 rounded-full bg-orange-50 text-[#C86D3B] flex items-center justify-center text-sm font-bold">
-              👥
+              <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             </span>
           </div>
           <div class="mt-3">
@@ -122,7 +132,7 @@ export function renderStaffView(state: any) {
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-[#7C7267]">Attendance Today</span>
             <span class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">
-              ✓
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
             </span>
           </div>
           <div class="mt-3">
@@ -131,7 +141,7 @@ export function renderStaffView(state: any) {
           </div>
           <div class="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] font-bold">
             <span class="text-emerald-600">Rate: ${Math.round((presentCount / (staff.length || 1)) * 100)}%</span>
-            <span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">Shift Active</span>
+            <span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-bold">Shift Active</span>
           </div>
         </article>
 
@@ -139,7 +149,7 @@ export function renderStaffView(state: any) {
         <article class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] flex flex-col justify-between">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-[#7C7267]">Monthly Payroll</span>
-            <span class="w-8 h-8 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center text-sm font-bold">
+            <span class="w-8 h-8 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center text-sm font-extrabold">
               ₹
             </span>
           </div>
@@ -160,7 +170,7 @@ export function renderStaffView(state: any) {
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-[#7C7267]">Staff Advances Active</span>
             <span class="w-8 h-8 rounded-full bg-purple-50 text-purple-700 flex items-center justify-center text-sm font-bold">
-              🤝
+              <svg class="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </span>
           </div>
           <div class="mt-3">
@@ -200,7 +210,7 @@ export function renderStaffView(state: any) {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </span>
             <input 
-              id="staff-search-input"
+              id="staff-search-input" 
               type="text" 
               value="${staffSearchQuery || ''}"
               placeholder="Search staff by name, role or phone..." 
@@ -239,6 +249,9 @@ export function renderStaffView(state: any) {
             const isPresent = person.attendanceToday === 'Present';
             const isOnLeave = person.attendanceToday === 'On Leave';
             const isPaid = person.salaryStatus === 'Paid';
+            const isDaily = person.salaryType === 'Daily';
+            const dailyRate = Number(person.salaryRate) || Math.round((Number(person.baseSalary) || 21000) / 30);
+            const monthlyAmount = Number(person.baseSalary) || (dailyRate * 30);
 
             return `
               <article class="bg-white rounded-3xl p-5 border border-[#F0ECE4] shadow-[0_2px_12px_rgba(74,58,47,0.03)] hover:shadow-md hover:border-[#C86D3B]/40 transition-all flex flex-col justify-between relative group">
@@ -271,31 +284,48 @@ export function renderStaffView(state: any) {
                     </span>
                   </div>
 
-                  <!-- Details Grid: Phone, Salary, Advance & Leaves -->
+                  <!-- Details Grid: Phone, Salary Type & Rate, Advance & Leaves -->
                   <div class="mt-4 p-3 bg-stone-50 rounded-2xl border border-stone-200/60 grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Monthly Salary</span>
-                      <span class="font-black text-[#2A1F1D] text-sm">₹${person.baseSalary?.toLocaleString() || 0}</span>
-                      <span class="text-[9px] font-bold px-1.5 py-0.2 rounded ml-1 ${
-                        isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
-                      }">
-                        ${person.salaryStatus || 'Pending'}
+                      <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">
+                        ${isDaily ? 'Daily Wage Rate' : 'Monthly Salary'}
                       </span>
+                      <div class="flex items-baseline gap-1 mt-0.5">
+                        <span class="font-black text-[#2A1F1D] text-sm">
+                          ₹${isDaily ? dailyRate.toLocaleString() : monthlyAmount.toLocaleString()}
+                        </span>
+                        <span class="text-[10px] font-bold text-stone-500">
+                          ${isDaily ? '/day' : '/mo'}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1 mt-1 flex-wrap">
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                          isDaily ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-50 text-blue-800 border border-blue-200'
+                        }">
+                          ${isDaily ? 'Daily Wage' : 'Monthly'}
+                        </span>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                          isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
+                        }">
+                          ${person.salaryStatus || 'Pending'}
+                        </span>
+                      </div>
                     </div>
 
                     <div>
                       <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Advance Due</span>
-                      <span class="font-extrabold ${person.advancesTaken > 0 ? 'text-amber-900' : 'text-stone-600'} text-sm">
+                      <span class="font-extrabold ${person.advancesTaken > 0 ? 'text-amber-900' : 'text-stone-600'} text-sm block mt-0.5">
                         ${person.advancesTaken > 0 ? `₹${person.advancesTaken.toLocaleString()}` : 'None'}
                       </span>
+                      <span class="text-[10px] text-stone-400 block mt-1">Deductible at payout</span>
                     </div>
 
-                    <div class="pt-1 border-t border-stone-200/60">
+                    <div class="pt-1.5 border-t border-stone-200/60">
                       <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Leaves Taken</span>
                       <span class="font-bold text-stone-700">${person.leavesTakenThisMonth || 0} / ${person.leavesAllowedPerMonth || 2} this mo</span>
                     </div>
 
-                    <div class="pt-1 border-t border-stone-200/60">
+                    <div class="pt-1.5 border-t border-stone-200/60">
                       <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Phone Contact</span>
                       <span class="font-mono font-bold text-stone-700 text-[11px]">${person.phone || 'N/A'}</span>
                     </div>
@@ -304,67 +334,77 @@ export function renderStaffView(state: any) {
 
                 <!-- Bottom Row: Quick 1-Click Attendance Buttons + Management Actions -->
                 <div class="mt-4 pt-3 border-t border-stone-100 space-y-2.5">
-                  <!-- Attendance Quick Buttons -->
+                  <!-- Attendance Quick Buttons (No emojis) -->
                   <div class="flex items-center justify-between">
                     <span class="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Mark Today:</span>
                     <div class="flex items-center gap-1">
                       <button 
                         data-mark-attendance="${person.id}" 
                         data-status="Present"
-                        class="px-2 py-0.8 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                        class="px-2 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
                           isPresent ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-stone-100 hover:bg-emerald-50 text-stone-600'
                         }"
                       >
-                        ✓ Present
+                        Present
                       </button>
                       <button 
                         data-mark-attendance="${person.id}" 
                         data-status="Half Day"
-                        class="px-2 py-0.8 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                        class="px-2 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
                           person.attendanceToday === 'Half Day' ? 'bg-amber-600 text-white shadow-2xs' : 'bg-stone-100 hover:bg-amber-50 text-stone-600'
                         }"
                       >
-                        ½ Half
+                        Half Day
                       </button>
                       <button 
                         data-mark-attendance="${person.id}" 
                         data-status="On Leave"
-                        class="px-2 py-0.8 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                        class="px-2 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
                           isOnLeave ? 'bg-amber-600 text-white shadow-2xs' : 'bg-stone-100 hover:bg-amber-50 text-stone-600'
                         }"
                       >
-                        🏖️ Leave
+                        On Leave
                       </button>
                     </div>
                   </div>
 
-                  <!-- Action Buttons: Pay Salary, Advance, Edit -->
-                  <div class="grid grid-cols-3 gap-1.5 pt-1">
+                  <!-- Action Buttons: Pay Salary, Advance, Edit, Delete -->
+                  <div class="grid grid-cols-4 gap-1.5 pt-1">
                     <button 
                       data-pay-staff-salary="${person.id}"
-                      class="py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
-                      title="Disburse / Record Monthly Salary"
+                      class="py-1.5 px-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                      title="Disburse / Record Salary"
                     >
-                      <span>₹</span>
-                      <span>Pay Salary</span>
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                      <span>Pay</span>
                     </button>
 
                     <button 
                       data-staff-give-advance="${person.id}"
-                      class="py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                      class="py-1.5 px-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
                       title="Give Festival / Personal Advance"
                     >
-                      <span>💵</span>
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                       <span>Advance</span>
                     </button>
 
                     <button 
                       data-edit-staff="${person.id}"
-                      class="py-1.5 px-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                      class="py-1.5 px-1 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
                       title="Edit Staff Member"
                     >
-                      <span>✏️</span>
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       <span>Edit</span>
+                    </button>
+
+                    <button 
+                      data-delete-staff="${person.id}"
+                      data-staff-name="${person.name}"
+                      class="py-1.5 px-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                      title="Remove Staff Member"
+                    >
+                      <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      <span>Remove</span>
                     </button>
                   </div>
                 </div>
@@ -379,10 +419,14 @@ export function renderStaffView(state: any) {
   `;
 }
 
-// Modal 1: Add or Edit Staff Member Modal
+// Modal 1: Add or Edit Staff Member Modal (Handles Daily Wage vs Monthly Salary & Staff Removal)
 export function renderAddStaffModal(state: any) {
   const { editingStaff, branches = [] } = state;
   const isEdit = !!editingStaff;
+  const isDaily = editingStaff?.salaryType === 'Daily';
+  const currentSalaryVal = isDaily 
+    ? (editingStaff.salaryRate || Math.round((editingStaff.baseSalary || 21000) / 30) || 800)
+    : (editingStaff?.baseSalary || 22000);
 
   return `
     <div id="staff-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
@@ -390,7 +434,7 @@ export function renderAddStaffModal(state: any) {
         <div class="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
           <div class="flex items-center gap-2">
             <span class="w-8 h-8 rounded-xl bg-orange-100 text-[#C86D3B] flex items-center justify-center font-bold text-sm">
-              👥
+              <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             </span>
             <h3 class="text-lg font-bold text-[#2A1F1D]">${isEdit ? 'Edit Staff Member' : 'Add New Staff Member'}</h3>
           </div>
@@ -440,6 +484,7 @@ export function renderAddStaffModal(state: any) {
             </div>
           </div>
 
+          <!-- Department & Salary Type -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block font-bold text-stone-700 mb-1">Department *</label>
@@ -455,19 +500,37 @@ export function renderAddStaffModal(state: any) {
             </div>
 
             <div>
-              <label class="block font-bold text-stone-700 mb-1">Base Monthly Salary (₹) *</label>
+              <label class="block font-bold text-stone-700 mb-1">Salary Type / Frequency *</label>
+              <select 
+                id="staff-form-salary-type" 
+                class="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-[#C86D3B] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
+              >
+                <option value="Monthly" ${!isDaily ? 'selected' : ''}>Monthly Fixed Salary (₹/month)</option>
+                <option value="Daily" ${isDaily ? 'selected' : ''}>Per-Day Wage / Daily Rate (₹/day)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Salary Rate & Branch Location -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label id="staff-form-salary-label" class="block font-bold text-stone-700 mb-1">
+                ${isDaily ? 'Daily Wage Rate (₹/day) *' : 'Base Monthly Salary (₹/mo) *'}
+              </label>
               <input 
                 id="staff-form-salary" 
                 type="number" 
                 required 
-                placeholder="25000"
-                value="${editingStaff?.baseSalary || 22000}"
+                min="100"
+                placeholder="${isDaily ? '800' : '25000'}"
+                value="${currentSalaryVal}"
                 class="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
               />
+              <p id="staff-form-salary-hint" class="text-[10px] text-stone-400 mt-1">
+                ${isDaily ? 'Credited per day worked (e.g. ₹600–₹1,200/day)' : 'Standard 30-day calendar monthly payout'}
+              </p>
             </div>
-          </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block font-bold text-stone-700 mb-1">Branch Location</label>
               <select 
@@ -475,11 +538,13 @@ export function renderAddStaffModal(state: any) {
                 class="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
               >
                 ${branches.map((b: any) => `
-                  <option value="${b.id}" ${editingStaff?.branchId === b.id ? 'selected' : ''}>${b.name}</option>
+                  <option value="${b.name}" ${editingStaff?.branchName === b.name ? 'selected' : ''}>${b.name}</option>
                 `).join('')}
               </select>
             </div>
+          </div>
 
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block font-bold text-stone-700 mb-1">Joining Date</label>
               <input 
@@ -490,9 +555,7 @@ export function renderAddStaffModal(state: any) {
                 class="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
               />
             </div>
-          </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block font-bold text-stone-700 mb-1">Emergency Contact</label>
               <input 
@@ -503,33 +566,50 @@ export function renderAddStaffModal(state: any) {
                 class="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
               />
             </div>
-
-            <div>
-              <label class="block font-bold text-stone-700 mb-1">Aadhar Number (Optional)</label>
-              <input 
-                id="staff-form-aadhar" 
-                type="text" 
-                placeholder="XXXX-XXXX-1234"
-                value="${editingStaff?.aadharNumber || ''}"
-                class="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
-              />
-            </div>
           </div>
 
-          <div class="flex items-center justify-end gap-2 pt-4 border-t border-stone-100">
-            <button 
-              type="button" 
-              id="cancel-staff-modal-btn"
-              class="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              class="px-5 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white font-bold rounded-xl shadow-md cursor-pointer active:scale-95 transition-all"
-            >
-              ${isEdit ? 'Save Changes' : 'Create Staff Record'}
-            </button>
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">Aadhar Number (Optional)</label>
+            <input 
+              id="staff-form-aadhar" 
+              type="text" 
+              placeholder="XXXX-XXXX-1234"
+              value="${editingStaff?.aadharNumber || ''}"
+              class="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
+            />
+          </div>
+
+          <!-- Modal Action Buttons: Delete Staff (if edit), Cancel, Save -->
+          <div class="flex items-center justify-between gap-2 pt-4 border-t border-stone-100">
+            ${isEdit ? `
+              <button 
+                type="button" 
+                id="delete-staff-modal-btn"
+                data-staff-id="${editingStaff.id}"
+                data-staff-name="${editingStaff.name}"
+                class="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 active:scale-95"
+                title="Remove this staff member permanently"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <span>Delete Staff</span>
+              </button>
+            ` : '<div></div>'}
+
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                id="cancel-staff-modal-btn"
+                class="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                class="px-5 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white font-bold rounded-xl shadow-md cursor-pointer active:scale-95 transition-all"
+              >
+                ${isEdit ? 'Save Changes' : 'Create Staff Record'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -537,23 +617,26 @@ export function renderAddStaffModal(state: any) {
   `;
 }
 
-// Modal 2: Pay Salary Modal
+// Modal 2: Pay Salary Modal (Supports Daily Wage vs Monthly)
 export function renderPaySalaryModal(state: any) {
   const { payingStaff } = state;
   if (!payingStaff) return '';
 
+  const isDaily = payingStaff.salaryType === 'Daily';
+  const dailyRate = Number(payingStaff.salaryRate) || Math.round((Number(payingStaff.baseSalary) || 21000) / 30);
+  const grossPayable = isDaily ? (dailyRate * 26) : (Number(payingStaff.baseSalary) || 22000);
   const advanceDeduction = payingStaff.advancesTaken || 0;
-  const netPayable = Math.max(0, (payingStaff.baseSalary || 0) - advanceDeduction);
+  const netPayable = Math.max(0, grossPayable - advanceDeduction);
 
   return `
     <div id="pay-salary-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
       <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 animate-slide-up">
         <div class="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
           <div class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+            <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm">
               ₹
             </span>
-            <h3 class="text-lg font-bold text-[#2A1F1D]">Disburse Monthly Salary</h3>
+            <h3 class="text-lg font-bold text-[#2A1F1D]">Disburse Salary</h3>
           </div>
           <button id="close-pay-salary-modal-btn" class="w-8 h-8 rounded-full bg-stone-100 text-stone-400 hover:text-stone-700 flex items-center justify-center font-bold text-sm cursor-pointer">
             ✕
@@ -579,8 +662,12 @@ export function renderPaySalaryModal(state: any) {
           <!-- Payout Breakdown -->
           <div class="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-200 space-y-2">
             <div class="flex justify-between text-stone-600">
-              <span>Base Monthly Salary:</span>
-              <span class="font-bold text-stone-900">₹${payingStaff.baseSalary?.toLocaleString()}</span>
+              <span>Salary Scheme:</span>
+              <span class="font-bold text-stone-900">${isDaily ? `Daily Wage (₹${dailyRate.toLocaleString()}/day)` : 'Monthly Fixed'}</span>
+            </div>
+            <div class="flex justify-between text-stone-600">
+              <span>${isDaily ? 'Estimated Gross (26 Shifts):' : 'Base Monthly Salary:'}</span>
+              <span class="font-bold text-stone-900">₹${grossPayable.toLocaleString()}</span>
             </div>
             ${advanceDeduction > 0 ? `
               <div class="flex justify-between text-amber-900 font-medium">
@@ -604,7 +691,7 @@ export function renderPaySalaryModal(state: any) {
           </div>
 
           <div>
-            <label class="block font-bold text-stone-700 mb-1">Salary Month</label>
+            <label class="block font-bold text-stone-700 mb-1">Salary Month / Cycle</label>
             <input 
               id="salary-month-label" 
               type="text" 
@@ -625,7 +712,7 @@ export function renderPaySalaryModal(state: any) {
               type="submit" 
               class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
             >
-              <span>✓ Confirm Payment (₹${netPayable.toLocaleString()})</span>
+              <span>Confirm Payment (₹${netPayable.toLocaleString()})</span>
             </button>
           </div>
         </form>
@@ -634,7 +721,7 @@ export function renderPaySalaryModal(state: any) {
   `;
 }
 
-// Modal 3: Record Leave Modal
+// Modal 3: Record Leave Modal (Clean PC Interface)
 export function renderRecordLeaveModal(state: any) {
   const { staff = [] } = state;
 
@@ -644,7 +731,7 @@ export function renderRecordLeaveModal(state: any) {
         <div class="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
           <div class="flex items-center gap-2">
             <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
-              🏖️
+              <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             </span>
             <h3 class="text-lg font-bold text-[#2A1F1D]">Record Staff Leave</h3>
           </div>
@@ -719,7 +806,7 @@ export function renderRecordLeaveModal(state: any) {
   `;
 }
 
-// Modal 4: Record Salary Advance Modal
+// Modal 4: Record Salary Advance Modal (Clean PC Interface)
 export function renderRecordAdvanceModal(state: any) {
   const { staff = [], advanceStaffId } = state;
   const preselected = staff.find((s: any) => s.id === advanceStaffId) || staff[0];
@@ -730,7 +817,7 @@ export function renderRecordAdvanceModal(state: any) {
         <div class="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
           <div class="flex items-center gap-2">
             <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
-              💵
+              <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </span>
             <h3 class="text-lg font-bold text-[#2A1F1D]">Give Staff Advance</h3>
           </div>

@@ -740,14 +740,14 @@ export function renderApp() {
   if (isInitialMount) {
     // Initial mount: build the complete persistent shell once
     appContainer.innerHTML = `
-      <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D]">
+      <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D] w-full max-w-[100vw] overflow-x-hidden">
         <!-- Desktop Sidebar Navigation (Visible on md and up) -->
         <div id="desktop-sidebar-container" class="hidden md:block shrink-0">
           ${renderSidebar(state.activeTab)}
         </div>
 
         <!-- Main Content Area with Persistent Scroll Container -->
-        <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto">
+        <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto w-full max-w-[100vw] overflow-x-hidden">
           <!-- Top Navigation Header -->
           <div id="topbar-container" class="sticky top-0 z-30">
             ${renderTopBar(state)}
@@ -3478,7 +3478,24 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     if (e.target.id === 'staff-modal-backdrop') closeStaffModal();
   });
 
-  // 8. Save Staff Form (Add or Edit)
+  // Dynamic Salary Type switcher in Add/Edit Staff Modal
+  const salaryTypeSelect = document.getElementById('staff-form-salary-type') as HTMLSelectElement;
+  salaryTypeSelect?.addEventListener('change', () => {
+    const label = document.getElementById('staff-form-salary-label');
+    const hint = document.getElementById('staff-form-salary-hint');
+    const input = document.getElementById('staff-form-salary') as HTMLInputElement;
+    if (salaryTypeSelect.value === 'Daily') {
+      if (label) label.textContent = 'Daily Wage Rate (₹/day) *';
+      if (hint) hint.textContent = 'Credited per day worked (e.g. ₹600–₹1,200/day)';
+      if (input && Number(input.value) > 3000) input.value = '800';
+    } else {
+      if (label) label.textContent = 'Base Monthly Salary (₹/mo) *';
+      if (hint) hint.textContent = 'Standard 30-day calendar monthly payout';
+      if (input && Number(input.value) < 3000) input.value = '25000';
+    }
+  });
+
+  // 8. Save Staff Form (Add or Edit with Per-Day vs Monthly Salary)
   document.getElementById('save-staff-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const idInput = (document.getElementById('staff-form-id') as HTMLInputElement)?.value;
@@ -3486,12 +3503,17 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const phone = ((document.getElementById('staff-form-phone') as HTMLInputElement)?.value || '').trim();
     const role = ((document.getElementById('staff-form-role') as HTMLInputElement)?.value || '').trim();
     const dept = (document.getElementById('staff-form-dept') as HTMLSelectElement)?.value || 'Kitchen / Halwai';
-    const salary = Number((document.getElementById('staff-form-salary') as HTMLInputElement)?.value) || 20000;
+    const salaryType = (document.getElementById('staff-form-salary-type') as HTMLSelectElement)?.value || 'Monthly';
+    const salaryVal = Number((document.getElementById('staff-form-salary') as HTMLInputElement)?.value) || (salaryType === 'Daily' ? 800 : 22000);
     const branch = ((document.getElementById('staff-form-branch') as HTMLInputElement)?.value || 'Navrangpura Flagship').trim();
+    const joining = ((document.getElementById('staff-form-joining') as HTMLInputElement)?.value || '').trim() || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const emergency = ((document.getElementById('staff-form-emergency') as HTMLInputElement)?.value || '').trim();
     const aadhar = ((document.getElementById('staff-form-aadhar') as HTMLInputElement)?.value || '').trim();
 
     if (!name) return;
+
+    const baseSalary = salaryType === 'Daily' ? (salaryVal * 30) : salaryVal;
+    const salaryRate = salaryVal;
 
     if (idInput) {
       // Editing existing staff
@@ -3501,11 +3523,14 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         member.phone = phone;
         member.role = role;
         member.department = dept;
-        member.baseSalary = salary;
+        member.salaryType = salaryType;
+        member.salaryRate = salaryRate;
+        member.baseSalary = baseSalary;
         member.branchName = branch;
+        member.joiningDate = joining;
         member.emergencyContact = emergency;
         member.aadharNumber = aadhar;
-        showToast(`Updated record for ${name}`, 'success');
+        showToast(`Updated ${name} (${salaryType === 'Daily' ? `₹${salaryRate}/day` : `₹${baseSalary.toLocaleString()}/mo`})`, 'success');
       }
     } else {
       // Add new staff
@@ -3517,9 +3542,10 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         department: dept,
         branchId: 'br-1',
         branchName: branch,
-        joiningDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-        baseSalary: salary,
-        salaryType: 'Monthly',
+        joiningDate: joining,
+        salaryType,
+        salaryRate,
+        baseSalary,
         advancesTaken: 0,
         salaryStatus: 'Pending',
         lastPaidDate: null,
@@ -3534,13 +3560,42 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         salaryHistory: []
       };
       state.staff.unshift(newStaff);
-      showToast(`Added new staff member: ${name}`, 'success');
+      showToast(`Added ${name} (${salaryType === 'Daily' ? `₹${salaryRate}/day` : `₹${baseSalary.toLocaleString()}/mo`})`, 'success');
     }
 
     state.showAddStaffModal = false;
     state.editingStaff = null;
     saveState();
     renderApp();
+  });
+
+  // Staff Removal / Deletion Handlers (Card & Modal)
+  const removeStaffMember = (staffId: string, staffName: string) => {
+    if (confirm(`Are you sure you want to remove "${staffName}" from the staff roster?\n\nThis will remove their shift records and attendance profile.`)) {
+      state.staff = state.staff.filter((s: any) => s.id !== staffId);
+      state.showAddStaffModal = false;
+      state.editingStaff = null;
+      saveState();
+      showToast(`Removed "${staffName}" from staff roster`, 'info');
+      renderApp();
+    }
+  };
+
+  document.querySelectorAll('[data-delete-staff]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-delete-staff') || '';
+      const name = btn.getAttribute('data-staff-name') || 'Staff Member';
+      removeStaffMember(id, name);
+    });
+  });
+
+  document.getElementById('delete-staff-modal-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const btn = e.currentTarget as HTMLElement;
+    const id = btn?.getAttribute('data-staff-id') || '';
+    const name = btn?.getAttribute('data-staff-name') || 'Staff Member';
+    removeStaffMember(id, name);
   });
 
   // 9. Quick 1-Click Attendance Toggle (Present, Half Day, On Leave)
@@ -3558,7 +3613,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     });
   });
 
-  // 10. Pay Staff Salary Modal Handlers
+  // 10. Pay Staff Salary Modal Handlers (Handles Daily Wage vs Monthly)
   document.querySelectorAll('[data-pay-staff-salary]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-pay-staff-salary');
@@ -3586,8 +3641,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     if (!state.payingStaff) return;
     const mode = (document.getElementById('salary-payment-mode') as HTMLSelectElement)?.value || 'Bank Transfer';
     const month = (document.getElementById('salary-month-label') as HTMLInputElement)?.value || 'September 2026';
+    const isDaily = state.payingStaff.salaryType === 'Daily';
+    const dailyRate = Number(state.payingStaff.salaryRate) || Math.round((Number(state.payingStaff.baseSalary) || 21000) / 30);
+    const gross = isDaily ? (dailyRate * 26) : (Number(state.payingStaff.baseSalary) || 22000);
     const adv = state.payingStaff.advancesTaken || 0;
-    const net = Math.max(0, (state.payingStaff.baseSalary || 0) - adv);
+    const net = Math.max(0, gross - adv);
 
     state.payingStaff.salaryStatus = 'Paid';
     state.payingStaff.advancesTaken = 0;
@@ -3595,7 +3653,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     if (!state.payingStaff.salaryHistory) state.payingStaff.salaryHistory = [];
     state.payingStaff.salaryHistory.unshift({
       month,
-      base: state.payingStaff.baseSalary,
+      base: gross,
       advanceDeduction: adv,
       netPaid: net,
       date: state.payingStaff.lastPaidDate,
@@ -3609,7 +3667,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.expenses.items.unshift({
       id: `exp-${Date.now()}`,
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-      description: `Staff Salary: ${state.payingStaff.name} (${month})`,
+      description: `Staff Salary: ${state.payingStaff.name} (${month}${isDaily ? ` - Daily Wage ₹${dailyRate}/day` : ''})`,
       category: 'Staff Salary',
       amount: net,
       status: 'Paid',

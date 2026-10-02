@@ -398,10 +398,10 @@ export function renderCustomersView(state: any) {
                     ${hasKhata ? `
                       <button 
                         data-settle-khata="${customer.id}"
-                        class="py-2 px-3.5 bg-[#1E7E34] hover:bg-[#166527] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                        class="py-2 px-3.5 bg-[#1E7E34] hover:bg-[#166527] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                         title="Settle full or partial payment amount"
                       >
-                        <span>💵</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <span>Settle Money</span>
                       </button>
                     ` : `
@@ -444,7 +444,7 @@ export function renderSettleKhataModal(customer: any) {
         <div class="flex items-center justify-between border-b border-[#F4EFE9] pb-4">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-2xl bg-[#E6F4EA] text-[#1E7E34] flex items-center justify-center font-bold text-lg">
-              💵
+              <svg class="w-5 h-5 text-[#1E7E34]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <div>
               <h3 class="text-lg font-bold text-[#2A1F1D]">Settle Khata Payment</h3>
@@ -525,7 +525,7 @@ export function renderSettleKhataModal(customer: any) {
               <label class="flex items-center gap-2.5 p-3 rounded-2xl border border-[#EFE7DE] bg-[#FAF7F2] cursor-pointer hover:border-[#C86D3B] transition-all has-[:checked]:border-[#C86D3B] has-[:checked]:bg-[#FFF7ED]">
                 <input type="radio" name="paymentMode" value="Cash" checked class="text-[#C86D3B] focus:ring-[#C86D3B]" />
                 <div>
-                  <p class="font-bold text-xs text-[#2A1F1D]">💵 Cash</p>
+                  <p class="font-bold text-xs text-[#2A1F1D]">Cash</p>
                   <p class="text-[10px] text-[#7C7267]">Received at counter</p>
                 </div>
               </label>
@@ -533,7 +533,7 @@ export function renderSettleKhataModal(customer: any) {
               <label class="flex items-center gap-2.5 p-3 rounded-2xl border border-[#EFE7DE] bg-[#FAF7F2] cursor-pointer hover:border-[#C86D3B] transition-all has-[:checked]:border-[#C86D3B] has-[:checked]:bg-[#FFF7ED]">
                 <input type="radio" name="paymentMode" value="UPI" class="text-[#C86D3B] focus:ring-[#C86D3B]" />
                 <div>
-                  <p class="font-bold text-xs text-[#2A1F1D]">📱 UPI / QR</p>
+                  <p class="font-bold text-xs text-[#2A1F1D]">UPI / QR</p>
                   <p class="text-[10px] text-[#7C7267]">GPay / PhonePe</p>
                 </div>
               </label>
@@ -694,9 +694,9 @@ export function renderCustomerProfileModal(customer: any, orders: any[] = []) {
             ${khataDue > 0 ? `
               <button 
                 data-settle-khata="${customer.id}"
-                class="px-5 py-2.5 bg-[#1E7E34] hover:bg-[#166527] text-white rounded-2xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                class="px-5 py-2.5 bg-[#1E7E34] hover:bg-[#166527] text-white rounded-2xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
-                <span>💵</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span>Settle ₹${khataDue.toLocaleString()}</span>
               </button>
             ` : ''}
