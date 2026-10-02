@@ -3,34 +3,34 @@ import time
 import sys
 
 def run_git_and_close():
-    # યુઝર પાસેથી કમિટ મેસેજ મેળવો
-    commit_message = input("તમારો કમિટ મેસેજ (Commit Message) ટાઇપ કરો: ")
+    # Prompt the user for a dynamic commit message
+    commit_message = input("Enter your commit message: ")
     
-    # જો મેસેજ ખાલી હોય તો ડિફોલ્ટ મેસેજ સેટ કરો
+    # If the message is empty, fall back to the default message
     if not commit_message.strip():
         commit_message = "UR CHANGE"
     
-    # પાવરશેલ માટે કમાન્ડ
+    # Construct the PowerShell command string chained with semicolons
     command = f'powershell -Command "git add .; git commit -m \\"{commit_message}\\"; git push origin main"'
     
     try:
-        print("\nGit કમાન્ડ્સ રન થઇ રહ્યા છે...")
-        # કમાન્ડ રન કરો
+        print("\nRunning Git commands...")
+        # Execute the combined command string in the shell
         result = subprocess.run(command, check=True, shell=True, text=True, capture_output=True)
         
-        print("\nસફળતાપૂર્વક અપલોડ (Push) થઇ ગયું!")
+        print("\nSuccessfully pushed to origin main!")
         print(result.stdout)
         
-        # સફળતાપૂર્વક રન થયા પછી 5 સેકન્ડ રાહ જુઓ અને બંધ કરો
-        print("\nઆ વિન્ડો 5 સેકન્ડમાં આપમેળે બંધ થઈ જશે...")
+        # Keep the window open for 5 seconds to let you read the success status
+        print("\nThis window will automatically close in 5 seconds...")
         time.sleep(5)
-        sys.exit()  # પાયથન વિન્ડો બંધ કરવા માટે
+        sys.exit()  # Closes the Python terminal window
         
     except subprocess.CalledProcessError as e:
-        # જો ભૂલ આવે તો વિન્ડો બંધ નહીં થાય જેથી તમે એરર વાંચી શકો
-        print("\nભૂલ (Error) આવી:")
+        # If an error occurs, do not close immediately so you can read the error logs
+        print("\nAn Error Occurred:")
         print(e.stderr)
-        input("\nવિન્ડો બંધ કરવા માટે એન્ટર (Enter) દબાવો...")
+        input("\nPress Enter to close this window...")
 
 if __name__ == "__main__":
     run_git_and_close()

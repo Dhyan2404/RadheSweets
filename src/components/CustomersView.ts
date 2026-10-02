@@ -331,34 +331,148 @@ export function renderCustomersView(state: any) {
 
       <!-- View Content: Advance Bulk Orders or Customer Cards -->
       ${isAdvanceTab ? `
-        <!-- Advance Bulk & Event Orders Calendar List -->
+        <!-- Advance Bulk & Event Orders Management -->
         <section class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            ${advanceOrders.map((order: any) => `
-              <div class="bg-white p-5 rounded-3xl border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-[#C86D3B]">#${order.id}</span>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    order.status === 'Ready' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                  }">
-                    ${order.status}
-                  </span>
-                </div>
-                <div>
-                  <h4 class="font-bold text-sm text-[#2A1F1D]">${order.customerName}</h4>
-                  <p class="text-xs text-[#7C7267]">${order.customerPhone}</p>
-                </div>
-                <div class="text-xs text-[#7C7267] bg-[#FAF7F2] p-2.5 rounded-xl border border-[#F0ECE4]">
-                  <p class="font-medium">📦 Event: ${order.event || 'Festival Bulk Order'}</p>
-                  <p class="font-medium mt-0.5">📅 Delivery: ${order.deliveryDate || 'Tomorrow'}</p>
-                  <p class="font-bold text-[#2A1F1D] mt-1">₹${(order.total || 0).toLocaleString()}</p>
-                </div>
+          <!-- Banner & Action Button -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl bg-amber-100 text-[#C86D3B] flex items-center justify-center font-bold text-xl border border-amber-200 shrink-0">
+                📦
               </div>
-            `).join('')}
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-[#2A1F1D]">Advance Bulk &amp; Festival Orders (${advanceOrders.length})</h3>
+                <p class="text-xs text-[#7C7267]">Pre-booked wedding catering, corporate festival hampers &amp; scheduled bulk sweet bookings</p>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              id="open-add-advance-modal-btn" 
+              class="px-4 py-2.5 bg-[#C86D3B] hover:bg-[#B25D2E] text-white text-xs font-bold rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              <span class="text-base leading-none font-black">+</span>
+              <span>Book Advance Order</span>
+            </button>
           </div>
+
+          ${advanceOrders.length === 0 ? `
+            <div class="py-16 text-center bg-white rounded-3xl border border-[#F0ECE4] space-y-3">
+              <span class="text-4xl">📅</span>
+              <p class="text-sm font-bold text-[#2A1F1D]">No advance bulk orders booked yet</p>
+              <p class="text-xs text-[#7C7267]">Click "Book Advance Order" to log your first wedding or festival bulk booking.</p>
+              <button 
+                type="button"
+                id="open-add-advance-modal-empty-btn"
+                class="px-4 py-2 bg-[#C86D3B] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-[#B25D2E]"
+              >
+                + Book Advance Order
+              </button>
+            </div>
+          ` : `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${advanceOrders.map((order: any) => {
+                const total = Number(order.totalAmount || order.total) || 0;
+                const paid = Number(order.depositPaid) || 0;
+                const balance = Math.max(0, total - paid);
+                const statusColors: any = {
+                  'Confirmed': 'bg-blue-100 text-blue-900 border-blue-200',
+                  'In Preparation': 'bg-amber-100 text-amber-900 border-amber-200',
+                  'Ready': 'bg-emerald-100 text-emerald-900 border-emerald-200',
+                  'Completed': 'bg-stone-200 text-stone-800 border-stone-300'
+                };
+                const statusClass = statusColors[order.status] || 'bg-amber-100 text-amber-900 border-amber-200';
+                const cleanPhone = (order.customerPhone || '').replace(/\D/g, '');
+                const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=${encodeURIComponent(`Namaste ${order.customerName}, regarding your advance order #${order.id} for ${order.eventDate || order.deliveryDate}: Total ₹${total}, Deposit Paid ₹${paid}, Balance Due ₹${balance}. Radhe Sweets`)}` : '#';
+
+                return `
+                  <div class="bg-white p-5 rounded-3xl border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] hover:shadow-md transition-all flex flex-col justify-between space-y-3.5">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <span class="font-mono text-xs font-black text-[#C86D3B] bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
+                          #${order.id}
+                        </span>
+                        <button 
+                          type="button"
+                          data-toggle-advance-status="${order.id}"
+                          class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${statusClass} cursor-pointer transition-all hover:scale-105 active:scale-95"
+                          title="Click to toggle status"
+                        >
+                          ${order.status || 'Confirmed'} ▾
+                        </button>
+                      </div>
+
+                      <div class="mt-2.5">
+                        <h4 class="font-bold text-sm text-[#2A1F1D] truncate">${order.customerName}</h4>
+                        <p class="text-xs text-[#7C7267] font-medium">${order.customerPhone}</p>
+                      </div>
+
+                      <div class="mt-3 text-xs bg-[#FAF7F2] p-3 rounded-2xl border border-[#F0ECE4] space-y-1.5">
+                        <div class="flex items-center justify-between">
+                          <span class="text-[#7C7267]">Category:</span>
+                          <span class="font-bold text-[#2A1F1D] truncate ml-2">${order.eventType || order.event || 'Bulk Order'}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                          <span class="text-[#7C7267]">Delivery / Event:</span>
+                          <span class="font-extrabold text-[#C86D3B]">📅 ${order.eventDate || order.deliveryDate || 'Scheduled'}</span>
+                        </div>
+                        <div class="pt-1.5 border-t border-[#EFE7DE]">
+                          <span class="text-[10px] text-stone-400 block mb-0.5">Sweets / Items:</span>
+                          <p class="text-xs text-stone-700 font-medium line-clamp-2">${order.itemsSummary || order.items || 'Confectionery Items'}</p>
+                        </div>
+                      </div>
+
+                      <div class="mt-3 p-2.5 bg-stone-50 rounded-2xl border border-stone-200/80 flex items-center justify-between text-xs">
+                        <div>
+                          <span class="text-[10px] text-stone-400 block">Total</span>
+                          <span class="font-black text-[#2A1F1D]">₹${total.toLocaleString()}</span>
+                        </div>
+                        <div class="text-center">
+                          <span class="text-[10px] text-stone-400 block">Deposit</span>
+                          <span class="font-bold text-emerald-700">₹${paid.toLocaleString()}</span>
+                        </div>
+                        <div class="text-right">
+                          <span class="text-[10px] text-stone-400 block">Balance Due</span>
+                          <span class="font-black ${balance > 0 ? 'text-amber-700' : 'text-stone-400'}">₹${balance.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="pt-2 border-t border-[#F7F3EE] flex items-center gap-2">
+                      <button 
+                        type="button" 
+                        data-edit-advance-order="${order.id}" 
+                        class="flex-1 py-2 bg-stone-100 hover:bg-stone-200 text-[#2A1F1D] text-xs font-bold rounded-xl transition-all cursor-pointer text-center"
+                      >
+                        ✏️ Edit Booking
+                      </button>
+                      ${cleanPhone ? `
+                        <a 
+                          href="${waUrl}" 
+                          target="_blank" 
+                          rel="noopener"
+                          class="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-200 transition-all cursor-pointer"
+                          title="WhatsApp Details"
+                        >
+                          💬
+                        </a>
+                      ` : ''}
+                      <button 
+                        type="button" 
+                        data-delete-advance-order="${order.id}" 
+                        class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-xl border border-rose-200 transition-all cursor-pointer"
+                        title="Delete Advance Order"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
         </section>
       ` : `
-        <!-- Customer Cards Grid with Prominent Customer IDs -->
+        <!-- Customer Cards Grid with Prominent Customer IDs (All Patrons Equal) -->
         <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           ${filteredCustomers.length === 0 ? `
             <div class="col-span-full py-16 text-center bg-white rounded-3xl border border-[#F0ECE4] space-y-3">
@@ -367,7 +481,6 @@ export function renderCustomersView(state: any) {
               <p class="text-xs text-[#7C7267]">Try clearing search keywords or register a new customer above.</p>
             </div>
           ` : filteredCustomers.map((customer: any) => {
-            const isVip = customer.tier === 'VIP' || customer.type === 'VIP';
             const initials = (customer.name || 'C').split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
             const totalSpent = Number(customer.totalSpent) || 0;
             const custIdDisplay = (customer.id || 'CUST').toUpperCase();
@@ -387,11 +500,6 @@ export function renderCustomersView(state: any) {
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black font-mono bg-stone-100 text-stone-800 border border-stone-200">
                           #${custIdDisplay}
                         </span>
-                        ${isVip ? `
-                          <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#FEF9C3] text-[#A16207] border border-[#FEF08A]">
-                            VIP ⭐
-                          </span>
-                        ` : ''}
                       </div>
                       <h3 class="font-bold text-sm text-[#2A1F1D] truncate mt-0.5 group-hover:text-[#C86D3B] transition-colors">
                         ${customer.name}
@@ -413,15 +521,15 @@ export function renderCustomersView(state: any) {
                 <!-- Customer Details & Preferences -->
                 <div class="bg-[#FAF7F2] p-3 rounded-2xl border border-[#F0ECE4] space-y-1.5 text-xs text-[#7C7267]">
                   <div class="flex items-center justify-between">
-                    <span>Loyalty Points:</span>
-                    <span class="font-bold text-[#A16207]">⭐ ${customer.loyaltyPoints || 0} pts</span>
+                    <span>Customer ID:</span>
+                    <span class="font-mono font-bold text-stone-900">#${custIdDisplay}</span>
                   </div>
                   <div class="flex items-center justify-between">
                     <span>Total Lifetime Spend:</span>
                     <span class="font-extrabold text-[#2A1F1D]">₹${totalSpent.toLocaleString()}</span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span>Total Orders:</span>
+                    <span>Total Purchases:</span>
                     <span class="font-bold text-stone-700">${customer.totalOrders || 1} bills</span>
                   </div>
                   ${customer.notes ? `
@@ -452,7 +560,6 @@ export function renderCustomersView(state: any) {
               </article>
             `;
           }).join('')}
-        </section>
       `}
 
     </div>
@@ -481,7 +588,7 @@ export function renderCustomerProfileModal(customer: any, orders: any[] = []) {
                   #${custIdDisplay}
                 </span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
-                  ${customer.tier || 'Regular'} Tier
+                  Registered Patron
                 </span>
               </div>
               <h3 class="text-lg font-bold text-[#2A1F1D] mt-0.5">${customer.name}</h3>
@@ -509,8 +616,8 @@ export function renderCustomerProfileModal(customer: any, orders: any[] = []) {
             <p class="font-extrabold text-stone-800 font-mono text-xs mt-0.5">#${custIdDisplay}</p>
           </div>
           <div class="p-3 bg-[#FAF7F2] rounded-2xl border border-[#F0ECE4]">
-            <p class="text-[10px] text-[#7C7267]">Loyalty Points</p>
-            <p class="font-extrabold text-[#A16207] text-sm mt-0.5">⭐ ${customer.loyaltyPoints || 0}</p>
+            <p class="text-[10px] text-[#7C7267]">Total Purchases</p>
+            <p class="font-extrabold text-[#C86D3B] text-sm mt-0.5">${customer.totalOrders || customerOrders.length || 1} bills</p>
           </div>
           <div class="p-3 bg-[#FAF7F2] rounded-2xl border border-[#F0ECE4]">
             <p class="text-[10px] text-[#7C7267]">Lifetime Spend</p>
