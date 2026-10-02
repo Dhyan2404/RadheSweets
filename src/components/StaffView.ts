@@ -7,13 +7,24 @@ export function renderStaffView(state: any) {
     staffFilterTab = 'all', 
     staffSearchQuery = '', 
     staffDeptFilter = 'all',
-    branches = [],
-    selectedBranchId = 'all'
+    branches = []
   } = state;
 
-  // Filter tabs counts & payroll calculation (handles both Monthly and Daily Wage)
-  const presentCount = staff.filter((s: any) => s.attendanceToday === 'Present').length;
-  const onLeaveCount = staff.filter((s: any) => s.attendanceToday === 'On Leave' || s.attendanceToday === 'Absent').length;
+  const activeBranchId = state.staffBranchFilter !== undefined 
+    ? state.staffBranchFilter 
+    : (state.currentBranchId || 'br-1');
+
+  const activeBranchObj = branches.find((b: any) => b.id === activeBranchId);
+
+  // Filter staff by the active selected branch (or 'all' if user selected all branches)
+  const branchStaff = staff.filter((s: any) => {
+    if (activeBranchId === 'all') return true;
+    return s.branchId === activeBranchId || (activeBranchObj && s.branchName === activeBranchObj.name);
+  });
+
+  // Filter tabs counts & payroll calculation for selected branch
+  const presentCount = branchStaff.filter((s: any) => s.attendanceToday === 'Present').length;
+  const onLeaveCount = branchStaff.filter((s: any) => s.attendanceToday === 'On Leave' || s.attendanceToday === 'Absent').length;
   
   const getStaffMonthlyEst = (s: any) => {
     if (s.salaryType === 'Daily') {
@@ -22,23 +33,23 @@ export function renderStaffView(state: any) {
     return Number(s.baseSalary) || 0;
   };
 
-  const totalPayroll = staff.reduce((sum: number, s: any) => sum + getStaffMonthlyEst(s), 0);
-  const paidPayroll = staff.filter((s: any) => s.salaryStatus === 'Paid').reduce((sum: number, s: any) => sum + getStaffMonthlyEst(s), 0);
+  const totalPayroll = branchStaff.reduce((sum: number, s: any) => sum + getStaffMonthlyEst(s), 0);
+  const paidPayroll = branchStaff.filter((s: any) => s.salaryStatus === 'Paid').reduce((sum: number, s: any) => sum + getStaffMonthlyEst(s), 0);
   const pendingPayroll = totalPayroll - paidPayroll;
-  const totalAdvances = staff.reduce((sum: number, s: any) => sum + (Number(s.advancesTaken) || 0), 0);
+  const totalAdvances = branchStaff.reduce((sum: number, s: any) => sum + (Number(s.advancesTaken) || 0), 0);
 
   const tabs = [
-    { id: 'all', label: `All Staff (${staff.length})` },
-    { id: 'attendance', label: `Attendance Today (${presentCount}/${staff.length})` },
-    { id: 'payroll', label: `Salary & Payroll (₹${(totalPayroll / 1000).toFixed(0)}k)` },
+    { id: 'all', label: `Staff (${branchStaff.length})` },
+    { id: 'attendance', label: `Attendance (${presentCount}/${branchStaff.length})` },
+    { id: 'payroll', label: `Payroll (₹${(totalPayroll / 1000).toFixed(0)}k)` },
     { id: 'leaves', label: `Leaves Ledger` },
-    { id: 'advances', label: `Salary Advances (₹${totalAdvances.toLocaleString()})` }
+    { id: 'advances', label: `Advances (₹${totalAdvances.toLocaleString()})` }
   ];
 
   const departments = ['All', 'Kitchen / Halwai', 'Sales Counter', 'Store Ops', 'Logistics'];
 
-  // Filter staff by department, search, and tab
-  let filteredStaff = staff.filter((s: any) => {
+  // Filter branch staff by department, search query, and tab
+  let filteredStaff = branchStaff.filter((s: any) => {
     // Dept filter
     if (staffDeptFilter !== 'all' && s.department !== staffDeptFilter) return false;
     
@@ -115,15 +126,15 @@ export function renderStaffView(state: any) {
             </span>
           </div>
           <div class="mt-3">
-            <h3 class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D]">${staff.length} Members</h3>
-            <p class="text-xs text-stone-500 mt-0.5">Across 3 Sweet Shop Kitchens &amp; Outlets</p>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-[#2A1F1D]">${branchStaff.length} Members</h3>
+            <p class="text-xs text-stone-500 mt-0.5">${activeBranchId === 'all' ? 'Across All Confectionery Outlets' : (activeBranchObj?.name || 'Selected Branch Kitchen')}</p>
           </div>
           <div class="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] font-bold">
-            <span class="text-emerald-700">Halwais: ${staff.filter((s:any)=>s.department.includes('Kitchen')).length}</span>
+            <span class="text-emerald-700">Halwais: ${branchStaff.filter((s:any)=>s.department.includes('Kitchen')).length}</span>
             <span class="text-stone-400">•</span>
-            <span class="text-sky-700">Counter: ${staff.filter((s:any)=>s.department.includes('Counter')).length}</span>
+            <span class="text-sky-700">Counter: ${branchStaff.filter((s:any)=>s.department.includes('Counter')).length}</span>
             <span class="text-stone-400">•</span>
-            <span class="text-purple-700">Ops: ${staff.filter((s:any)=>s.department.includes('Ops') || s.department.includes('Logistics')).length}</span>
+            <span class="text-purple-700">Ops: ${branchStaff.filter((s:any)=>s.department.includes('Ops') || s.department.includes('Logistics')).length}</span>
           </div>
         </article>
 
@@ -235,12 +246,43 @@ export function renderStaffView(state: any) {
             </button>
           `).join('')}
         </div>
+
+        <!-- Branch Roster Filter Pills (Only see selected branch employee by default) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-stone-100">
+          <span class="text-xs font-bold text-stone-400 uppercase tracking-wider shrink-0 mr-1">Branch Roster:</span>
+          ${branches.map((b: any) => {
+            const isSelected = activeBranchId === b.id;
+            const bStaffCount = staff.filter((s: any) => s.branchId === b.id || s.branchName === b.name).length;
+            return `
+              <button 
+                data-staff-branch="${b.id}"
+                class="px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  isSelected 
+                    ? 'bg-[#C86D3B] text-white shadow-xs' 
+                    : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-stone-200'
+                }"
+              >
+                ${b.name} (${bStaffCount})
+              </button>
+            `;
+          }).join('')}
+          <button 
+            data-staff-branch="all"
+            class="px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              activeBranchId === 'all' 
+                ? 'bg-[#C86D3B] text-white shadow-xs' 
+                : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-stone-200'
+            }"
+          >
+            All Branches (${staff.length})
+          </button>
+        </div>
       </section>
 
       <!-- Staff List & Management Grid -->
       <section class="space-y-4">
         <div class="flex items-center justify-between text-xs text-stone-500 font-semibold px-1">
-          <span>Showing <strong>${filteredStaff.length}</strong> staff member(s)</span>
+          <span>Showing <strong>${filteredStaff.length}</strong> staff in <strong>${activeBranchId === 'all' ? 'All Branches' : (activeBranchObj?.name || 'Selected Branch')}</strong></span>
           <span>Shift Timing: 07:00 AM – 10:30 PM</span>
         </div>
 

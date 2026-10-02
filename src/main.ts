@@ -124,6 +124,7 @@ const state = {
   staffFilterTab: 'all',
   staffSearchQuery: '',
   staffDeptFilter: 'all',
+  staffBranchFilter: stored?.staffBranchFilter || stored?.currentBranchId || 'br-1',
 
   // Enterprise Multi-Branch & Store Inventory State
   branches: stored?.branches || [...initialData.branches],
@@ -233,6 +234,7 @@ function saveState() {
       staff: state.staff,
       branches: state.branches,
       currentBranchId: state.currentBranchId,
+      staffBranchFilter: state.staffBranchFilter,
       userRole: state.userRole,
       parkedBills: state.parkedBills,
       rawMaterials: state.rawMaterials,
@@ -523,8 +525,9 @@ export async function handleBranchSwitch(targetBranchId: string) {
   // 1. Snapshot and save departing branch state (sweets, orders, KPIs, customers)
   saveBranchSnapshot(departingBranchId);
 
-  // 2. Switch current branch ID
+  // 2. Switch current branch ID and sync staff branch filter
   state.currentBranchId = targetBranchId;
+  state.staffBranchFilter = targetBranchId;
 
   // 3. Clear transient checkout & counter draft state (prevent leaking cart or selected customer)
   state.posCart = [];
@@ -3423,6 +3426,18 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       const dept = btn.getAttribute('data-staff-dept');
       if (dept) {
         state.staffDeptFilter = (dept === 'All' ? 'all' : dept);
+        renderApp();
+      }
+    });
+  });
+
+  // 2b. Branch Roster Filter Pills (Only see selected branch employee by default)
+  document.querySelectorAll('[data-staff-branch]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const branch = btn.getAttribute('data-staff-branch');
+      if (branch) {
+        state.staffBranchFilter = branch;
+        saveState();
         renderApp();
       }
     });
