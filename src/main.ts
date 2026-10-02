@@ -177,6 +177,7 @@ const state = {
 
   // Navigation & View Mode
   activeTab: (stored?.activeTab && stored.activeTab !== 'recipes' && stored.activeTab !== 'storefront') ? stored.activeTab : 'pos',
+  insidersLang: (stored?.insidersLang || (typeof localStorage !== 'undefined' && localStorage.getItem('radhe_insiders_lang')) || 'en') as 'en' | 'gu',
   deviceMode: stored?.deviceMode || 'desktop', // 'desktop' or 'mobile'
   currentTheme: stored?.currentTheme || 'warm', // 'warm' or 'ice'
   isDarkMode: stored?.isDarkMode || false,
@@ -1895,6 +1896,22 @@ function attachEventListeners() {
       if (tabId) {
         state.activeTab = tabId;
         state.showMobileDrawer = false;
+        saveState();
+        renderApp();
+      }
+    });
+  });
+
+  // Insiders View Language Switcher (EN <-> GUJ)
+  document.querySelectorAll('[data-action="switch-insiders-lang"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetLang = btn.getAttribute('data-lang') as 'en' | 'gu';
+      if (targetLang) {
+        state.insidersLang = targetLang;
+        try {
+          localStorage.setItem('radhe_insiders_lang', targetLang);
+        } catch (_) {}
         saveState();
         renderApp();
       }
