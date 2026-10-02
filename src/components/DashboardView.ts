@@ -240,8 +240,8 @@ export function renderDashboardView(state: any) {
           </div>
         </article>
 
-        <!-- CARD 4: Profit -->
-        <article class="kpi-card animate-card-pop stagger-4 interactive-scale bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="analytics">
+        <!-- CARD 4: Profit (Click opens All-Over Month & Per-Day Profit Ledger) -->
+        <article id="kpi-profit-card" data-action="open-profit-modal" class="kpi-card animate-card-pop stagger-4 interactive-scale bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" title="Click to view All-Over Month & Per-Day Profit">
           <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="kpi-top-row flex items-center justify-between">
             <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E8F6EF] text-[#0D9488] flex items-center justify-center shadow-2xs">
@@ -249,14 +249,17 @@ export function renderDashboardView(state: any) {
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"></path>
               </svg>
             </span>
-            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+            <button type="button" data-action="open-profit-modal" class="kpi-card-more-btn px-2 py-0.5 rounded-full bg-emerald-700/10 hover:bg-emerald-700/20 text-[#0D9488] text-[10px] font-extrabold flex items-center gap-1 transition-colors cursor-pointer" title="Open Profit Breakdown">
+              <span>Per-Day Ledgers ↗</span>
             </button>
           </div>
 
           <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
-            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Profit</p>
+            <div class="flex items-center justify-between">
+              <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Profit</p>
+              <span class="text-[9px] font-black text-[#0D9488] bg-white/70 px-1.5 py-0.2 rounded-md border border-[#DEEFE6]">Daily / Month</span>
+            </div>
             <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
               ${renderCounter({
                 value: profitVal,
@@ -270,8 +273,9 @@ export function renderDashboardView(state: any) {
 
           <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="kpi-trend-badge text-[#0D9488] font-bold text-[10px] sm:text-xs z-10">
+            <div class="kpi-trend-badge text-[#0D9488] font-bold text-[10px] sm:text-xs z-10 flex items-center gap-1">
               <span>${profitMarginStr}</span>
+              <span class="text-[9px] text-stone-500 font-normal">• Click to view daily</span>
             </div>
 
             <!-- Soft Bezier Sparkline -->

@@ -567,22 +567,22 @@ export function renderPosView(state: any) {
       <!-- Pinned Floating Action Bar & Slide-up Cart Bottom Sheet  -->
       <!-- ======================================================== -->
 
-      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) -->
+      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Black & White -->
       <aside 
         id="mobile-floating-checkout-bar" 
-        class="lg:hidden fixed bottom-[5.25rem] sm:bottom-20 inset-x-3 z-30 bg-gradient-to-r from-[#C86D3B] via-[#BD5E2A] to-[#A84C1C] text-white p-3 rounded-2xl shadow-[0_8px_25px_rgba(200,109,59,0.5)] border border-orange-300/40 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
+        class="lg:hidden fixed bottom-[5.25rem] sm:bottom-20 inset-x-3 z-30 bg-black text-white p-3 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.6)] border border-white/25 flex items-center justify-between animate-card-pop ${posCart.length > 0 ? '' : 'hidden'}"
         aria-label="Mobile Sticky Checkout Bar"
       >
         <button type="button" id="mobile-cart-toggle-btn" class="flex items-center gap-2.5 text-left cursor-pointer active:scale-95 transition-transform">
-          <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-extrabold text-base text-white shadow-2xs">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+          <div class="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-extrabold text-base shadow-xs">
+            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
           </div>
           <div>
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-bold text-white leading-none" id="mobile-bar-count">${posCart.length} item${posCart.length > 1 ? 's' : ''}</span>
-              <span class="text-[10px] text-amber-200 font-semibold bg-white/10 px-1.5 py-0.5 rounded-full">View Items</span>
+              <span class="text-[10px] text-zinc-300 font-semibold bg-white/10 border border-white/20 px-1.5 py-0.5 rounded-full">View Items</span>
             </div>
-            <p class="text-base font-black text-amber-200 leading-tight mt-0.5" id="mobile-bar-total">₹${totalPayable}</p>
+            <p class="text-base font-black text-white leading-tight mt-0.5" id="mobile-bar-total">₹${totalPayable}</p>
           </div>
         </button>
 
@@ -590,7 +590,7 @@ export function renderPosView(state: any) {
           <button 
             type="button"
             id="mobile-bar-pay-btn" 
-            class="px-4 py-2 rounded-xl bg-white text-[#C86D3B] hover:bg-orange-50 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+            class="px-4 py-2 rounded-xl bg-white text-black hover:bg-zinc-200 font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <span>Checkout ➔</span>
           </button>

@@ -17,20 +17,20 @@ export function renderMobileBottomNav(currentTab: string, state?: any) {
           data-tab="dashboard" 
           class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
             currentTab === 'dashboard' 
-              ? 'text-[#C86D3B] font-bold' 
-              : 'text-stone-400 hover:text-stone-700 font-medium'
+              ? 'text-black font-black' 
+              : 'text-black hover:text-black font-bold'
           }"
           aria-label="Dashboard"
         >
           <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
-            currentTab === 'dashboard' ? 'bg-orange-50 text-[#C86D3B]' : ''
+            currentTab === 'dashboard' ? 'bg-black/10 text-black' : 'text-black'
           }">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </div>
-          <span class="text-[9px] tracking-tight mt-0.5">Home</span>
-          ${currentTab === 'dashboard' ? '<span class="w-1 h-1 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1 h-1 opacity-0 mt-0.5"></span>'}
+          <span class="text-[10px] tracking-tight mt-0.5 text-black font-extrabold">Home</span>
+          ${currentTab === 'dashboard' ? '<span class="w-1.5 h-1.5 rounded-full bg-black mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
         </button>
 
         <!-- Tab 2: Orders & Invoices -->
@@ -39,23 +39,23 @@ export function renderMobileBottomNav(currentTab: string, state?: any) {
           data-tab="orders" 
           class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
             currentTab === 'orders' 
-              ? 'text-[#C86D3B] font-bold' 
-              : 'text-stone-400 hover:text-stone-700 font-medium'
+              ? 'text-black font-black' 
+              : 'text-black hover:text-black font-bold'
           }"
           aria-label="Orders"
         >
           <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
-            currentTab === 'orders' ? 'bg-orange-50 text-[#C86D3B]' : ''
+            currentTab === 'orders' ? 'bg-black/10 text-black' : 'text-black'
           }">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
           </div>
-          <span class="text-[9px] tracking-tight mt-0.5">Orders</span>
-          ${currentTab === 'orders' ? '<span class="w-1 h-1 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1 h-1 opacity-0 mt-0.5"></span>'}
+          <span class="text-[10px] tracking-tight mt-0.5 text-black font-extrabold">Orders</span>
+          ${currentTab === 'orders' ? '<span class="w-1.5 h-1.5 rounded-full bg-black mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
         </button>
 
         <!-- Tab 3 (CENTER): SLEEK HERO FLOATING POS BUTTON -->
@@ -77,7 +77,7 @@ export function renderMobileBottomNav(currentTab: string, state?: any) {
               </span>
             ` : ''}
           </button>
-          <span class="text-[9px] font-extrabold text-[#C86D3B] tracking-tight mt-0.5">Sell POS</span>
+          <span class="text-[10px] font-black text-black tracking-tight mt-0.5">Sell POS</span>
         </div>
 
         <!-- Tab 4: Customers & Khata -->
@@ -86,36 +86,36 @@ export function renderMobileBottomNav(currentTab: string, state?: any) {
           data-tab="customers" 
           class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
             currentTab === 'customers' 
-              ? 'text-[#C86D3B] font-bold' 
-              : 'text-stone-400 hover:text-stone-700 font-medium'
+              ? 'text-black font-black' 
+              : 'text-black hover:text-black font-bold'
           }"
           aria-label="Customers & Khata"
         >
           <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
-            currentTab === 'customers' ? 'bg-orange-50 text-[#C86D3B]' : ''
+            currentTab === 'customers' ? 'bg-black/10 text-black' : 'text-black'
           }">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </div>
-          <span class="text-[9px] tracking-tight mt-0.5">Khata</span>
-          ${currentTab === 'customers' ? '<span class="w-1 h-1 rounded-full bg-[#C86D3B] mt-0.5"></span>' : '<span class="w-1 h-1 opacity-0 mt-0.5"></span>'}
+          <span class="text-[10px] tracking-tight mt-0.5 text-black font-extrabold">Khata</span>
+          ${currentTab === 'customers' ? '<span class="w-1.5 h-1.5 rounded-full bg-black mt-0.5"></span>' : '<span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>'}
         </button>
 
         <!-- Tab 5: All Modules / Slide-out Menu Trigger -->
         <button 
           type="button"
           id="mobile-bottom-menu-btn"
-          class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer text-stone-500 hover:text-stone-800 font-medium active:scale-95"
+          class="flex-1 flex flex-col items-center justify-center py-0.5 rounded-xl transition-all cursor-pointer text-black hover:text-black font-bold active:scale-95"
           aria-label="All Modules Menu"
         >
-          <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center transition-all text-black">
+            <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path d="M4 6h16M4 12h16M4 18h7" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </div>
-          <span class="text-[9px] tracking-tight mt-0.5">Menu</span>
-          <span class="w-1 h-1 opacity-0 mt-0.5"></span>
+          <span class="text-[10px] tracking-tight mt-0.5 text-black font-extrabold">Menu</span>
+          <span class="w-1.5 h-1.5 opacity-0 mt-0.5"></span>
         </button>
 
       </div>

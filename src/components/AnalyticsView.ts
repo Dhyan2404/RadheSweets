@@ -1,4 +1,5 @@
 // Multi-Branch Consolidated Financial Portfolio & True Net Profit Analytics View Component
+import { computeProfitLedger } from './ProfitModal.ts';
 
 export function renderAnalyticsView(state) {
   const { kpis, analytics, branches = [], expenses, shopInfo } = state;
@@ -101,6 +102,110 @@ export function renderAnalyticsView(state) {
           }).join('')}
         </div>
       </section>
+` + (function() {
+        const ledger = computeProfitLedger(state, state.profitSelectedMonth || 'Sep 2026');
+        return `
+      <!-- All-Over Month & Per-Day Profit & Customer Sales Ledger -->
+      <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-5" id="analytics-daily-profit-ledger">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center font-black text-sm">₹</span>
+              <h3 class="text-base font-black text-[var(--text-main)]">
+                All-Over Month &amp; Per-Day Profit Ledger
+              </h3>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+                Customer Sales Driven
+              </span>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mt-0.5">
+              Live profit computed for each day as per day sales which depends on customers' purchases
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" data-action="open-profit-modal" class="px-3.5 py-1.5 bg-stone-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+              <span>Detailed Modal ↗</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Monthly KPI Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50/70 border border-emerald-200">
+            <p class="text-[10px] sm:text-xs font-bold text-emerald-800 uppercase tracking-wide">All-Over Month Profit</p>
+            <p class="text-xl sm:text-2xl font-black text-emerald-950 mt-1">₹${ledger.totalProfit.toLocaleString()}</p>
+            <p class="text-[10px] text-emerald-700 font-semibold mt-0.5">${ledger.overallMargin}% Net Take-Home</p>
+          </div>
+          <div class="p-3.5 sm:p-4 rounded-xl bg-stone-50 border border-stone-200">
+            <p class="text-[10px] sm:text-xs font-bold text-stone-600 uppercase tracking-wide">Customer Sales (Sell)</p>
+            <p class="text-xl sm:text-2xl font-black text-stone-900 mt-1">₹${ledger.totalSales.toLocaleString()}</p>
+            <p class="text-[10px] text-stone-500 font-semibold mt-0.5">${ledger.totalCustomers} Customer Buys</p>
+          </div>
+          <div class="p-3.5 sm:p-4 rounded-xl bg-rose-50/60 border border-rose-200">
+            <p class="text-[10px] sm:text-xs font-bold text-rose-800 uppercase tracking-wide">Sweets Cost (COGS)</p>
+            <p class="text-xl sm:text-2xl font-black text-rose-950 mt-1">₹${ledger.totalCost.toLocaleString()}</p>
+            <p class="text-[10px] text-rose-700 font-semibold mt-0.5">Production Ingredients</p>
+          </div>
+          <div class="p-3.5 sm:p-4 rounded-xl bg-blue-50/60 border border-blue-200">
+            <p class="text-[10px] sm:text-xs font-bold text-blue-800 uppercase tracking-wide">Average Daily Profit</p>
+            <p class="text-xl sm:text-2xl font-black text-blue-950 mt-1">₹${ledger.avgDailyProfit.toLocaleString()}</p>
+            <p class="text-[10px] text-blue-700 font-semibold mt-0.5">Per-Day Operating Pace</p>
+          </div>
+        </div>
+
+        <!-- Daily Ledger Table -->
+        <div class="border border-[var(--border-color)] rounded-xl overflow-hidden bg-white shadow-2xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-stone-50 text-stone-700 font-black text-[11px] uppercase border-b border-stone-200">
+                  <th class="py-2.5 px-4">Date &amp; Day</th>
+                  <th class="py-2.5 px-4">Customer Buys (Orders)</th>
+                  <th class="py-2.5 px-4 text-right">Day Sales (₹)</th>
+                  <th class="py-2.5 px-4 text-right">Day Cost (₹)</th>
+                  <th class="py-2.5 px-4 text-right">Per-Day Profit (₹)</th>
+                  <th class="py-2.5 px-4 text-right">Margin</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-100">
+                ${ledger.days.map(day => `
+                  <tr class="hover:bg-amber-50/30 transition-colors">
+                    <td class="py-2.5 px-4 font-bold text-stone-900 whitespace-nowrap">
+                      ${day.date} <span class="text-stone-400 font-normal text-[10px]">(${day.dayOfWeek})</span>
+                    </td>
+                    <td class="py-2.5 px-4">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 text-[10px] font-bold">
+                          ${day.customerOrders.length} Buys
+                        </span>
+                        <span class="text-[11px] text-stone-600 truncate max-w-[200px]" title="${day.customerOrders.map(c => c.customerName).join(', ')}">
+                          ${day.customerOrders.slice(0, 2).map(c => c.customerName).join(', ')}${day.customerOrders.length > 2 ? '...' : ''}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="py-2.5 px-4 text-right font-black text-stone-900">
+                      ₹${day.sales.toLocaleString()}
+                    </td>
+                    <td class="py-2.5 px-4 text-right font-bold text-rose-600">
+                      - ₹${day.cost.toLocaleString()}
+                    </td>
+                    <td class="py-2.5 px-4 text-right whitespace-nowrap">
+                      <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 font-black text-xs">
+                        + ₹${day.profit.toLocaleString()}
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-4 text-right font-bold text-emerald-700">
+                      ${day.sales > 0 ? ((day.profit / day.sales) * 100).toFixed(1) : '0.0'}%
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+        `;
+      })() + `
 
       <!-- True Net Profit P&L Statement Engine -->
       <section class="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-subtle space-y-4">

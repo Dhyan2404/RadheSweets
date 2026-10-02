@@ -67,6 +67,7 @@ import {
 } from './components/ProductsView.ts';
 import { renderExpensesView, renderAddExpenseModal } from './components/ExpensesView.ts';
 import { renderAnalyticsView } from './components/AnalyticsView.ts';
+import { renderProfitDetailsModal } from './components/ProfitModal.ts';
 import { renderSettingsView } from './components/SettingsView.ts';
 import { renderSplashView } from './components/SplashView.ts';
 import { 
@@ -151,6 +152,8 @@ const state = {
   zReports: stored?.zReports || [...initialData.zReports],
   auditLogs: stored?.auditLogs || [...initialData.auditLogs],
   selectedWeightUnit: stored?.selectedWeightUnit || 'kg',
+  showProfitModal: false,
+  profitSelectedMonth: 'Sep 2026',
 
   // Navigation & View Mode
   activeTab: (stored?.activeTab && stored.activeTab !== 'recipes' && stored.activeTab !== 'storefront') ? stored.activeTab : 'pos',
@@ -1037,6 +1040,7 @@ function renderModals() {
     ${state.showRecordAdvanceModal ? renderRecordAdvanceModal(state) : ''}
     ${state.showAddBranchModal ? renderAddBranchModal(state) : ''}
     ${state.showEditBranchModal ? renderEditBranchModal(state) : ''}
+    ${state.showProfitModal ? renderProfitDetailsModal(state, state.profitSelectedMonth || 'Sep 2026') : ''}
   `;
 }
 
@@ -1081,6 +1085,63 @@ function attachEventListeners() {
     if (e.target?.id === 'mobile-drawer-backdrop') {
       closeMobileDrawer();
     }
+  });
+
+  // Profit & Customer Sales Intelligence Modal Listeners
+  const openProfitModal = () => {
+    state.showProfitModal = true;
+    renderApp();
+  };
+  const closeProfitModal = () => {
+    state.showProfitModal = false;
+    renderApp();
+  };
+
+  document.querySelectorAll('[data-action="open-profit-modal"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openProfitModal();
+    });
+  });
+
+  document.getElementById('kpi-profit-card')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openProfitModal();
+  });
+
+  document.getElementById('close-profit-modal-btn')?.addEventListener('click', closeProfitModal);
+  document.getElementById('profit-modal-close-bottom-btn')?.addEventListener('click', closeProfitModal);
+  document.getElementById('profit-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'profit-modal-backdrop') {
+      closeProfitModal();
+    }
+  });
+
+  document.getElementById('profit-month-select')?.addEventListener('change', (e: any) => {
+    state.profitSelectedMonth = e.target.value;
+    renderApp();
+  });
+
+  document.querySelectorAll('[data-toggle-day-details]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = btn.getAttribute('data-toggle-day-details');
+      const row = document.getElementById(`day-details-row-${idx}`);
+      if (row) {
+        row.classList.toggle('hidden');
+      }
+    });
+  });
+
+  document.getElementById('profit-modal-full-pl-btn')?.addEventListener('click', () => {
+    state.showProfitModal = false;
+    state.activeTab = 'analytics';
+    renderApp();
+    setTimeout(() => {
+      document.getElementById('analytics-daily-profit-ledger')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   });
 
   // Google SEO & Sitemap Modal
