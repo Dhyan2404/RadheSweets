@@ -26,7 +26,8 @@ import {
   clearActiveCheckoutInCloud,
   firestoreLiveState,
   onFirestoreStatusChange,
-  getBranchDefaultCatalog
+  getBranchDefaultCatalog,
+  testFirestoreConnection
 } from './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.ts';
@@ -3968,6 +3969,32 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
     saveState();
     showToast(`✓ Store details & UPI ID (${state.shopInfo.upiId}) saved!`, 'success');
+    renderApp();
+  });
+
+  // Settings: Cloud Firestore Live Connection Test
+  document.getElementById('test-firestore-connection-btn')?.addEventListener('click', async () => {
+    showToast('Testing Cloud Firestore ping...', 'info');
+    const result = await testFirestoreConnection();
+    if (result.success) {
+      showToast('✅ Cloud Firestore Connected! Live sync is active.', 'success');
+    } else if (result.needsDbCreate) {
+      showToast('⚠️ Firestore database not created in project radhesweets0! Click "Open Firebase Console & Create Database" in Settings.', 'error');
+    } else {
+      showToast(`Firestore test failed: ${result.message}`, 'error');
+    }
+    renderApp();
+  });
+
+  // Settings: Push All ERP Data directly to Cloud Firestore
+  document.getElementById('sync-all-to-firestore-btn')?.addEventListener('click', async () => {
+    showToast('Uploading all 100 sweets, orders & records to Cloud Firestore...', 'info');
+    const syncRes = await syncAllToFirebaseCloud(state);
+    if (syncRes.success) {
+      showToast(`☁️ Pushed ${syncRes.count} records directly to Cloud Firestore!`, 'success');
+    } else {
+      showToast('Cloud sync finished with notices.', 'info');
+    }
     renderApp();
   });
 

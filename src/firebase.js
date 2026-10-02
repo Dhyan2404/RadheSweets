@@ -2,8 +2,8 @@
 // Real-time Cloud persistence per store branch (Navrangpura, Satellite, SG Highway)
 // Project: radhesweets0 - Pure Cloud Firestore (No Storage)
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 import { 
   getFirestore, 
   doc, 
@@ -13,8 +13,9 @@ import {
   collection, 
   onSnapshot,
   query,
-  limit
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+  limit,
+  serverTimestamp
+} from "firebase/firestore";
 import { initialData } from "./data.js";
 
 export const firebaseConfig = {
@@ -83,6 +84,36 @@ export function handleFirestoreError(label, err) {
     return;
   }
   console.warn(`[Firebase Firestore] ${label}:`, msg);
+}
+
+/**
+ * Diagnostic & Active Connection Ping for Cloud Firestore
+ */
+export async function testFirestoreConnection() {
+  updateStatus('syncing');
+  try {
+    const pingRef = doc(db, "_system", "connection_test");
+    await setDoc(pingRef, {
+      ping: true,
+      timestamp: new Date().toISOString(),
+      clientTime: Date.now(),
+      status: "online"
+    });
+    updateStatus('synced');
+    firestoreLiveState.connected = true;
+    firestoreLiveState.errorDetails = null;
+    return { success: true, message: 'Firestore connection verified successfully!' };
+  } catch (err) {
+    const msg = err?.message || String(err);
+    const code = err?.code || 'unknown';
+    handleFirestoreError('Connection Test', err);
+    return { 
+      success: false, 
+      code,
+      message: msg,
+      needsDbCreate: msg.includes('not found') || msg.includes('(default)') || code === 'not-found'
+    };
+  }
 }
 
 /**

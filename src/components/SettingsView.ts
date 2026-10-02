@@ -1,6 +1,8 @@
 // Profile, Settings, Branch Configuration & UPI Payment Hub Component
 // Tailored for Radhe Sweets Ahmedabad with full mobile and desktop responsiveness
 
+import { firestoreLiveState } from '../firebase.js';
+
 export function renderSettingsView(state: any) {
   const { 
     shopInfo = {}, 
@@ -29,6 +31,88 @@ export function renderSettingsView(state: any) {
         <p class="text-xs sm:text-sm text-[var(--text-muted)]">
           Configure shop details, custom UPI ID, dynamic counter QR code, branch locations, and system preferences.
         </p>
+      </section>
+
+      <!-- 1.5. Cloud Firestore Real-time Sync & Database Diagnostics -->
+      <section class="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-3xl border border-[var(--border-color)] shadow-subtle space-y-4" data-purpose="firestore-sync-card">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-xl bg-orange-100 text-[#C86D3B] flex items-center justify-center font-bold text-sm shadow-xs">🔥</span>
+              <h3 class="text-base sm:text-lg font-black text-[var(--text-main)]">Cloud Firestore Database</h3>
+            </div>
+            <p class="text-xs text-[var(--text-light)] mt-1">
+              Project: <code class="font-mono bg-stone-100 px-1.5 py-0.5 rounded text-amber-800 font-bold">radhesweets0</code> • Database: <code class="font-mono bg-stone-100 px-1.5 py-0.5 rounded text-stone-700 font-bold">(default)</code>
+            </p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            ${firestoreLiveState.connected ? `
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Firestore Connected</span>
+              </span>
+            ` : `
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>${firestoreLiveState.syncStatus === 'needs_db_create' ? 'Database Not Created' : 'Connecting...'}</span>
+              </span>
+            `}
+          </div>
+        </div>
+
+        <!-- Setup Alert if Database Not Created in Console -->
+        ${!firestoreLiveState.connected ? `
+          <div class="p-4 rounded-2xl bg-amber-50/90 border border-amber-300/80 space-y-3">
+            <div class="flex items-start gap-3">
+              <span class="text-xl">⚠️</span>
+              <div class="space-y-1">
+                <h4 class="font-extrabold text-xs sm:text-sm text-amber-950">Action Needed: Activate Cloud Firestore in Firebase Console</h4>
+                <p class="text-xs text-amber-900 leading-relaxed">
+                  Firebase project <strong>radhesweets0</strong> exists, but the Firestore Database instance has not been provisioned yet (returns <code>404 NOT_FOUND</code>).
+                </p>
+                <div class="text-[11px] text-amber-800 font-medium space-y-0.5 pt-1">
+                  <p>1. Open the Firebase Console link below.</p>
+                  <p>2. Click <strong>"Create database"</strong> and select <strong>"Start in test mode"</strong>.</p>
+                  <p>3. Choose your region (e.g. <code>asia-south1</code> Mumbai) and click <strong>Enable</strong>.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <a 
+                href="https://console.firebase.google.com/project/radhesweets0/firestore" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="px-4 py-2 bg-[#C86D3B] hover:bg-[#B25D2E] active:scale-95 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+              >
+                <span>👉 Open Firebase Console &amp; Create Database</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </a>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2.5 pt-1">
+          <button 
+            type="button" 
+            id="test-firestore-connection-btn"
+            class="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-800 rounded-xl text-xs font-bold transition-all cursor-pointer border border-stone-200 shadow-2xs flex items-center gap-2"
+          >
+            <span>📡</span>
+            <span>Test Firestore Connection</span>
+          </button>
+
+          <button 
+            type="button" 
+            id="sync-all-to-firestore-btn"
+            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-2"
+          >
+            <span>☁️</span>
+            <span>Sync All 100 Sweets, Orders &amp; Data to Cloud</span>
+          </button>
+        </div>
       </section>
 
       <!-- 2. Active Branch Location Selector -->
