@@ -2551,7 +2551,7 @@ export const initialData = {
 
   customers: [
     {
-      id: "cust-1",
+      id: "CUST-1001",
       name: "Jignesh Shah",
       phone: "+91 98765 67890",
       email: "jignesh@gmail.com",
@@ -2559,14 +2559,12 @@ export const initialData = {
       type: "VIP",
       tier: "VIP",
       loyaltyPoints: 420,
-      khataBalance: 1250,
-      creditLimit: 10000,
       totalOrders: 28,
       totalSpent: 8450,
       notes: "Preferred customer. Prefers low-sugar sweets and extra silver vark."
     },
     {
-      id: "cust-2",
+      id: "CUST-1002",
       name: "Riya Patel",
       phone: "+91 98765 43210",
       email: "riya@gmail.com",
@@ -2574,14 +2572,12 @@ export const initialData = {
       type: "Regular",
       tier: "Regular",
       loyaltyPoints: 85,
-      khataBalance: 0,
-      creditLimit: 5000,
       totalOrders: 3,
       totalSpent: 1250,
       notes: "Likes fresh hot Gulab Jamun for family dinners."
     },
     {
-      id: "cust-3",
+      id: "CUST-1003",
       name: "Amit Kumar",
       phone: "+91 98765 12345",
       email: "amit@gmail.com",
@@ -2589,14 +2585,12 @@ export const initialData = {
       type: "Regular",
       tier: "Regular",
       loyaltyPoints: 310,
-      khataBalance: 4200,
-      creditLimit: 15000,
       totalOrders: 12,
       totalSpent: 4320,
       notes: "Frequent corporate bulk order buyer."
     },
     {
-      id: "cust-4",
+      id: "CUST-1004",
       name: "Priya Panchal",
       phone: "+91 98765 11122",
       email: "priya@gmail.com",
@@ -2604,14 +2598,12 @@ export const initialData = {
       type: "Regular",
       tier: "Regular",
       loyaltyPoints: 160,
-      khataBalance: 0,
-      creditLimit: 5000,
       totalOrders: 7,
       totalSpent: 2890,
       notes: "Always requests gift box packaging."
     },
     {
-      id: "cust-5",
+      id: "CUST-1005",
       name: "Neha Shah",
       phone: "+91 98765 77665",
       email: "neha@gmail.com",
@@ -2619,14 +2611,12 @@ export const initialData = {
       type: "Regular",
       tier: "Regular",
       loyaltyPoints: 215,
-      khataBalance: 850,
-      creditLimit: 7500,
       totalOrders: 9,
       totalSpent: 3410,
       notes: "Regular weekend sweets purchaser."
     },
     {
-      id: "cust-6",
+      id: "CUST-1006",
       name: "Meet Kothari",
       phone: "+91 98765 99887",
       email: "meet@gmail.com",
@@ -2634,14 +2624,12 @@ export const initialData = {
       type: "New",
       tier: "New",
       loyaltyPoints: 30,
-      khataBalance: 0,
-      creditLimit: 2000,
       totalOrders: 2,
       totalSpent: 780,
       notes: "New customer from online search."
     },
     {
-      id: "cust-7",
+      id: "CUST-1007",
       name: "Rakesh Thakkar",
       phone: "+91 98765 11223",
       email: "rakesh@gmail.com",
@@ -2649,8 +2637,6 @@ export const initialData = {
       type: "Regular",
       tier: "Regular",
       loyaltyPoints: 140,
-      khataBalance: 0,
-      creditLimit: 5000,
       totalOrders: 5,
       totalSpent: 1950,
       notes: "Prefers Dry Fruit Barfi & Motichoor Ladoo."
@@ -2661,7 +2647,7 @@ export const initialData = {
     {
       id: "SA00129",
       date: "25 Sep 2026, 10:28 AM",
-      customerId: "cust-1",
+      customerId: "CUST-1001",
       customerName: "Jignesh Shah",
       customerPhone: "+91 98765 67890",
       customerAddress: "Ahmedabad, Gujarat",
@@ -2682,7 +2668,7 @@ export const initialData = {
     {
       id: "SA00128",
       date: "25 Sep 2026, 10:15 AM",
-      customerId: "cust-2",
+      customerId: "CUST-1002",
       customerName: "Riya Patel",
       customerPhone: "+91 98765 43210",
       customerAddress: "Vadodara, Gujarat",
@@ -2701,7 +2687,7 @@ export const initialData = {
     {
       id: "SA00127",
       date: "24 Sep 2026, 7:30 PM",
-      customerId: "cust-3",
+      customerId: "CUST-1003",
       customerName: "Amit Kumar",
       customerPhone: "+91 98765 12345",
       customerAddress: "Surat, Gujarat",
@@ -2720,7 +2706,7 @@ export const initialData = {
     {
       id: "SA00126",
       date: "24 Sep 2026, 5:10 PM",
-      customerId: "cust-4",
+      customerId: "CUST-1004",
       customerName: "Priya Panchal",
       customerPhone: "+91 98765 11122",
       customerAddress: "Ahmedabad, Gujarat",
@@ -2740,7 +2726,7 @@ export const initialData = {
     {
       id: "SA00125",
       date: "23 Sep 2026, 2:45 PM",
-      customerId: "cust-5",
+      customerId: "CUST-1005",
       customerName: "Neha Shah",
       customerPhone: "+91 98765 77665",
       customerAddress: "Gandhinagar, Gujarat",

@@ -218,7 +218,7 @@ export function renderPosView(state: any) {
         
         <!-- Sweets Selection Area (8 Columns) -->
         <div class="lg:col-span-8 space-y-4">
-          <!-- Step 1: Customer Selection Bar with Khata / Loyalty Status -->
+          <!-- Step 1: Customer Selection Bar with Customer ID & Loyalty Status -->
           <div class="bg-[var(--bg-surface)] p-3.5 sm:p-4 rounded-2xl border border-[var(--border-color)] shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
             <div class="flex items-center space-x-3 w-full sm:w-auto">
               <span class="w-9 h-9 rounded-2xl ${selectedCustomer ? 'bg-emerald-600' : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)]'} text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-xs">

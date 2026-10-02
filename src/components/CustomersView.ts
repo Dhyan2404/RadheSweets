@@ -353,10 +353,6 @@ export function renderCustomersView(state: any) {
   `;
 }
 
-// Deprecated no-op for any stale imports
-export function renderSettleKhataModal(_customer?: any) {
-  return '';
-}
 
 // Customer Profile & Detailed History Modal
 export function renderCustomerProfileModal(customer: any, orders: any[] = []) {

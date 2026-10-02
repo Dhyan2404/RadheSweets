@@ -985,7 +985,7 @@ export async function syncAllToFirebaseCloud(state) {
     });
   }
 
-  // 5. Customers & Khata into Firestore
+  // 5. Customers & Directory into Firestore
   if (state.customers && state.customers.length > 0) {
     state.customers.forEach(cust => {
       tasks.push(saveCustomerToCloud(cust, branchId));

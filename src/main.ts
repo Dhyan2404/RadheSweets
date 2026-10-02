@@ -61,7 +61,6 @@ import { renderOrderDetailsModal } from './components/OrderDetailsModal.ts';
 import { 
   renderCustomersView, 
   renderAddCustomerModal, 
-  renderSettleKhataModal, 
   renderCustomerProfileModal 
 } from './components/CustomersView.ts';
 import { 
@@ -138,15 +137,7 @@ const state = {
   ],
   receiptSettings: stored?.receiptSettings || stored?.shopInfo?.receiptSettings || { ...defaultReceiptSettings },
   showMobileCartSheet: false,
-  customers: (stored?.customers && stored.customers.length > 0)
-    ? stored.customers.map((c: any) => {
-        const match = initialData.customers.find((ic: any) => ic.id === c.id || ic.name === c.name);
-        if (match && (c.khataBalance === undefined || c.khataBalance === null || (c.khataBalance === 0 && match.khataBalance > 0 && (!c.khataHistory || c.khataHistory.length === 0)))) {
-          return { ...c, khataBalance: match.khataBalance, creditLimit: c.creditLimit || match.creditLimit };
-        }
-        return c;
-      })
-    : [...initialData.customers],
+  customers: (stored?.customers && stored.customers.length > 0) ? stored.customers : [...initialData.customers],
   orders: stored?.orders || [...initialData.orders],
   expenses: stored?.expenses || { ...initialData.expenses },
   analytics: stored?.analytics || { ...initialData.analytics },
@@ -198,7 +189,6 @@ const state = {
   paymentMethod: 'Cash',
   orderNote: '',
   cashTendered: 0,
-  khataOverrideApproved: false,
   boxTareGrams: 0,
 
   // Modals & Drawers
@@ -209,8 +199,6 @@ const state = {
   showThermalModal: false,
   showOrderDetailsModal: false,
   showAddCustomerModal: false,
-  showSettleKhataModal: false,
-  settlingCustomer: null,
   showCustomerProfileModal: false,
   profileCustomer: null,
   showAddProductModal: false,
@@ -337,7 +325,7 @@ function handleIncomingPeerSync(incomingData?: any) {
 
     let hasUpdate = false;
 
-    // 1. Synchronize customers & Khata dues (Checks actual content, not just length!)
+    // 1. Synchronize customers & loyalty directory (Checks actual content, not just length!)
     if (Array.isArray(fresh.customers) && fresh.customers.length > 0) {
       const isDiff = JSON.stringify(fresh.customers) !== JSON.stringify(state.customers);
       if (isDiff) {
@@ -599,8 +587,7 @@ export function setupBranchFirestoreListeners(branchId: string) {
   });
   activeSubscriptions.push(unsubKpis);
 
-  // 4. Live Branch Customers Listener (Branch-isolated patrons & Khata)
-  // 4. Live Branch Customers Listener (Branch-isolated patrons & Khata)
+  // 4. Live Branch Customers Listener (Branch-isolated patrons & loyalty directory)
   const unsubCusts = subscribeToBranchCustomers(branchId, (cloudCustomers: any[]) => {
     if (branchId !== state.currentBranchId) return;
     if (cloudCustomers && cloudCustomers.length > 0) {
@@ -840,8 +827,8 @@ function updatePageSeoMetadata(activeTab: string) {
       desc: 'Browse handcrafted Indian sweets made with pure desi ghee, Goan cashews, Kashmiri saffron, and Bilona butter. Kaju Katli, Peda, Gulab Jamun & Namkeen.'
     },
     customers: {
-      title: 'Customer Khata, Udhar Ledger & Loyalty Club | Radhe Sweets',
-      desc: 'Patron loyalty points, VIP tier benefits, and institutional Khata credit ledger. Settle partial or full payments with live balance recalculation.'
+      title: 'Customer Directory, ID & Loyalty Club | Radhe Sweets',
+      desc: 'Patron loyalty points, VIP tier benefits, and Customer ID tracking. Complete order history and patron profiles.'
     },
     orders: {
       title: 'Live Orders, Kitchen Prep & Bulk Delivery | Radhe Sweets',
@@ -1044,8 +1031,7 @@ function renderModals() {
     ${state.showSuccessModal ? renderOrderSuccessModal(state.lastPlacedOrder) : ''}
     ${state.showThermalModal ? renderThermalReceiptModal(state.activeOrder || state.lastPlacedOrder, state.shopInfo, state.receiptSettings) : ''}
     ${state.showOrderDetailsModal ? renderOrderDetailsModal(state.activeOrder) : ''}
-    ${state.showAddCustomerModal ? renderAddCustomerModal() : ''}
-    ${state.showSettleKhataModal ? renderSettleKhataModal(state.settlingCustomer) : ''}
+    ${state.showAddCustomerModal ? renderAddCustomerModal(state) : ''}
     ${state.showCustomerProfileModal ? renderCustomerProfileModal(state.profileCustomer, state.orders) : ''}
     ${state.showAddProductModal ? renderAddProductModal(state) : ''}
     ${state.showEditProductModal ? renderEditProductModal(state.editingSweet, state) : ''}
@@ -1432,7 +1418,7 @@ function attachEventListeners() {
         });
       });
 
-      // Customer result click: View Customer Profile & Khata
+      // Customer result click: View Customer Profile & History
       document.querySelectorAll('#search-modal-results-container [data-search-action="view-customer"]').forEach(el => {
         el.addEventListener('click', () => {
           const custId = el.getAttribute('data-customer-id');
@@ -2537,8 +2523,6 @@ function attachEventListeners() {
         if (confirmLabel) confirmLabel.textContent = `Instant Click Pay • ₹${totalPayable}`;
         const sliderLabel = document.querySelector('#checkout-slide-commit-label span span');
         if (sliderLabel) sliderLabel.textContent = `Slide to checkout • ₹${totalPayable}`;
-        const khataDetails = document.getElementById('checkout-khata-details');
-        if (khataDetails) khataDetails.textContent = `₹${totalPayable} will be added to ${state.selectedCustomer?.name || 'Customer'}'s Khata account.`;
       }
     });
   });
@@ -2577,8 +2561,6 @@ function attachEventListeners() {
         if (confirmLabel) confirmLabel.textContent = `Instant Click Pay • ₹${totalPayable}`;
         const sliderLabel = document.querySelector('#checkout-slide-commit-label span span');
         if (sliderLabel) sliderLabel.textContent = `Slide to checkout • ₹${totalPayable}`;
-        const khataDetails = document.getElementById('checkout-khata-details');
-        if (khataDetails) khataDetails.textContent = `₹${totalPayable} will be added to ${state.selectedCustomer?.name || 'Customer'}'s Khata account.`;
 
         saveState();
         syncActiveCheckoutDraft();
@@ -2657,17 +2639,6 @@ function attachEventListeners() {
     });
   });
 
-  // Khata Manager Override Checkbox
-  const khataOverrideBox = document.getElementById('khata-override-checkbox') as HTMLInputElement | null;
-  if (khataOverrideBox) {
-    khataOverrideBox.checked = !!state.khataOverrideApproved;
-    khataOverrideBox.addEventListener('change', (e) => {
-      state.khataOverrideApproved = (e.target as HTMLInputElement).checked;
-      playBeep('click');
-      renderApp();
-    });
-  }
-
   // Box Tare Deduction Buttons (Legal Metrology Compliance)
   document.querySelectorAll('[data-set-tare]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -2725,24 +2696,6 @@ function attachEventListeners() {
       const cartSubtotal = state.posCart.reduce((sum, item) => sum + (item.rate * item.qty), 0);
       const discountAmount = Math.round((cartSubtotal * (state.discountPercent || 0)) / 100);
       const totalPayable = Math.max(0, cartSubtotal - discountAmount);
-
-      // 1. Strict Khata Credit Limit Guard
-      if (state.paymentMethod === 'Khata') {
-        if (!state.selectedCustomer) {
-          showToast('Khata credit requires an attached customer! Please attach customer phone number.', 'warning');
-          playBeep('warning');
-          isProcessingOrder = false;
-          return;
-        }
-        const currentDue = state.selectedCustomer.khataBalance || 0;
-        const limit = state.selectedCustomer.creditLimit || 5000;
-        if ((currentDue + totalPayable) > limit && !state.khataOverrideApproved) {
-          showToast(`Khata credit limit (₹${limit}) exceeded! Check manager override to approve.`, 'error');
-          playBeep('warning');
-          isProcessingOrder = false;
-          return;
-        }
-      }
 
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -2839,15 +2792,12 @@ function attachEventListeners() {
       saveBranchKpisToCloud(state.currentBranchId, state.kpis);
       clearActiveCheckoutInCloud(state.currentBranchId);
 
-      // Update customer stats & Khata ledger in Firestore
+      // Update customer stats & loyalty points in Firestore
       if (state.selectedCustomer) {
         const cust = state.customers.find((c: any) => c.id === state.selectedCustomer.id);
         if (cust) {
           cust.totalOrders = (cust.totalOrders || 0) + 1;
           cust.totalSpent = (cust.totalSpent || 0) + totalPayable;
-          if (state.paymentMethod === 'Khata') {
-            cust.khataBalance = (cust.khataBalance || 0) + totalPayable;
-          }
           cust.loyaltyPoints = (cust.loyaltyPoints || 0) + Math.floor(totalPayable / 100);
           saveCustomerToCloud(cust, state.currentBranchId, state.customers);
         }
@@ -2863,7 +2813,6 @@ function attachEventListeners() {
       state.posCart = [];
       state.quickCart = [];
       state.cashTendered = 0;
-      state.khataOverrideApproved = false;
       state.showCheckoutModal = false;
       state.showSuccessModal = true;
       saveState();
@@ -3088,7 +3037,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     });
   });
 
-  // Void & Restore Order Engine (Restores Sweet Stock, Reverses Khata, Updates KPIs & Cloud)
+  // Void & Restore Order Engine (Restores Sweet Stock, Updates Customer Stats, KPIs & Cloud)
   const voidAndRestoreOrder = (orderId: string) => {
     const idx = state.orders.findIndex((o: any) => o.id === orderId);
     if (idx === -1) return;
@@ -3107,11 +3056,10 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       });
     }
 
-    // 2. Reverse Khata Balance if paid via Khata
-    if (order.paymentMethod === 'Khata' && order.customerId) {
+    // 2. Reverse Customer Stats if associated with a patron
+    if (order.customerId) {
       const cust = state.customers.find((c: any) => c.id === order.customerId);
       if (cust) {
-        cust.khataBalance = Math.max(0, (cust.khataBalance || 0) - (order.total || 0));
         cust.totalSpent = Math.max(0, (cust.totalSpent || 0) - (order.total || 0));
         cust.totalOrders = Math.max(0, (cust.totalOrders || 0) - 1);
         saveCustomerToCloud(cust, state.currentBranchId, state.customers);
@@ -3285,128 +3233,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     }
   });
 
-  // Settle Khata Modal Triggers (Settle some amount or all)
-  document.querySelectorAll('[data-settle-khata]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.getAttribute('data-settle-khata');
-      const cust = state.customers.find((c: any) => c.id === id);
-      if (cust) {
-        state.settlingCustomer = cust;
-        state.showSettleKhataModal = true;
-        state.showCustomerProfileModal = false;
-        renderApp();
-      }
-    });
-  });
-
-  document.getElementById('close-settle-khata-btn')?.addEventListener('click', () => {
-    state.showSettleKhataModal = false;
-    state.settlingCustomer = null;
-    renderApp();
-  });
-  document.getElementById('cancel-settle-khata-btn')?.addEventListener('click', () => {
-    state.showSettleKhataModal = false;
-    state.settlingCustomer = null;
-    renderApp();
-  });
-  document.getElementById('settle-khata-modal')?.addEventListener('click', (e: any) => {
-    if (e.target.id === 'settle-khata-modal') {
-      state.showSettleKhataModal = false;
-      state.settlingCustomer = null;
-      renderApp();
-    }
-  });
-
-  // Quick Amount Chips in Settle Khata Modal
-  document.querySelectorAll('[data-quick-settle-amt]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const amt = btn.getAttribute('data-quick-settle-amt');
-      const input = document.getElementById('settle-amount-input') as HTMLInputElement;
-      const form = document.getElementById('settle-khata-form');
-      if (input && amt && form) {
-        input.value = amt;
-        const currentDue = Number(form.getAttribute('data-current-due')) || 0;
-        const entered = Number(amt) || 0;
-        const rem = Math.max(0, currentDue - entered);
-        const remEl = document.getElementById('settle-remaining-calc');
-        if (remEl) remEl.textContent = `₹${rem.toLocaleString()}`;
-        const btnText = document.getElementById('settle-submit-btn-text');
-        if (btnText) btnText.textContent = `Confirm Settlement (₹${entered.toLocaleString()})`;
-      }
-    });
-  });
-
-  // Dynamic input calculation on Settle Amount Input
-  document.getElementById('settle-amount-input')?.addEventListener('input', (e: any) => {
-    const form = document.getElementById('settle-khata-form');
-    if (form) {
-      const currentDue = Number(form.getAttribute('data-current-due')) || 0;
-      const val = Number(e.target.value) || 0;
-      const rem = Math.max(0, currentDue - val);
-      const remEl = document.getElementById('settle-remaining-calc');
-      if (remEl) remEl.textContent = `₹${rem.toLocaleString()}`;
-      const btnText = document.getElementById('settle-submit-btn-text');
-      if (btnText) btnText.textContent = val > 0 ? `Confirm Settlement (₹${val.toLocaleString()})` : 'Confirm Settlement';
-    }
-  });
-
-  // Settle Khata Form Submission
-  document.getElementById('settle-khata-form')?.addEventListener('submit', (e: any) => {
-    e.preventDefault();
-    const form = e.target;
-    const customerId = form.getAttribute('data-customer-id');
-    const cust = state.customers.find((c: any) => c.id === customerId);
-    if (!cust) return;
-
-    const fd = new FormData(form);
-    const settleAmt = Number(fd.get('amount')) || 0;
-    const paymentMode = (fd.get('paymentMode') as string) || 'Cash';
-    const note = (fd.get('note') as string) || '';
-
-    if (settleAmt <= 0) {
-      alert('Please enter a valid settlement amount greater than 0');
-      return;
-    }
-
-    const prevBal = Number(cust.khataBalance) || 0;
-    const newBal = Math.max(0, prevBal - settleAmt);
-    cust.khataBalance = newBal;
-    cust.totalSpent = (Number(cust.totalSpent) || 0) + settleAmt;
-
-    // Record in customer settlement history ledger
-    if (!cust.khataHistory) cust.khataHistory = [];
-    const now = new Date();
-    const dateFormatted = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    cust.khataHistory.unshift({
-      id: `SETTLE-${Date.now()}`,
-      date: dateFormatted,
-      amount: settleAmt,
-      paymentMode: paymentMode,
-      note: note || 'Counter Payment Settlement',
-      previousBalance: prevBal,
-      remainingBalance: newBal
-    });
-
-    // Record in global shop audit logs
-    state.auditLogs.unshift({
-      time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      user: state.shopInfo?.owner || 'Admin',
-      action: 'Khata Payment Settled',
-      details: `Received ₹${settleAmt.toLocaleString()} from ${cust.name} via ${paymentMode}. Balance: ₹${newBal.toLocaleString()}`
-    });
-
-    // Save to Firebase Firestore cloud & local storage
-    saveCustomerToCloud(cust, state.currentBranchId, state.customers);
-    saveBranchSnapshot(state.currentBranchId);
-
-    state.showSettleKhataModal = false;
-    state.settlingCustomer = null;
-    saveState();
-    renderApp();
-    showToast(`✓ Received ₹${settleAmt.toLocaleString()} payment from ${cust.name}! Remaining Khata: ₹${newBal.toLocaleString()}`, 'success');
-  });
-
   // Add Customer Modal
   document.getElementById('open-add-customer-modal-btn')?.addEventListener('click', () => {
     state.showAddCustomerModal = true;
@@ -3431,26 +3257,34 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   document.getElementById('add-customer-form')?.addEventListener('submit', (e: any) => {
     e.preventDefault();
     const fd = new FormData(e.target);
+    const customIdRaw = (fd.get('customId') as string || '').trim().replace(/^#/, '');
+    const assignedId = customIdRaw ? customIdRaw : `CUST-${1000 + state.customers.length + 1}`;
+    const rawPhone = (fd.get('phone') as string || '').replace(/\D/g, '');
+    const formattedPhone = rawPhone.length === 10 ? `+91 ${rawPhone.slice(0, 5)} ${rawPhone.slice(5)}` : `+91 ${fd.get('phone')}`;
+    const loyaltyPts = Number(fd.get('loyaltyPoints')) >= 0 ? Number(fd.get('loyaltyPoints')) : 50;
+
     const newCust = {
-      id: `cust-${Date.now()}`,
-      name: fd.get('name') as string,
-      phone: `+91 ${fd.get('phone')}`,
-      email: (fd.get('email') as string) || '',
-      address: (fd.get('address') as string) || 'Ahmedabad, Gujarat',
+      id: assignedId,
+      name: (fd.get('name') as string || 'New Customer').trim(),
+      phone: formattedPhone,
+      email: (fd.get('email') as string || '').trim(),
+      address: (fd.get('address') as string || 'Ahmedabad, Gujarat').trim(),
       type: (fd.get('tier') as string) || 'Regular',
       tier: (fd.get('tier') as string) || 'Regular',
-      khataBalance: Number(fd.get('khataBalance')) || 0,
-      creditLimit: Number(fd.get('creditLimit')) || 5000,
+      loyaltyPoints: loyaltyPts,
       totalOrders: 0,
       totalSpent: 0,
-      loyaltyPoints: 50,
-      notes: (fd.get('notes') as string) || ''
+      notes: (fd.get('notes') as string || '').trim()
     };
+
     state.customers.unshift(newCust);
-    state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
-    state.kpis.customers.formatted = String(state.kpis.customers.value);
+    if (state.kpis && state.kpis.customers) {
+      state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+      state.kpis.customers.formatted = String(state.kpis.customers.value);
+    }
     saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
     saveBranchSnapshot(state.currentBranchId);
+    showToast(`✓ Registered patron ${newCust.name} (ID: #${newCust.id.toUpperCase()})`, 'success');
     completeCustomerSelection(newCust);
   });
 
@@ -4846,7 +4680,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const customerName = typedName || `Patron (${formattedPhone})`;
 
     const newCustomer = {
-      id: `cust-${Date.now()}`,
+      id: `CUST-${1000 + state.customers.length + 1}`,
       name: customerName,
       phone: formattedPhone,
       email: '',
@@ -4854,8 +4688,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       type: 'Regular',
       tier: 'Regular',
       loyaltyPoints: 50, // Welcome points!
-      khataBalance: 0,
-      creditLimit: 5000,
       totalOrders: 1,
       totalSpent: 0,
       notes: 'Registered via Counter Phone Dialer'
@@ -5461,7 +5293,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
           const typedName = nameInput?.value?.trim();
           const customerName = typedName || `Patron (${phone})`;
           const newCustomer = {
-            id: `cust-${Date.now()}`,
+            id: `CUST-${1000 + state.customers.length + 1}`,
             name: customerName,
             phone: phone,
             email: '',
@@ -5469,8 +5301,6 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
             type: 'Regular',
             tier: 'Regular',
             loyaltyPoints: 50,
-            khataBalance: 0,
-            creditLimit: 5000,
             totalOrders: 1,
             totalSpent: 0,
             notes: 'Registered via Phone Dialer'
@@ -5534,7 +5364,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
         document.getElementById('dialer-attach-new-instant-btn')?.addEventListener('click', () => {
           const phone = formatDialerPhone(rawDigits);
           const newCust = {
-            id: `cust-${Date.now()}`,
+            id: `CUST-${1000 + state.customers.length + 1}`,
             name: `Patron (${phone})`,
             phone: phone,
             email: '',
@@ -5542,8 +5372,6 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
             type: 'Regular',
             tier: 'Regular',
             loyaltyPoints: 50,
-            khataBalance: 0,
-            creditLimit: 5000,
             totalOrders: 1,
             totalSpent: 0,
             notes: 'Registered via Phone Dialer'
@@ -5610,7 +5438,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
         completeCustomerSelection(existing);
       } else {
         const newCust = {
-          id: `cust-${Date.now()}`,
+          id: `CUST-${1000 + state.customers.length + 1}`,
           name: `Patron (${phone})`,
           phone: phone,
           email: '',
@@ -5618,8 +5446,6 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
           type: 'Regular',
           tier: 'Regular',
           loyaltyPoints: 50,
-          khataBalance: 0,
-          creditLimit: 5000,
           totalOrders: 1,
           totalSpent: 0,
           notes: 'Registered via Phone Dialer'

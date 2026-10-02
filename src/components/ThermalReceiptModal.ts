@@ -189,7 +189,7 @@ export function renderReceiptSlipHtml(order: any, shopInfo: any, settingsInput?:
         ` : ''}
         ${(cfg.showCustomerName || cfg.showPaymentMode) ? `
           <div class="flex justify-between">
-            ${cfg.showCustomerName ? `<span>Customer: ${order.customerName || 'Walk-in Counter'}</span>` : '<span></span>'}
+            ${cfg.showCustomerName ? `<span>Customer: ${order.customerName || 'Walk-in Counter'}${order.customerId ? ` (#${order.customerId.toUpperCase()})` : ''}</span>` : '<span></span>'}
             ${cfg.showPaymentMode ? `<span>Mode: ${order.paymentMethod || 'Cash'}</span>` : ''}
           </div>
         ` : ''}

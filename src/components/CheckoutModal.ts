@@ -1,5 +1,5 @@
 // Checkout Modal Component
-// Streamlined Counter Billing with Cash, UPI, Card & Khata
+// Streamlined Counter Billing with Cash, UPI & Card
 import { renderSlideCommit } from './SlideCommit.ts';
 
 export function renderCheckoutModal(state: any) {
@@ -213,7 +213,7 @@ export function renderCheckoutModal(state: any) {
           </div>
         </div>
 
-        <!-- Payment Mode Selection (Cash, UPI, Card, Khata) -->
+        <!-- Payment Mode Selection (Cash, UPI, Card) -->
         <div>
           <div class="flex items-center justify-between mb-2">
             <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Payment Mode</h4>
