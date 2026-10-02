@@ -110,7 +110,6 @@ import {
   renderAddBranchModal, 
   renderEditBranchModal 
 } from './components/BranchModals.ts';
-import { renderInsidersView } from './components/InsidersView.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 
@@ -177,7 +176,6 @@ const state = {
 
   // Navigation & View Mode
   activeTab: (stored?.activeTab && stored.activeTab !== 'recipes' && stored.activeTab !== 'storefront') ? stored.activeTab : 'pos',
-  insidersLang: (stored?.insidersLang || (typeof localStorage !== 'undefined' && localStorage.getItem('radhe_insiders_lang')) || 'en') as 'en' | 'gu',
   deviceMode: stored?.deviceMode || 'desktop', // 'desktop' or 'mobile'
   currentTheme: stored?.currentTheme || 'warm', // 'warm' or 'ice'
   isDarkMode: stored?.isDarkMode || false,
@@ -874,10 +872,6 @@ function updatePageSeoMetadata(activeTab: string) {
     settings: {
       title: 'Store Configuration & Multi-Branch Management | Radhe Sweets',
       desc: 'Manage SG Highway and Satellite sweet branch profiles, thermal printer configurations, taxes and system preferences.'
-    },
-    insiders: {
-      title: 'Confidential ERP & POS Blueprint | Radhe Sweets Insiders',
-      desc: 'Architecture blueprint, complete module breakdown, daily operational flows and technical specs for Radhe Sweets confectionery ERP.'
     }
   };
 
@@ -1049,8 +1043,6 @@ function renderTabContent() {
       return renderStaffView(state);
     case 'settings':
       return renderSettingsView(state);
-    case 'insiders':
-      return renderInsidersView(state);
     default:
       return renderDashboardView(state);
   }
@@ -1896,22 +1888,6 @@ function attachEventListeners() {
       if (tabId) {
         state.activeTab = tabId;
         state.showMobileDrawer = false;
-        saveState();
-        renderApp();
-      }
-    });
-  });
-
-  // Insiders View Language Switcher (EN <-> GUJ)
-  document.querySelectorAll('[data-action="switch-insiders-lang"]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const targetLang = btn.getAttribute('data-lang') as 'en' | 'gu';
-      if (targetLang) {
-        state.insidersLang = targetLang;
-        try {
-          localStorage.setItem('radhe_insiders_lang', targetLang);
-        } catch (_) {}
         saveState();
         renderApp();
       }
@@ -6053,11 +6029,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 // Initialize with Google Deep Linking & Cloud Sync
 function initApp() {
   const initialHash = window.location.hash.replace('#/', '').replace('#', '');
-  const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '');
-
-  if (pathname === 'insiders' || initialHash === 'insiders') {
-    state.activeTab = 'insiders';
-  } else if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings', 'insiders'].includes(initialHash)) {
+  if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(initialHash)) {
     state.activeTab = initialHash;
   }
   renderApp();
@@ -6117,7 +6089,7 @@ if (document.readyState === 'loading') {
 // Google Sitemap Deep Linking - Listen for browser URL hash changes
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#/', '').replace('#', '');
-  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings', 'insiders'].includes(hash) && state.activeTab !== hash) {
+  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(hash) && state.activeTab !== hash) {
     state.activeTab = hash;
     saveState();
     renderApp();
