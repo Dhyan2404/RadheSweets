@@ -70,6 +70,22 @@ export function renderSidebar(currentTab) {
           </div>
         </div>
 
+        <!-- Spotlight Search Trigger (Ctrl+K) -->
+        <button 
+          id="desktop-search-trigger"
+          type="button"
+          class="w-full flex items-center justify-between px-3.5 py-2.5 bg-stone-50 hover:bg-stone-100/90 border border-stone-200/80 rounded-xl text-stone-500 hover:text-stone-800 text-xs font-medium cursor-pointer transition-all active:scale-98 shadow-2xs"
+          title="Search sweets, customers, orders (Ctrl+K)"
+        >
+          <div class="flex items-center space-x-2.5">
+            <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span>Search (Ctrl+K)</span>
+          </div>
+          <kbd class="text-[10px] font-mono font-bold text-stone-400 bg-white border border-stone-200 rounded px-1.5 py-0.5 shadow-2xs">⌘K</kbd>
+        </button>
+
         <!-- Navigation Links -->
         <nav class="space-y-1" data-purpose="main-nav">
           ${navItems.map(item => {

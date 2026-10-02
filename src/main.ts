@@ -834,7 +834,6 @@ export function renderApp() {
   const mainTabContent = document.getElementById('main-tab-content');
   const modalsRoot = document.getElementById('modals-root');
   const desktopSidebarContainer = document.getElementById('desktop-sidebar-container');
-  const topbarContainer = document.getElementById('topbar-container');
   const mobileNavContainer = document.getElementById('mobile-nav-container');
 
   const isInitialMount = !mainTabContent || !mainScrollContainer || !modalsRoot;
@@ -852,11 +851,6 @@ export function renderApp() {
 
         <!-- Main Content Area with Persistent Scroll Container -->
         <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto w-full max-w-[100vw] overflow-x-hidden">
-          <!-- Top Navigation Header -->
-          <div id="topbar-container" class="sticky top-0 z-30">
-            ${renderTopBar(state)}
-          </div>
-
           <!-- Active Tab Body -->
           <main id="main-tab-content" class="flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8">
             ${renderTabContent()}
@@ -892,7 +886,6 @@ export function renderApp() {
       // Tab changed: Update navigation, run entry animation, and scroll to top
       if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
       if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab, state);
-      if (topbarContainer) topbarContainer.innerHTML = renderTopBar(state);
 
       mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter";
       mainTabContent.innerHTML = renderTabContent();
@@ -902,7 +895,6 @@ export function renderApp() {
     } else {
       // In-page click/action: DO NOT play animate-page-enter (prevents blank/flicker flash!)
       if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
-      if (topbarContainer) topbarContainer.innerHTML = renderTopBar(state);
       if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab, state);
 
       mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8";
