@@ -229,17 +229,11 @@ export function renderPosView(state: any) {
                   <p class="text-xs font-bold text-[var(--text-main)]">
                     ${selectedCustomer ? 'Attached Customer' : 'Walk-in Counter Customer (Cash / OTC)'}
                   </p>
-                  ${selectedCustomer?.loyaltyPoints ? `
-                    <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.2 rounded-full">
-                      ⭐ ${selectedCustomer.loyaltyPoints} Pts
-                    </span>
-                  ` : ''}
                 </div>
                 ${selectedCustomer ? `
                   <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                     <span class="text-xs font-extrabold text-[var(--brand-primary)]">${selectedCustomer.name}</span>
                     <span class="text-[11px] font-mono text-[var(--text-muted)] font-semibold">${selectedCustomer.phone}</span>
-                    <span class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.2 rounded">${selectedCustomer.tier || 'VIP'}</span>
                     ${selectedCustomer.id ? `
                       <span class="text-[10px] font-black font-mono text-stone-800 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
                         #${selectedCustomer.id.toUpperCase()}
@@ -247,7 +241,7 @@ export function renderPosView(state: any) {
                     ` : ''}
                   </div>
                 ` : `
-                  <p class="text-[11px] text-[var(--text-muted)] font-medium">Standard OTC sales. Dial customer phone or search to attach Customer ID &amp; earn rewards</p>
+                  <p class="text-[11px] text-[var(--text-muted)] font-medium">Standard OTC sales. Dial customer phone or search to attach unique Customer ID</p>
                 `}
               </div>
             </div>

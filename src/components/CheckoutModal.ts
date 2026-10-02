@@ -32,7 +32,7 @@ export function renderCheckoutModal(state: any) {
           </span>
         </div>
 
-        <!-- Customer Profile & Loyalty Card -->
+        <!-- Customer Profile Section -->
         <div id="checkout-customer-section" class="bg-[var(--bg-subtle)] p-3.5 rounded-xl border border-[var(--border-color)] flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-full ${selectedCustomer ? 'bg-[var(--brand-primary)]' : 'bg-stone-600'} text-white font-bold text-xs flex items-center justify-center shadow-xs">
@@ -41,12 +41,7 @@ export function renderCheckoutModal(state: any) {
             <div>
               <div class="flex items-center space-x-2">
                 <span class="font-bold text-xs sm:text-sm text-[var(--text-main)]">${selectedCustomer?.name || 'Walk-in Counter Customer'}</span>
-                <span class="text-[9px] ${selectedCustomer ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-800'} font-bold px-1.5 py-0.2 rounded">${selectedCustomer?.tier || 'Cash OTC'}</span>
-                ${selectedCustomer?.loyaltyPoints ? `
-                  <span class="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded border border-amber-300">
-                    ⭐ ${selectedCustomer.loyaltyPoints} Pts
-                  </span>
-                ` : ''}
+                <span class="text-[9px] ${selectedCustomer ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-emerald-100 text-emerald-800'} font-bold px-1.5 py-0.2 rounded">${selectedCustomer ? 'Registered Patron' : 'Cash OTC'}</span>
               </div>
               <p class="text-[11px] text-[var(--text-muted)]">${selectedCustomer?.phone || 'OTC Instant Counter Delivery'}</p>
               ${selectedCustomer?.id ? `

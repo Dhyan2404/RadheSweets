@@ -112,13 +112,6 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-black font-mono bg-stone-100 text-stone-800 border border-stone-200">
                     #${(c.id || 'CUST').toUpperCase()}
                   </span>
-                  <span class="text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
-                    c.tier === 'VIP' ? 'bg-amber-500 text-white shadow-2xs' : 
-                    c.tier === 'Corporate' ? 'bg-indigo-600 text-white shadow-2xs' : 
-                    'bg-stone-200 text-stone-700'
-                  }">
-                    ${c.tier || 'Regular'}
-                  </span>
                   ${isExact ? `
                     <span class="text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-600 text-white shadow-2xs">
                       ★ Matched
@@ -127,9 +120,9 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
                 </div>
                 <p class="text-xs sm:text-sm font-mono font-bold text-[var(--text-muted)] mt-0.5">${c.phone}</p>
                 <div class="flex items-center gap-2 mt-1 text-xs text-[var(--text-light)] flex-wrap">
-                  <span class="font-bold text-amber-700">⭐ ${c.loyaltyPoints || 0} pts</span>
+                  <span class="font-bold text-stone-800">Spent: ₹${(c.totalSpent || 0).toLocaleString()}</span>
                   <span>•</span>
-                  <span>Spent: ₹${c.totalSpent || 0}</span>
+                  <span>${c.totalOrders || 1} orders</span>
                 </div>
               </div>
             </div>

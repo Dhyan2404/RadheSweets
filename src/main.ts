@@ -64,6 +64,10 @@ import {
   renderCustomerProfileModal,
   renderEditCustomerModal 
 } from './components/CustomersView.ts';
+import {
+  renderAddAdvanceOrderModal,
+  renderEditAdvanceOrderModal
+} from './components/AdvanceOrderModals.ts';
 import { 
   renderProductsView, 
   renderAddProductModal, 
@@ -204,6 +208,9 @@ const state = {
   profileCustomer: null,
   showEditCustomerModal: false,
   editingCustomer: null as any,
+  showAddAdvanceModal: false,
+  showEditAdvanceModal: false,
+  editingAdvanceOrder: null as any,
   customersSortBy: stored?.customersSortBy || 'most-spent',
   expenseSavedSuccess: false,
   lastSavedExpense: null as any,
@@ -1040,6 +1047,8 @@ function renderModals() {
     ${state.showAddCustomerModal ? renderAddCustomerModal(state) : ''}
     ${state.showCustomerProfileModal ? renderCustomerProfileModal(state.profileCustomer, state.orders) : ''}
     ${state.showEditCustomerModal && state.editingCustomer ? renderEditCustomerModal(state.editingCustomer) : ''}
+    ${state.showAddAdvanceModal ? renderAddAdvanceOrderModal(state) : ''}
+    ${state.showEditAdvanceModal && state.editingAdvanceOrder ? renderEditAdvanceOrderModal(state.editingAdvanceOrder) : ''}
     ${state.showAddProductModal ? renderAddProductModal(state) : ''}
     ${state.showEditProductModal ? renderEditProductModal(state.editingSweet, state) : ''}
     ${state.showManageCategoriesModal ? renderManageCategoriesModal(state) : ''}

@@ -763,30 +763,7 @@ export function renderEditCustomerModal(customer: any) {
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block font-bold text-[#2A1F1D] mb-1.5">Customer Tier</label>
-              <select 
-                name="tier" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
-              >
-                <option value="Regular" ${customer.tier === 'Regular' ? 'selected' : ''}>Regular</option>
-                <option value="VIP" ${customer.tier === 'VIP' ? 'selected' : ''}>VIP Gold Tier</option>
-                <option value="Corporate" ${customer.tier === 'Corporate' ? 'selected' : ''}>Corporate / Institutional</option>
-              </select>
-            </div>
 
-            <div>
-              <label class="block font-bold text-[#2A1F1D] mb-1.5">Loyalty Points</label>
-              <input 
-                type="number" 
-                name="loyaltyPoints" 
-                value="${customer.loyaltyPoints || 0}" 
-                min="0"
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
-              />
-            </div>
-          </div>
 
           <div>
             <label class="block font-bold text-[#2A1F1D] mb-1.5">Email Address</label>
@@ -917,30 +894,7 @@ export function renderAddCustomerModal(state?: any) {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block font-bold text-[#2A1F1D] mb-1.5">Customer Tier</label>
-              <select 
-                name="tier" 
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
-              >
-                <option value="Regular">Regular</option>
-                <option value="VIP">VIP Gold Tier</option>
-                <option value="Corporate">Corporate / Institutional</option>
-              </select>
-            </div>
 
-            <div>
-              <label class="block font-bold text-[#2A1F1D] mb-1.5">Welcome Loyalty Points</label>
-              <input 
-                type="number" 
-                name="loyaltyPoints" 
-                value="50" 
-                min="0"
-                class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-2xl text-xs font-bold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
-              />
-            </div>
-          </div>
 
           <div>
             <label class="block font-bold text-[#2A1F1D] mb-1.5">Email Address (Optional)</label>

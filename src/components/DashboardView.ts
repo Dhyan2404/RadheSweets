@@ -680,7 +680,7 @@ export function renderDashboardView(state: any) {
                   <div>
                     <div class="flex items-center space-x-1.5">
                       <span class="font-semibold text-xs text-[#2A1F1D]">${state.selectedCustomer ? state.selectedCustomer.name : 'Walk-in Customer'}</span>
-                      <span class="text-[9px] ${state.selectedCustomer ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-800'} font-bold px-1.5 py-0.2 rounded">${state.selectedCustomer ? (state.selectedCustomer.tier || 'VIP') : 'OTC Sale'}</span>
+                      <span class="text-[9px] ${state.selectedCustomer ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-emerald-100 text-emerald-800'} font-bold px-1.5 py-0.2 rounded">${state.selectedCustomer ? 'Registered Patron' : 'OTC Sale'}</span>
                     </div>
                     <p class="text-[11px] text-stone-500">${state.selectedCustomer ? state.selectedCustomer.phone : 'No phone attached'}</p>
                   </div>

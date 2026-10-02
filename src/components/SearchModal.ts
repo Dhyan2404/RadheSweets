@@ -25,8 +25,7 @@ export function renderSearchResultsBody(state: any): string {
     ? customers.filter((c: any) => 
         (c.name && c.name.toLowerCase().includes(query)) ||
         (c.phone && c.phone.includes(query)) ||
-        (c.id && c.id.toLowerCase().includes(query)) ||
-        (c.tier && c.tier.toLowerCase().includes(query))
+        (c.id && c.id.toLowerCase().includes(query))
       )
     : customers.slice(0, 5);
 
@@ -43,8 +42,8 @@ export function renderSearchResultsBody(state: any): string {
   const allActions = [
     { id: 'act-pos', title: 'Open POS Counter / New Bill', desc: 'Create quick walk-in or express counter sale', badge: 'POS Counter', icon: 'cart', tab: 'pos' },
     { id: 'act-add-sweet', title: 'Add New Confectionery Sweet', desc: 'Register fresh batch, pricing, and stock', badge: 'Inventory', icon: 'plus', action: 'add-product' },
-    { id: 'act-add-customer', title: 'Register New Customer Account', desc: 'Create customer profile & loyalty account with ID', badge: 'Customers', icon: 'user-plus', action: 'add-customer' },
-    { id: 'act-cust-dir', title: 'Customer Directory & VIP Tiers', desc: 'Manage patron IDs, loyalty points and purchase history', badge: 'Customers', icon: 'user-check', tab: 'customers' },
+    { id: 'act-add-customer', title: 'Register New Customer Account', desc: 'Create customer profile with unique Customer ID', badge: 'Customers', icon: 'user-plus', action: 'add-customer' },
+    { id: 'act-cust-dir', title: 'Customer Directory & Advance Orders', desc: 'Manage patron IDs, bulk bookings and purchase history', badge: 'Customers', icon: 'user-check', tab: 'customers' },
     { id: 'act-expense', title: 'Record Store Expense', desc: 'Log dairy milk, pure ghee, sugar or payroll cost', badge: 'Expenses', icon: 'receipt', action: 'add-expense' },
     { id: 'act-analytics', title: 'View Analytics & Profit Reports', desc: 'Check gross profit margins, shift reports, and trajectories', badge: 'Reports', icon: 'chart', tab: 'analytics' },
     { id: 'act-seo', title: 'Google SEO & Sitemap Status', desc: 'Audit sitemap.xml, robots.txt, and JSON-LD schema', badge: 'SEO Hub', icon: 'search', action: 'open-seo' },
@@ -175,14 +174,13 @@ export function renderSearchResultsBody(state: any): string {
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <p class="font-bold text-xs sm:text-sm text-[#2A1F1D] truncate group-hover:text-amber-800 transition-colors">${cust.name}</p>
                     <span class="font-mono text-[9px] font-extrabold text-amber-900 bg-amber-100/90 px-1.5 py-0.5 rounded-md border border-amber-200/70">#${(cust.id || 'CUST').toUpperCase()}</span>
-                    ${cust.tier === 'VIP' ? '<span class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded shadow-2xs">VIP</span>' : ''}
                   </div>
                   <p class="text-[11px] text-stone-400 mt-0.5 truncate">${cust.phone || 'No phone'}</p>
                 </div>
               </div>
               <div class="text-right shrink-0 ml-2">
-                <p class="text-xs font-bold text-emerald-700">
-                  ⭐ ${cust.loyaltyPoints || 0} pts
+                <p class="text-xs font-bold text-[#1E7E34]">
+                  ₹${(cust.totalSpent || 0).toLocaleString()}
                 </p>
                 <span class="text-[10px] text-stone-400 font-medium">${cust.ordersCount || cust.visits || cust.totalOrders || 0} orders</span>
               </div>
