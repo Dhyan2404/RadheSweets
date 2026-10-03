@@ -391,13 +391,6 @@ export function renderProductsView(state: any) {
                       >
                         +10
                       </button>
-                      <button 
-                        data-edit-product="${item.id}"
-                        class="px-2.5 py-1 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#7C7267] hover:text-[#2A1F1D] border border-[#EFE7DE] rounded-xl text-xs transition-all"
-                        title="Edit Details"
-                      >
-                        ✏️
-                      </button>
                     </div>
 
                     <button 
@@ -569,16 +562,6 @@ export function renderProductsView(state: any) {
                           >
                             +10
                           </button>
-
-                          <!-- Edit Product -->
-                          <button 
-                            data-edit-product="${item.id}"
-                            class="px-2.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F0ECE4] text-[#7C7267] hover:text-[#2A1F1D] border border-[#EFE7DE] rounded-xl text-xs font-semibold transition-all shadow-2xs"
-                            title="Edit Product Details & Thresholds"
-                          >
-                            ✏️
-                          </button>
-
                           <!-- Sell in POS -->
                           <button 
                             data-add-to-pos="${item.id}"
@@ -597,6 +580,120 @@ export function renderProductsView(state: any) {
             </div>
           </section>
         `}
+    </div>
+  `;
+}
+
+// Visual Photo Picker Component: 100 Pre-Packaged Sweet Photos Gallery + Upload + URL
+function renderSweetPhotoCustomizer(prefix: 'add' | 'edit', initialImg: string = '/assets/sweets/sw-1.png', sweetName: string = 'Sweet') {
+  const sweetPhotos = Array.from({ length: 100 }, (_, i) => ({
+    id: i + 1,
+    url: `/assets/sweets/sw-${i + 1}.png`
+  }));
+
+  const isCollectionPhoto = initialImg.includes('/assets/sweets/sw-');
+  const collectionNumber = isCollectionPhoto ? initialImg.replace(/.*sw-(\d+)\.png.*/, '$1') : '1';
+
+  return `
+    <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-3" id="${prefix}-sweet-photo-section">
+      <div class="flex items-center justify-between">
+        <label class="block font-bold text-stone-800 text-xs flex items-center gap-1.5">
+          <span>🍰</span>
+          <span>Mithai Photo / Collection Selection</span>
+        </label>
+        <span id="${prefix}-sweet-selected-label" class="text-[10px] text-amber-900 bg-amber-100 font-bold px-2 py-0.5 rounded-full border border-amber-300">
+          ${isCollectionPhoto ? `Collection Photo #${collectionNumber}` : 'Custom Image'}
+        </span>
+      </div>
+
+      <!-- Preview & Primary Controls -->
+      <div class="flex items-start gap-3">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-dashed border-amber-300 bg-white shrink-0 relative flex items-center justify-center shadow-2xs group">
+          <img 
+            id="${prefix}-sweet-preview-img" 
+            src="${initialImg}" 
+            alt="${sweetName}" 
+            class="w-full h-full object-cover transition-transform group-hover:scale-105"
+            onerror="this.src='/assets/sweets/sw-1.png'"
+          />
+        </div>
+
+        <div class="flex-1 space-y-2 min-w-0">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button 
+              type="button" 
+              id="${prefix}-toggle-collection-btn" 
+              class="px-3 py-1.5 bg-[#C86D3B] hover:bg-[#b05a2b] text-white rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs flex items-center gap-1"
+            >
+              <span>🖼️</span>
+              <span>100 Sweets Gallery</span>
+            </button>
+
+            <label class="px-2.5 py-1.5 bg-white hover:bg-amber-50 text-[#C86D3B] border border-amber-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs flex items-center gap-1">
+              <span>📷</span>
+              <span>Upload Photo</span>
+              <input type="file" id="${prefix}-sweet-file-input" accept="image/*" class="hidden" />
+            </label>
+
+            <button 
+              type="button" 
+              id="${prefix}-sweet-clear-img-btn" 
+              class="px-2 py-1.5 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-xl text-[11px] font-semibold transition-all cursor-pointer"
+            >
+              Reset
+            </button>
+          </div>
+
+          <!-- Hidden or Controlled URL input -->
+          <div>
+            <input 
+              type="text" 
+              name="image" 
+              id="${prefix}-sweet-image-input" 
+              placeholder="Or paste direct image URL (https://...)" 
+              value="${initialImg}" 
+              class="w-full px-3 py-1.5 bg-white border border-[#EFE7DE] rounded-xl text-xs font-mono text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- 100 Sweet Photos Gallery Collection Accordion/Picker -->
+      <div id="${prefix}-collection-gallery-panel" class="border border-stone-200 bg-white rounded-2xl p-3 space-y-2 shadow-2xs">
+        <div class="flex flex-wrap items-center justify-between gap-1.5 border-b border-stone-100 pb-2">
+          <span class="text-[11px] font-bold text-stone-700 flex items-center gap-1">
+            <span>✨</span>
+            <span>Select Sweet Photo:</span>
+          </span>
+          <div class="flex flex-wrap items-center gap-1" id="${prefix}-collection-page-tabs">
+            <button type="button" data-gallery-tab="all" data-prefix="${prefix}" class="gallery-tab-btn active px-2 py-0.5 rounded-lg text-[10px] font-bold bg-[#C86D3B] text-white cursor-pointer">All (100)</button>
+            <button type="button" data-gallery-tab="1-25" data-prefix="${prefix}" class="gallery-tab-btn px-2 py-0.5 rounded-lg text-[10px] font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer">1 - 25</button>
+            <button type="button" data-gallery-tab="26-50" data-prefix="${prefix}" class="gallery-tab-btn px-2 py-0.5 rounded-lg text-[10px] font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer">26 - 50</button>
+            <button type="button" data-gallery-tab="51-75" data-prefix="${prefix}" class="gallery-tab-btn px-2 py-0.5 rounded-lg text-[10px] font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer">51 - 75</button>
+            <button type="button" data-gallery-tab="76-100" data-prefix="${prefix}" class="gallery-tab-btn px-2 py-0.5 rounded-lg text-[10px] font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer">76 - 100</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-44 overflow-y-auto p-1 rounded-xl bg-stone-50/60 border border-stone-100" id="${prefix}-collection-grid">
+          ${sweetPhotos.map(p => {
+            const isSel = initialImg.includes(`sw-${p.id}.png`);
+            return `
+              <button 
+                type="button" 
+                data-pick-sweet-photo="${p.url}" 
+                data-pick-id="${p.id}"
+                data-target-prefix="${prefix}"
+                class="sweet-picker-item group relative rounded-xl overflow-hidden aspect-square border-2 ${isSel ? 'border-[#C86D3B] ring-2 ring-[#C86D3B]/40 shadow-xs' : 'border-stone-200 hover:border-amber-400'} bg-white transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0"
+                title="Select Sweet Photo #${p.id}"
+              >
+                <img src="${p.url}" alt="#${p.id}" class="w-full h-full object-cover" loading="lazy" />
+                <span class="absolute bottom-0 inset-x-0 bg-stone-900/70 text-[8px] font-mono text-white text-center py-0.5 leading-none">#${p.id}</span>
+                ${isSel ? '<span class="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#C86D3B] text-white flex items-center justify-center text-[8px] font-black">✓</span>' : ''}
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
     </div>
   `;
 }
@@ -639,46 +736,8 @@ export function renderAddProductModal(state?: any) {
             />
           </div>
 
-          <!-- Photo Customizer (Upload or URL) -->
-          <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
-            <div class="flex items-center justify-between">
-              <label class="block font-bold text-stone-800 text-xs">Mithai Photo / Picture</label>
-              <span class="text-[10px] text-stone-500 font-semibold">Upload Photo or Paste Image URL</span>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-dashed border-amber-300 bg-white shrink-0 relative flex items-center justify-center shadow-2xs">
-                <img 
-                  id="add-sweet-preview-img" 
-                  src="/assets/sweets/sw-1.png" 
-                  alt="Preview" 
-                  class="w-full h-full object-cover"
-                />
-              </div>
-
-              <div class="flex-1 space-y-2">
-                <div class="flex flex-wrap items-center gap-2">
-                  <label class="px-3 py-1.5 bg-white hover:bg-amber-50 text-[#C86D3B] border border-amber-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs flex items-center gap-1.5">
-                    <span>📷</span>
-                    <span>Upload Device Photo</span>
-                    <input type="file" id="add-sweet-file-input" accept="image/*" class="hidden" />
-                  </label>
-                  <button type="button" id="add-sweet-clear-img-btn" class="px-2.5 py-1.5 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-xl text-[11px] font-semibold transition-all cursor-pointer">
-                    Reset
-                  </button>
-                </div>
-
-                <input 
-                  type="text" 
-                  name="image" 
-                  id="add-sweet-image-input" 
-                  placeholder="Or paste direct image URL (https://...)" 
-                  value="/assets/sweets/sw-1.png"
-                  class="w-full px-3 py-1.5 bg-white border border-[#EFE7DE] rounded-xl text-xs font-mono text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
-                />
-              </div>
-            </div>
-          </div>
+          <!-- Photo Customizer with 100 Sweet Photos Collection Picker -->
+          ${renderSweetPhotoCustomizer('add', '/assets/sweets/sw-1.png', 'New Sweet')}
 
           <!-- Category & Unit -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -855,47 +914,8 @@ export function renderEditProductModal(sweet: any, state?: any) {
             />
           </div>
 
-          <!-- Photo Customizer (Upload or URL) -->
-          <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
-            <div class="flex items-center justify-between">
-              <label class="block font-bold text-stone-800 text-xs">Mithai Photo / Picture</label>
-              <span class="text-[10px] text-stone-500 font-semibold">Upload Photo or Paste Image URL</span>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-dashed border-amber-300 bg-white shrink-0 relative flex items-center justify-center shadow-2xs">
-                <img 
-                  id="edit-sweet-preview-img" 
-                  src="${sweetImg}" 
-                  alt="${sweet.name}" 
-                  class="w-full h-full object-cover"
-                  onerror="this.src='/assets/sweets/sw-1.png'"
-                />
-              </div>
-
-              <div class="flex-1 space-y-2">
-                <div class="flex flex-wrap items-center gap-2">
-                  <label class="px-3 py-1.5 bg-white hover:bg-amber-50 text-[#C86D3B] border border-amber-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs flex items-center gap-1.5">
-                    <span>📷</span>
-                    <span>Upload New Photo</span>
-                    <input type="file" id="edit-sweet-file-input" accept="image/*" class="hidden" />
-                  </label>
-                  <button type="button" id="edit-sweet-reset-img-btn" data-default-src="/assets/sweets/${sweet.id}.png" class="px-2.5 py-1.5 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-xl text-[11px] font-semibold transition-all cursor-pointer">
-                    Default
-                  </button>
-                </div>
-
-                <input 
-                  type="text" 
-                  name="image" 
-                  id="edit-sweet-image-input" 
-                  placeholder="Or paste direct image URL (https://...)" 
-                  value="${sweetImg}" 
-                  class="w-full px-3 py-1.5 bg-white border border-[#EFE7DE] rounded-xl text-xs font-mono text-[#2A1F1D] focus:bg-white focus:outline-none focus:border-[#C86D3B]"
-                />
-              </div>
-            </div>
-          </div>
+          <!-- Photo Customizer with 100 Sweet Photos Collection Picker -->
+          ${renderSweetPhotoCustomizer('edit', sweetImg, sweet.name)}
 
           <!-- Category & Unit -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

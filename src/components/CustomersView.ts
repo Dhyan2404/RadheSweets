@@ -395,6 +395,9 @@ export function renderCustomersView(state: any) {
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black font-mono bg-stone-100 text-stone-800 border border-stone-200">
                           #${custIdDisplay}
                         </span>
+                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold ${customer.branchId && customer.branchId !== state?.currentBranchId ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-stone-100 text-stone-600'}">
+                          📍 ${(state?.branches || []).find((b: any) => b.id === customer.branchId)?.name || customer.branchName || 'Radhe Sweets'}
+                        </span>
                       </div>
                       <h3 class="font-bold text-sm text-[#2A1F1D] truncate mt-0.5 group-hover:text-[#C86D3B] transition-colors">
                         ${customer.name}
@@ -449,18 +452,11 @@ export function renderCustomersView(state: any) {
                   <button 
                     type="button"
                     data-select-for-pos="${customer.id}"
-                    class="flex-1 py-2 bg-[#C86D3B] hover:bg-[#B25D2E] text-white text-xs font-bold rounded-2xl shadow-xs transition-all text-center cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+                    class="w-full py-2 bg-[#C86D3B] hover:bg-[#B25D2E] text-white text-xs font-bold rounded-2xl shadow-xs transition-all text-center cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
                   >
                     <span>⚡ Attach to POS</span>
                   </button>
-                  <button 
-                    type="button"
-                    data-view-customer-profile="${customer.id}"
-                    class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-2xl transition-all cursor-pointer"
-                    title="View Full Profile & Past Bills"
-                  >
-                    👁️ History
-                  </button>
+                  
                 </div>
               </article>
             `;
@@ -812,12 +808,13 @@ export function renderAddCustomerModal(state?: any) {
               <input 
                 type="tel" 
                 name="phone" 
+                id="add-customer-phone-input"
                 required 
                 placeholder="98765 43210" 
-                pattern="[0-9]{10}"
                 class="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EFE7DE] rounded-r-2xl text-xs font-semibold text-[#2A1F1D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C86D3B]/20 focus:border-[#C86D3B] transition-all"
               />
             </div>
+            <div id="add-customer-phone-match-card" class="mt-2 hidden"></div>
           </div>
 
 

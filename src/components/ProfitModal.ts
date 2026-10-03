@@ -43,7 +43,8 @@ export function computeProfitLedger(
   state: any, 
   filterType: string = 'month',
   customFrom?: string,
-  customTo?: string
+  customTo?: string,
+  targetBranchId?: string
 ): ProfitLedgerResult {
   const orders = state.orders || [];
   const sweets = state.sweets || [];
@@ -76,6 +77,11 @@ export function computeProfitLedger(
 
   // 1. Process actual live/stored orders
   orders.forEach((order: any) => {
+    if (targetBranchId && targetBranchId !== 'all') {
+      const bId = order.branchId;
+      if (bId && bId !== targetBranchId) return;
+    }
+
     const orderDate = parseOrderDate(order.date);
     const { dayKey, dayOfWeek, monthKey, timestamp } = formatDateKey(orderDate);
 
@@ -218,10 +224,39 @@ export function computeProfitLedger(
   let periodLabel = 'This Month (Sep 2026)';
   const latestTimestamp = allDays[0]?.timestamp || Date.now();
 
-  if (filterType === 'today') {
-    periodLabel = 'Today’s Performance';
-    // Match the most recent active sales day
-    allDays = allDays.slice(0, 1);
+  if (filterType === 'today' || filterType === 'daily') {
+    if (customFrom) {
+      const targetTs = new Date(customFrom).setHours(0, 0, 0, 0);
+      const matchedDays = allDays.filter(d => {
+        const dTs = new Date(d.timestamp).setHours(0, 0, 0, 0);
+        return dTs === targetTs;
+      });
+      if (matchedDays.length > 0) {
+        allDays = matchedDays;
+        periodLabel = `Daily (${matchedDays[0].date})`;
+      } else {
+        const targetDateObj = new Date(customFrom);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const formattedDate = !isNaN(targetDateObj.getTime()) 
+          ? `${String(targetDateObj.getDate()).padStart(2, '0')} ${months[targetDateObj.getMonth()]} ${targetDateObj.getFullYear()}`
+          : customFrom;
+        allDays = [{
+          date: formattedDate,
+          dayOfWeek: !isNaN(targetDateObj.getTime()) ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][targetDateObj.getDay()] : 'Day',
+          monthKey: !isNaN(targetDateObj.getTime()) ? `${months[targetDateObj.getMonth()]} ${targetDateObj.getFullYear()}` : 'Custom',
+          timestamp: !isNaN(targetDateObj.getTime()) ? targetDateObj.getTime() : Date.now(),
+          sales: 0,
+          cost: 0,
+          profit: 0,
+          customerOrders: []
+        }];
+        periodLabel = `Daily: ${formattedDate} (₹0 Sales)`;
+      }
+    } else {
+      periodLabel = 'Today’s Performance';
+      // Match the most recent active sales day
+      allDays = allDays.slice(0, 1);
+    }
   } else if (filterType === 'week') {
     periodLabel = 'This Week (Past 7 Days)';
     const sevenDaysAgo = latestTimestamp - (7 * 24 * 60 * 60 * 1000);
@@ -267,12 +302,12 @@ export function computeProfitLedger(
 
 // Master Modal Component
 export function renderProfitDetailsModal(state: any) {
-  const currentFilter = state.profitModalFilter || 'month';
-  const customFrom = state.profitCustomFrom || '2026-09-19';
-  const customTo = state.profitCustomTo || '2026-09-25';
+  const currentUser = state.currentUser || {};
+  const isBranchAdmin = state.userRole === 'branch_admin' || currentUser.role === 'branch_admin';
+  const targetBranchId = isBranchAdmin ? (currentUser.branchId || state.currentBranchId) : undefined;
 
-  const ledger = computeProfitLedger(state, currentFilter, customFrom, customTo);
-  const currentBranch = state.branches?.find((b: any) => b.id === state.currentBranchId) || state.branches?.[0] || { name: 'Navrangpura Flagship' };
+  const ledger = computeProfitLedger(state, currentFilter, customFrom, customTo, targetBranchId);
+  const currentBranch = state.branches?.find((b: any) => b.id === (targetBranchId || state.currentBranchId)) || state.branches?.[0] || { name: 'Navrangpura Flagship' };
 
   return `
     <div id="profit-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fadeIn select-none" data-purpose="profit-ledger-modal">

@@ -1,97 +1,311 @@
-// Dashboard View Component - 100% Exact Match with Stitch Dashboard (screen.png)
-// Features: 
-// 1. 6 KPI Stat Cards (Customers, Sales, Orders, Profit, Cost, Returning) with Status Badges and Color Waves
-// 2. Sales Overview Area Chart (Monthly trajectory, Gross Sales 1 Sep - 30 Sep, interactive spline)
-// 3. Order Status Donut Chart (Total 126 Orders in center, Delivered, Processing, Pending, Canceled breakdown)
-// 4. Fast Selling Sweets & Stock Table (KK, RG, GJ, ML, KP, MC with stock badges and quick + Add buttons)
-// 5. Quick Billing (POS) Card (Counter 1, Selected Customer Jignesh Shah, Line Items, Subtotal, Proceed to Checkout)
+// Dashboard View Component
+// 1. Owner Mode: Consolidated Multi-Branch Enterprise Command Center
+//    - Combined orders across all outlets
+//    - Combined customers across all outlets
+//    - Combined sales, profit & cost metrics
+//    - Outlets Performance Arena (Side-by-side branch comparison cards)
+//    - Cross-Branch Product Stock Monitor Matrix ("which branch has how much left")
+//    - Combined Live Orders Stream across all outlets
+// 2. Branch Manager / Cashier Mode: Strictly Branch-Level Isolated Dashboard
+//    - Only current branch metrics, stock, orders, and counter quick billing
 
 import { renderCounter } from './Counter.ts';
+import { getBranchDefaultCatalog } from '../firebase.js';
+import { initialData } from '../data.js';
 
 export function renderDashboardView(state: any) {
-  const { kpis = {}, quickCart = [], orders = [], sweets = [], customers = [] } = state;
+  const currentUser = state.currentUser || { role: 'owner', name: 'Owner' };
+  const isOwner = currentUser.role === 'owner';
   const timeFilter = state.timeFilter || 'month';
+  const branches = state.branches || initialData.branches || [];
 
-  let filteredOrders = [...orders];
-  let periodMultiplier = 1;
-  let periodLabel = 'This Month';
+  // Active branch details
+  const currentBranchId = state.currentBranchId || 'br-1';
+  const activeBranchObj = branches.find((b: any) => b.id === currentBranchId) || branches[0] || { name: 'Active Outlet', code: 'BR-01' };
 
-  if (timeFilter === 'today') {
-    periodLabel = 'Today';
-    const latestDate = orders[0]?.date?.split(',')?.[0]?.trim() || '25 Sep 2026';
-    const todayOrders = orders.filter((o: any) => o.date && o.date.includes(latestDate));
-    filteredOrders = todayOrders.length > 0 ? todayOrders : orders.slice(0, 3);
-  } else if (timeFilter === 'week') {
-    periodLabel = 'This Week';
-    filteredOrders = orders.slice(0, Math.min(orders.length, 12));
-    periodMultiplier = 1.35;
-  } else if (timeFilter === 'quarter') {
-    periodLabel = 'Quarterly';
-    periodMultiplier = 2.95;
+  // =========================================================================
+  // MULTI-BRANCH DATA AGGREGATION SYSTEM (For Owner Combined Dashboard)
+  // =========================================================================
+  const branchDataMap: Record<string, {
+    branch: any;
+    sweets: any[];
+    orders: any[];
+    customers: any[];
+    kpis: any;
+    revenue: number;
+    ordersCount: number;
+  }> = {};
+
+  branches.forEach((b: any) => {
+    if (b.id === currentBranchId) {
+      const bOrders = state.orders || [];
+      const bRev = bOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0) || b.revenue || 0;
+      branchDataMap[b.id] = {
+        branch: b,
+        sweets: state.sweets || [],
+        orders: bOrders,
+        customers: state.customers || [],
+        kpis: state.kpis || {},
+        revenue: bRev,
+        ordersCount: bOrders.length || b.orders || 0
+      };
+    } else {
+      let snap: any = null;
+      try {
+        const raw = localStorage.getItem(`radhe_branch_${b.id}_snapshot_v2`);
+        if (raw) snap = JSON.parse(raw);
+      } catch (_) {}
+
+      if (snap) {
+        const snapOrders = snap.orders || [];
+        const snapRev = snapOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0) || b.revenue || 0;
+        branchDataMap[b.id] = {
+          branch: b,
+          sweets: snap.sweets || [],
+          orders: snapOrders,
+          customers: snap.customers || [],
+          kpis: snap.kpis || {},
+          revenue: snapRev,
+          ordersCount: snapOrders.length || b.orders || 0
+        };
+      } else {
+        const defaults = getBranchDefaultCatalog(b.id);
+        branchDataMap[b.id] = {
+          branch: b,
+          sweets: defaults.sweets || [],
+          orders: [],
+          customers: [],
+          kpis: defaults.kpis || {},
+          revenue: b.revenue || 0,
+          ordersCount: b.orders || 0
+        };
+      }
+    }
+  });
+
+  // User-selected Dashboard view: 'all' for overall combined vs branch ID for branch-wise view
+  const dashboardBranchFilter = state.dashboardBranchFilter || (isOwner ? 'all' : currentBranchId);
+  const isOverall = dashboardBranchFilter === 'all';
+  const displayBranchObj = branches.find((b: any) => b.id === dashboardBranchFilter) || activeBranchObj;
+
+  // Calculate Consolidated Metrics for Owner vs Branch-Level for Branch Manager
+  let ordersList: any[] = [];
+  let sweetsList: any[] = [];
+  let customersCount = 0;
+  let salesVal = 0;
+  let costVal = 0;
+  let profitVal = 0;
+  let ordersVal = 0;
+
+  if (isOverall) {
+    // 1. Combined Orders with branch attribution tags across all 11 outlets
+    ordersList = [];
+    branches.forEach((b: any) => {
+      const bData = branchDataMap[b.id];
+      if (bData && bData.orders) {
+        bData.orders.forEach((o: any) => {
+          ordersList.push({
+            ...o,
+            branchId: b.id,
+            branchName: b.name,
+            branchCode: b.code || b.id
+          });
+        });
+      }
+    });
+
+    // Sort combined orders by creation time or date desc
+    ordersList.sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.date || 0).getTime();
+      const timeB = new Date(b.createdAt || b.date || 0).getTime();
+      return timeB - timeA;
+    });
+
+    // 2. Combined Sales across all 11 branches
+    salesVal = branches.reduce((sum: number, b: any) => sum + (branchDataMap[b.id]?.revenue || 0), 0);
+    if (salesVal === 0) salesVal = 48500;
+
+    // 3. Combined Cost & Profit
+    costVal = Math.round(salesVal * 0.62);
+    profitVal = Math.max(0, salesVal - costVal);
+
+    // 4. Combined Orders Count
+    ordersVal = branches.reduce((sum: number, b: any) => sum + (branchDataMap[b.id]?.ordersCount || 0), 0);
+    if (ordersVal === 0) ordersVal = 132;
+
+    // 5. Combined Customers (Unique patrons enterprise-wide)
+    const customerPhoneSet = new Set<string>();
+    branches.forEach((b: any) => {
+      const custs = branchDataMap[b.id]?.customers || [];
+      custs.forEach((c: any) => {
+        if (c.phone) customerPhoneSet.add(c.phone);
+        else if (c.id) customerPhoneSet.add(c.id);
+      });
+    });
+    customersCount = Math.max(customerPhoneSet.size, (state.customers?.length || 0), 110);
+    sweetsList = state.sweets || [];
   } else {
-    periodLabel = 'This Month';
-    // Full monthly dataset
+    // Branch Wise View for specific branch
+    const bData = branchDataMap[dashboardBranchFilter] || {
+      orders: [],
+      sweets: state.sweets || [],
+      revenue: displayBranchObj.revenue || 0,
+      ordersCount: displayBranchObj.orders || 0
+    };
+    ordersList = bData.orders || [];
+    sweetsList = bData.sweets || state.sweets || [];
+    salesVal = bData.revenue || displayBranchObj.revenue || 0;
+    costVal = Math.round(salesVal * 0.62);
+    profitVal = Math.max(0, salesVal - costVal);
+    ordersVal = bData.ordersCount || ordersList.length || displayBranchObj.orders || 0;
+    customersCount = (state.customers || []).filter((c: any) => c.branchId === dashboardBranchFilter).length || 10;
   }
 
-  const baseSales = filteredOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
-  const baseCost = filteredOrders.reduce((sum: number, o: any) => {
-    let orderCost = 0;
-    if (o.items && Array.isArray(o.items)) {
-      o.items.forEach((item: any) => {
-        const sw = sweets.find((s: any) => s.id === item.id || s.name === item.name);
-        const unitCost = sw?.costPrice || (item.rate ? Math.round(item.rate * 0.60) : 0);
-        orderCost += (Number(item.quantity) || 1) * unitCost;
-      });
-    }
-    return sum + (orderCost > 0 ? orderCost : Math.round((o.total || 0) * 0.62));
-  }, 0);
+  // Timeframe multiplier
+  let periodMultiplier = 1;
+  let periodLabel = 'This Month';
+  if (timeFilter === 'today') {
+    periodLabel = 'Today';
+    periodMultiplier = 0.15;
+  } else if (timeFilter === 'week') {
+    periodLabel = 'This Week';
+    periodMultiplier = 0.35;
+  } else if (timeFilter === 'quarter') {
+    periodLabel = 'Quarterly';
+    periodMultiplier = 2.8;
+  }
 
-  // Timeframe adaptive values
-  const salesVal = Math.round((timeFilter === 'month' ? (kpis.sales?.value || baseSales) : baseSales) * periodMultiplier);
-  const costVal = Math.round((timeFilter === 'month' ? (kpis.cost?.value || baseCost) : baseCost) * periodMultiplier);
-  const profitVal = Math.max(0, salesVal - costVal);
-  const profitMarginStr = salesVal > 0 ? `${((profitVal / salesVal) * 100).toFixed(1)}% margin` : '0.0% margin';
-  const costPercentStr = salesVal > 0 ? `${((costVal / salesVal) * 100).toFixed(1)}%` : '0.0%';
+  const displaySales = Math.round(salesVal * (timeFilter === 'month' ? 1 : periodMultiplier));
+  const displayCost = Math.round(costVal * (timeFilter === 'month' ? 1 : periodMultiplier));
+  const displayProfit = Math.max(0, displaySales - displayCost);
+  const displayOrders = Math.round(ordersVal * (timeFilter === 'month' ? 1 : periodMultiplier));
+  const displayCustomers = Math.round(customersCount * (timeFilter === 'month' ? 1 : periodMultiplier));
+  const displayReturning = Math.round(displayCustomers * 0.42);
 
-  const ordersVal = Math.round((timeFilter === 'month' ? (kpis.orders?.value || filteredOrders.length) : filteredOrders.length) * periodMultiplier);
-  const customersVal = timeFilter === 'today' ? filteredOrders.length : Math.round((timeFilter === 'month' ? (kpis.customers?.value || customers.length) : customers.length) * (timeFilter === 'quarter' ? 1.5 : 1));
-
-  // Dynamic returning: 
-  const returningVal = Math.round(customersVal * 0.42);
-  const returningPercentStr = customersVal > 0 ? `${Math.min(100, Math.round((returningVal / customersVal) * 100))}%` : '0.0%';
-
-  const items = quickCart || [];
-  const subtotal = items.reduce((sum: number, item: any) => sum + (item.total || Math.round(item.qty * (item.rate || item.price || 0))), 0);
-  const totalPayable = subtotal;
+  const profitMarginStr = displaySales > 0 ? `${((displayProfit / displaySales) * 100).toFixed(1)}% margin` : '0.0% margin';
+  const costPercentStr = displaySales > 0 ? `${((displayCost / displaySales) * 100).toFixed(1)}%` : '0.0%';
 
   // Donut chart status calculations
-  const totalOrders = ordersVal;
+  const totalOrders = displayOrders || 1;
   const completedOrders = Math.round(totalOrders * 0.88);
   const advanceOrders = Math.round(totalOrders * 0.08);
   const kitchenOrders = Math.max(0, totalOrders - completedOrders - advanceOrders);
 
-  const completedPct = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
-  const advancePct = totalOrders > 0 ? Math.round((advanceOrders / totalOrders) * 100) : 0;
-  const kitchenPct = totalOrders > 0 ? Math.round((kitchenOrders / totalOrders) * 100) : 0;
+  const completedPct = Math.round((completedOrders / totalOrders) * 100);
+  const advancePct = Math.round((advanceOrders / totalOrders) * 100);
+  const kitchenPct = Math.round((kitchenOrders / totalOrders) * 100);
+
+  // Quick Cart for POS card
+  const quickItems = state.quickCart || [];
+  const quickSubtotal = quickItems.reduce((sum: number, it: any) => sum + (it.total || Math.round(it.qty * (it.rate || it.price || 0))), 0);
+
+  // Master catalog of all 100 sweets for Cross-Branch Stock Matrix
+  const masterCatalog = initialData.sweets || [];
+  const matrixSearchQuery = (state.crossBranchSearchQuery || '').toLowerCase().trim();
+  const matrixCategoryFilter = state.crossBranchFilterCategory || 'All';
+
+  const filteredMatrixSweets = masterCatalog.filter((s: any) => {
+    const matchesSearch = !matrixSearchQuery || 
+      s.name.toLowerCase().includes(matrixSearchQuery) || 
+      (s.category && s.category.toLowerCase().includes(matrixSearchQuery));
+
+    let matchesCategory = true;
+    if (matrixCategoryFilter === 'Low Stock Alert (<15kg)') {
+      // Show if any branch has <= 15 kg
+      matchesCategory = branches.some((b: any) => {
+        const sw = (branchDataMap[b.id]?.sweets || []).find((bs: any) => bs.id === s.id || bs.name === s.name);
+        return sw && sw.stock <= 15;
+      });
+    } else if (matrixCategoryFilter === 'Pure Desi Ghee') {
+      matchesCategory = s.isPureGhee || (s.badge && s.badge.toLowerCase().includes('ghee'));
+    } else if (matrixCategoryFilter !== 'All') {
+      matchesCategory = s.category === matrixCategoryFilter;
+    }
+    return matchesSearch && matchesCategory;
+  });
 
   return `
-    <div class="space-y-6 animate-fadeIn select-none" data-purpose="stitch-dashboard">
+    <div class="space-y-6 animate-fadeIn select-none" data-purpose="radhe-dashboard">
       
-      <!-- Greeting & Time Filter Header -->
-      <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-4" data-purpose="greeting-header">
+      <!-- Greeting & Top Context Bar -->
+      <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)]" data-purpose="greeting-header">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-[#2A1F1D] tracking-tight">Dashboard</h1>
-          <p class="text-xs sm:text-sm text-stone-500 mt-0.5">Here's what's happening with your sweet shop today.</p>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="w-8 h-8 rounded-xl ${isOwner ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-900'} flex items-center justify-center font-black text-sm">
+              ${isOwner ? (isOverall ? '👑' : '🏬') : '🏢'}
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-black text-[#2A1F1D] tracking-tight">
+              ${isOwner 
+                ? (isOverall ? 'Multi-Branch Enterprise Dashboard' : `${displayBranchObj.name} Dashboard`) 
+                : `${activeBranchObj.name} Dashboard`
+              }
+            </h1>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+              isOwner 
+                ? (isOverall ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-blue-900 border border-blue-300')
+                : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+            }">
+              ${isOwner 
+                ? (isOverall ? `Consolidated Enterprise (${branches.length} Gandhinagar Outlets)` : `Branch View • ${displayBranchObj.code || 'Gandhinagar Outlet'}`)
+                : `Active Outlet • ${activeBranchObj.code || 'Branch'}`
+              }
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-stone-500 mt-1 font-medium">
+            ${isOwner 
+              ? (isOverall 
+                  ? `Combined live orders, patron directory, and cross-branch inventory levels across all 11 Gandhinagar locations (Sector 21, Kudasan, Infocity, Sargasan, GIFT City & more).`
+                  : `Individual counter operations, orders fulfillment, and inventory levels for ${displayBranchObj.name} (${displayBranchObj.address || 'Gandhinagar'}).`
+                )
+              : `Real-time counter billing, stock deduction, and orders fulfillment for ${activeBranchObj.name}.`
+            }
+          </p>
         </div>
 
-        <!-- Time Filter Dropdown (1:1 with Stitch screen.png) -->
-        <div class="flex items-center space-x-2">
+        <!-- Controls: Branch View Selector, Timeframe Filter & Quick Branch Switch -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+          ${isOwner ? `
+            <div class="flex items-center gap-1.5">
+              <div class="relative">
+                <select id="dashboard-branch-select" class="appearance-none bg-amber-50/90 border border-amber-300 text-xs font-black text-amber-950 py-2 pl-3 pr-8 rounded-xl shadow-xs hover:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors">
+                  <option value="all" ${isOverall ? 'selected' : ''}>🌐 Overall (All 11 Branches Combined)</option>
+                  <optgroup label="Gandhinagar Branches">
+                    ${branches.map((b: any) => `
+                      <option value="${b.id}" ${dashboardBranchFilter === b.id ? 'selected' : ''}>🏢 ${b.name} (${b.city || 'Gandhinagar'})</option>
+                    `).join('')}
+                  </optgroup>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-amber-700">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                  </svg>
+                </div>
+              </div>
+
+              ${!isOverall ? `
+                <button 
+                  type="button" 
+                  data-dashboard-branch="all" 
+                  class="px-2.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-black text-xs flex items-center gap-1 border border-stone-300 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                  title="Switch back to enterprise-wide consolidated view"
+                >
+                  <span>← Overall</span>
+                </button>
+              ` : ''}
+            </div>
+          ` : `
+            <span class="px-3 py-1.5 bg-stone-100 rounded-xl text-stone-700 font-bold text-xs border border-stone-200">
+              📍 ${activeBranchObj.city || 'Gandhinagar'}
+            </span>
+          `}
+
+          <!-- Time Filter Dropdown -->
           <div class="relative">
-            <select id="dashboard-time-filter" class="appearance-none bg-white border border-[#F0ECE4] text-xs sm:text-sm font-medium text-stone-700 py-2 pl-3.5 pr-8 rounded-xl shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors">
-              <option value="month" ${state.timeFilter === 'month' ? 'selected' : ''}>This Month</option>
-              <option value="today" ${state.timeFilter === 'today' ? 'selected' : ''}>Today</option>
-              <option value="week" ${state.timeFilter === 'week' ? 'selected' : ''}>This Week</option>
-              <option value="quarter" ${state.timeFilter === 'quarter' ? 'selected' : ''}>Quarterly</option>
+            <select id="dashboard-time-filter" class="appearance-none bg-white border border-[#F0ECE4] text-xs sm:text-sm font-bold text-stone-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors">
+              <option value="month" ${timeFilter === 'month' ? 'selected' : ''}>This Month</option>
+              <option value="today" ${timeFilter === 'today' ? 'selected' : ''}>Today</option>
+              <option value="week" ${timeFilter === 'week' ? 'selected' : ''}>This Week</option>
+              <option value="quarter" ${timeFilter === 'quarter' ? 'selected' : ''}>Quarterly</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-stone-400">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,49 +313,48 @@ export function renderDashboardView(state: any) {
               </svg>
             </div>
           </div>
+
+          <!-- Quick Header Logout Button -->
+          <button 
+            type="button" 
+            id="dashboard-logout-btn" 
+            data-action="app-logout" 
+            class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            title="Sign Out of Radhe Sweets"
+          >
+            <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span>Logout</span>
+          </button>
         </div>
       </section>
 
-      <!-- Mobile Quick Search Trigger (10000x Better Mobile Search) -->
-      <div class="md:hidden w-full -mt-2" data-purpose="mobile-hero-search">
-        <button 
-          type="button" 
-          id="mobile-hero-search-trigger"
-          class="w-full flex items-center justify-between px-4 py-3 bg-white border border-[#F0ECE4] shadow-xs rounded-2xl text-left text-stone-400 text-xs font-medium cursor-pointer active:scale-98 transition-all hover:border-[#C86D3B]/40"
-        >
-          <span class="flex items-center gap-2.5">
-            <svg class="w-4 h-4 text-[#C86D3B]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <span class="text-stone-600 font-semibold">Search sweets, customers, bills...</span>
-          </span>
-          <span class="px-2.5 py-1 rounded-xl bg-orange-50 text-[#C86D3B] text-[10px] font-bold border border-orange-200/60 shadow-2xs">Search</span>
-        </button>
-      </div>
-
       <!-- ======================================================== -->
-      <!-- 6 KPI Stat Cards Grid (Clean Responsive Grid)            -->
+      <!-- 6 CONSOLIDATED / BRANCH KPI CARDS GRID                   -->
       <!-- ======================================================== -->
       <section id="kpi-tiles-container" class="grid grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-5" data-purpose="kpi-metrics-grid">
         
         <!-- CARD 1: Customers -->
         <article class="kpi-card animate-card-pop stagger-1 interactive-scale bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EB] to-[#FCEAE0] border border-[#F6E7DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
-          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="kpi-top-row flex items-center justify-between">
             <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FCEEE3] text-[#C86D3B] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
               </svg>
             </span>
-            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
-            </button>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${isOwner ? 'bg-amber-200/80 text-amber-950' : 'bg-stone-200/80 text-stone-800'}">
+              ${isOwner ? 'All Outlets' : 'Branch'}
+            </span>
           </div>
 
-          <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
-            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Customers</p>
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">
+              ${isOwner ? 'Combined Patrons' : 'Branch Customers'}
+            </p>
             <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
               ${renderCounter({
-                value: customersVal,
+                value: displayCustomers,
                 fontWeight: 800,
                 gradientHeight: 6,
                 gradientFrom: 'rgba(255, 249, 245, 0.75)'
@@ -149,49 +362,35 @@ export function renderDashboardView(state: any) {
             </div>
           </div>
 
-          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>${customersVal > 0 ? '+12%' : '0%'}</span>
+              <span>+14.2%</span>
             </div>
-
-            <!-- Soft Bezier Sparkline -->
-            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
-              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
-                <path d="M 5 35 Q 35 32, 60 22 T 95 18 T 135 6" stroke="#E07A5F" stroke-width="2.5" stroke-linecap="round"></path>
-                <path d="M 5 35 Q 35 32, 60 22 T 95 18 T 135 6 L 135 45 L 5 45 Z" fill="url(#peachSparkFill)" opacity="0.25"></path>
-                <defs>
-                  <linearGradient id="peachSparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#E07A5F" stop-opacity="0.6"></stop>
-                    <stop offset="100%" stop-color="#E07A5F" stop-opacity="0.0"></stop>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+            <div class="text-[10px] text-stone-400 font-medium z-10">Active Loyalty Members</div>
           </div>
         </article>
 
         <!-- CARD 2: Sales -->
         <article class="kpi-card animate-card-pop stagger-2 interactive-scale bg-gradient-to-br from-[#F4FAF6] via-[#EAF5EE] to-[#E2F2E7] border border-[#E0EFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
-          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="kpi-top-row flex items-center justify-between">
             <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF7EE] text-[#16A34A] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C9.5 2 7.8 3.5 7.4 5.5L4 7.2v1.5l1.6.8C5.2 11.2 5 13 5 15c0 4.4 3.1 7 7 7s7-2.6 7-7c0-2-.2-3.8-.6-5.5l1.6-.8V7.2l-3.4-1.7C16.2 3.5 14.5 2 12 2zm0 6c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm0 8c1.7 0 3 .9 3 2H9c0-1.1 1.3-2 3-2z"></path>
               </svg>
             </span>
-            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
-            </button>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${isOwner ? 'bg-emerald-200/80 text-emerald-950' : 'bg-stone-200/80 text-stone-800'}">
+              ${isOwner ? 'Combined Revenue' : 'Outlet Sales'}
+            </span>
           </div>
 
-          <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
-            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Sales</p>
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">
+              ${isOwner ? 'Consolidated Sales' : 'Branch Sales'}
+            </p>
             <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
               ${renderCounter({
-                value: salesVal,
+                value: displaySales,
                 prefix: '₹',
                 fontWeight: 800,
                 gradientHeight: 6,
@@ -200,49 +399,35 @@ export function renderDashboardView(state: any) {
             </div>
           </div>
 
-          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>${salesVal > 0 ? '+8.4%' : '0%'}</span>
+              <span>+9.6%</span>
             </div>
-
-            <!-- Soft Bezier Sparkline -->
-            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
-              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
-                <path d="M 5 32 Q 35 28, 65 18 T 100 14 T 135 5" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"></path>
-                <path d="M 5 32 Q 35 28, 65 18 T 100 14 T 135 5 L 135 45 L 5 45 Z" fill="url(#mintSparkFill)" opacity="0.25"></path>
-                <defs>
-                  <linearGradient id="mintSparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#10B981" stop-opacity="0.6"></stop>
-                    <stop offset="100%" stop-color="#10B981" stop-opacity="0.0"></stop>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+            <div class="text-[10px] text-stone-400 font-medium z-10">${periodLabel}</div>
           </div>
         </article>
 
         <!-- CARD 3: Orders -->
         <article class="kpi-card animate-card-pop stagger-3 interactive-scale bg-gradient-to-br from-[#F8F5FD] via-[#EFEBF9] to-[#E8E0F7] border border-[#E9E2F5] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="orders">
-          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="kpi-top-row flex items-center justify-between">
             <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#F3EEFC] text-[#7C3AED] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
-            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
-            </button>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${isOwner ? 'bg-purple-200/80 text-purple-950' : 'bg-stone-200/80 text-stone-800'}">
+              ${isOwner ? 'All Branches' : 'Counter'}
+            </span>
           </div>
 
-          <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
-            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Orders</p>
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">
+              ${isOwner ? 'Combined Orders' : 'Branch Orders'}
+            </p>
             <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
               ${renderCounter({
-                value: ordersVal,
+                value: displayOrders,
                 fontWeight: 800,
                 gradientHeight: 6,
                 gradientFrom: 'rgba(248, 245, 253, 0.75)'
@@ -250,52 +435,34 @@ export function renderDashboardView(state: any) {
             </div>
           </div>
 
-          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
-              <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>${ordersVal > 0 ? '+9.2%' : '0%'}</span>
+            <div class="kpi-trend-badge flex items-center text-purple-600 font-bold text-[10px] sm:text-xs z-10">
+              <span>${ordersList.length} live bills</span>
             </div>
-
-            <!-- Soft Bezier Sparkline -->
-            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
-              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
-                <path d="M 5 34 Q 35 24, 70 26 T 105 14 T 135 4" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round"></path>
-                <path d="M 5 34 Q 35 24, 70 26 T 105 14 T 135 4 L 135 45 L 5 45 Z" fill="url(#lavSparkFill)" opacity="0.25"></path>
-                <defs>
-                  <linearGradient id="lavSparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.6"></stop>
-                    <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.0"></stop>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+            <div class="text-[10px] text-stone-400 font-medium z-10">Counter &amp; Advance</div>
           </div>
         </article>
 
-        <!-- CARD 4: Profit (Click opens All-Over Month & Per-Day Profit Ledger) -->
-        <article id="kpi-profit-card" data-action="open-profit-modal" class="kpi-card animate-card-pop stagger-4 interactive-scale bg-gradient-to-br from-[#F1FAF5] via-[#E8F6EE] to-[#DEEFE6] border border-[#DEEFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" title="Click to view All-Over Month & Per-Day Profit">
-          <!-- Top Row: Icon Badge & 3-Dots Menu -->
+        <!-- CARD 4: Profit -->
+        <article id="kpi-profit-card" class="kpi-card animate-card-pop stagger-4 interactive-scale bg-gradient-to-br from-[#F1FAF5] via-[#E4F5EB] to-[#D5EFE0] border border-[#CEE9DC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" title="Click to view full profit intelligence & breakdown">
           <div class="kpi-top-row flex items-center justify-between">
-            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E8F6EF] text-[#0D9488] flex items-center justify-center shadow-2xs">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"></path>
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E5F7ED] text-[#0D9488] flex items-center justify-center shadow-2xs">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
-            <button type="button" data-action="open-profit-modal" class="kpi-card-more-btn px-2 py-0.5 rounded-full bg-emerald-700/10 hover:bg-emerald-700/20 text-[#0D9488] text-[10px] font-extrabold flex items-center gap-1 transition-colors cursor-pointer" title="Open Profit Breakdown">
-              <span>Per-Day Ledgers ↗</span>
-            </button>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-teal-200/80 text-teal-950">
+              Net Profit
+            </span>
           </div>
 
-          <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
-            <div class="flex items-center justify-between">
-              <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Profit</p>
-              <span class="text-[9px] font-black text-[#0D9488] bg-white/70 px-1.5 py-0.2 rounded-md border border-[#DEEFE6]">Daily / Month</span>
-            </div>
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">
+              ${isOwner ? 'Consolidated Profit' : 'Branch Profit'}
+            </p>
             <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
               ${renderCounter({
-                value: profitVal,
+                value: displayProfit,
                 prefix: '₹',
                 fontWeight: 800,
                 gradientHeight: 6,
@@ -304,49 +471,34 @@ export function renderDashboardView(state: any) {
             </div>
           </div>
 
-          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge text-[#0D9488] font-bold text-[10px] sm:text-xs z-10 flex items-center gap-1">
               <span>${profitMarginStr}</span>
-              <span class="text-[9px] text-stone-500 font-normal">• Click to view daily</span>
             </div>
-
-            <!-- Soft Bezier Sparkline -->
-            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
-              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
-                <path d="M 5 31 Q 40 30, 75 22 T 115 14 T 135 7" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round"></path>
-                <path d="M 5 31 Q 40 30, 75 22 T 115 14 T 135 7 L 135 45 L 5 45 Z" fill="url(#tealSparkFill)" opacity="0.25"></path>
-                <defs>
-                  <linearGradient id="tealSparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#0D9488" stop-opacity="0.6"></stop>
-                    <stop offset="100%" stop-color="#0D9488" stop-opacity="0.0"></stop>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+            <div class="text-[10px] text-teal-700 font-extrabold z-10">⚡ High Margin</div>
           </div>
         </article>
 
         <!-- CARD 5: Cost -->
         <article class="kpi-card animate-card-pop stagger-5 interactive-scale bg-gradient-to-br from-[#FDF5F4] via-[#FCECEB] to-[#FADEDB] border border-[#F7DDDC] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="expenses">
-          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="kpi-top-row flex items-center justify-between">
             <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FEECEB] text-[#E11D48] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"></path>
               </svg>
             </span>
-            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
-            </button>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-950">
+              Raw Materials &amp; Dairy
+            </span>
           </div>
 
-          <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
-            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Cost</p>
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">
+              ${isOwner ? 'Combined Expenses' : 'Branch Inward Cost'}
+            </p>
             <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
               ${renderCounter({
-                value: costVal,
+                value: displayCost,
                 prefix: '₹',
                 fontWeight: 800,
                 gradientHeight: 6,
@@ -355,49 +507,35 @@ export function renderDashboardView(state: any) {
             </div>
           </div>
 
-          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge text-rose-500 font-bold text-[10px] sm:text-xs z-10">
-              <span>${costPercentStr}</span>
+              <span>${costPercentStr} of revenue</span>
             </div>
-
-            <!-- Soft Bezier Sparkline -->
-            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
-              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
-                <path d="M 5 18 Q 35 22, 68 28 T 105 22 T 135 32" stroke="#F43F5E" stroke-width="2.5" stroke-linecap="round"></path>
-                <path d="M 5 18 Q 35 22, 68 28 T 105 22 T 135 32 L 135 45 L 5 45 Z" fill="url(#roseSparkFill)" opacity="0.25"></path>
-                <defs>
-                  <linearGradient id="roseSparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#F43F5E" stop-opacity="0.6"></stop>
-                    <stop offset="100%" stop-color="#F43F5E" stop-opacity="0.0"></stop>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+            <div class="text-[10px] text-stone-400 font-medium z-10">Ghee, Cashews, Milk</div>
           </div>
         </article>
 
-        <!-- CARD 6: Returning -->
+        <!-- CARD 6: Returning Patrons -->
         <article class="kpi-card animate-card-pop stagger-6 interactive-scale bg-gradient-to-br from-[#F2F7FD] via-[#ECF3FC] to-[#E0EDFA] border border-[#DBE7F6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="customers">
-          <!-- Top Row: Icon Badge & 3-Dots Menu -->
           <div class="kpi-top-row flex items-center justify-between">
             <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF4FD] text-[#0284C7] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
             </span>
-            <button class="kpi-card-more-btn w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-black/5 transition-colors" title="More options">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
-            </button>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-sky-200/80 text-sky-950">
+              Returning
+            </span>
           </div>
 
-          <!-- Middle: Label & Stat -->
           <div class="kpi-middle-row mt-2.5 sm:mt-4 z-10">
-            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">Returning</p>
+            <p class="kpi-stat-label text-xs sm:text-sm font-semibold text-[#5A4E4D]">
+              ${isOwner ? 'Combined Returning' : 'Repeat Customers'}
+            </p>
             <div class="kpi-stat-value text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1615] tracking-tight mt-0.5 sm:mt-1">
               ${renderCounter({
-                value: returningVal,
-                suffix: ' cust',
+                value: displayReturning,
+                suffix: ' patrons',
                 fontWeight: 800,
                 gradientHeight: 6,
                 gradientFrom: 'rgba(242, 247, 253, 0.75)'
@@ -405,38 +543,325 @@ export function renderDashboardView(state: any) {
             </div>
           </div>
 
-          <!-- Bottom Row: Trend Badge & Bezier Sparkline -->
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
             <div class="kpi-trend-badge flex items-center text-sky-600 font-bold text-[10px] sm:text-xs z-10">
-              <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <span>${returningPercentStr}</span>
+              <span>42.0% Repeat Rate</span>
             </div>
-
-            <!-- Soft Bezier Sparkline -->
-            <div class="kpi-sparkline-wrap w-20 sm:w-32 md:w-36 h-8 sm:h-12 absolute -right-2 -bottom-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
-              <svg class="w-full h-full" viewBox="0 0 140 45" fill="none">
-                <path d="M 5 33 Q 40 32, 75 22 T 115 14 T 135 5" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round"></path>
-                <path d="M 5 33 Q 40 32, 75 22 T 115 14 T 135 5 L 135 45 L 5 45 Z" fill="url(#skySparkFill)" opacity="0.25"></path>
-                <defs>
-                  <linearGradient id="skySparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#0284C7" stop-opacity="0.6"></stop>
-                    <stop offset="100%" stop-color="#0284C7" stop-opacity="0.0"></stop>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+            <div class="text-[10px] text-stone-400 font-medium z-10">Gandhinagar Patrons</div>
           </div>
         </article>
+
       </section>
 
       <!-- ======================================================== -->
-      <!-- MAIN 12-COLUMN DASHBOARD GRID (1:1 with Stitch screen.png) -->
-      <!-- With Scroll-Reveal Staggered Animations for All Sections  -->
+      <!-- OWNER EXCLUSIVE: OUTLETS PERFORMANCE ARENA               -->
+      <!-- ======================================================== -->
+      ${isOwner ? `
+        <section class="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4" data-purpose="outlets-arena">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F4EFE9] pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-base sm:text-lg font-black text-[#2A1F1D]">🏢 Outlets Performance Arena</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                  Side-By-Side Comparison (11 Branches)
+                </span>
+              </div>
+              <p class="text-xs text-stone-500">Live operational status, orders volume, and revenue across every Gandhinagar store outlet</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="text-xs font-bold text-stone-500">
+                Total Outlets: <span class="text-[#C86D3B] font-black">${branches.length}</span>
+              </div>
+              <button 
+                type="button" 
+                data-action="open-add-branch" 
+                id="dashboard-add-branch-btn" 
+                class="px-3 py-1.5 bg-[#C86D3B] hover:bg-[#b05a2b] text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+                title="Add a new store branch"
+              >
+                <span>+ Add Branch</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Branch Comparison Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            ${branches.map((b: any, bIdx: number) => {
+              const bData = branchDataMap[b.id] || { revenue: b.revenue || 0, ordersCount: b.orders || 0, sweets: [] };
+              const bRev = bData.revenue;
+              const bOrders = bData.ordersCount;
+              const lowStockCount = (bData.sweets || []).filter((s: any) => s.stock <= 15).length;
+              const isCurrentActive = b.id === currentBranchId;
+
+              const colors = [
+                { bg: 'from-amber-500/10 to-orange-500/5', border: 'border-amber-200', tag: 'bg-amber-100 text-amber-950', badge: 'Flagship' },
+                { bg: 'from-blue-500/10 to-indigo-500/5', border: 'border-blue-200', tag: 'bg-blue-100 text-blue-950', badge: 'Outlet' },
+                { bg: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-200', tag: 'bg-emerald-100 text-emerald-950', badge: 'Hub' },
+                { bg: 'from-purple-500/10 to-pink-500/5', border: 'border-purple-200', tag: 'bg-purple-100 text-purple-950', badge: 'Express' }
+              ];
+              const theme = colors[bIdx % colors.length];
+
+              return `
+                <div class="p-4 rounded-2xl bg-gradient-to-br ${theme.bg} border ${theme.border} shadow-2xs space-y-3 relative group">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase ${theme.tag}">
+                      ${b.code || `BRANCH-0${bIdx + 1}`}
+                    </span>
+                    ${isCurrentActive ? `
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse">
+                        Active Terminal 🟢
+                      </span>
+                    ` : ''}
+                  </div>
+
+                  <div>
+                    <div class="flex items-center justify-between gap-1">
+                      <h3 class="font-extrabold text-sm text-[#2A1F1D] truncate" title="${b.name}">${b.name}</h3>
+                      ${b.mapUrl ? `
+                        <a href="${b.mapUrl}" target="_blank" rel="noopener noreferrer" class="text-[10px] font-black text-blue-600 hover:text-blue-800 hover:underline shrink-0 flex items-center gap-0.5" title="Open Google Maps">
+                          <span>Map 📍</span>
+                        </a>
+                      ` : ''}
+                    </div>
+                    <p class="text-[11px] text-stone-500 truncate" title="${b.address || b.city || 'Gandhinagar'}">${b.address || b.city || 'Gandhinagar'}</p>
+                    ${b.phone ? `<p class="text-[10px] font-mono font-semibold text-stone-400 mt-0.5 truncate">📞 ${b.phone}</p>` : ''}
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2 pt-1 border-t border-stone-200/60 text-xs">
+                    <div>
+                      <span class="text-[10px] text-stone-400 font-bold uppercase block">Revenue</span>
+                      <span class="font-black text-stone-900 text-sm">₹${bRev.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span class="text-[10px] text-stone-400 font-bold uppercase block">Live Orders</span>
+                      <span class="font-black text-stone-900 text-sm">${bOrders}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between text-[11px] font-semibold text-stone-600 pt-1">
+                    <span class="${lowStockCount > 0 ? 'text-amber-700 font-bold' : 'text-emerald-700 font-bold'}">
+                      ${lowStockCount > 0 ? `⚠️ ${lowStockCount} Low` : '✅ In Stock'}
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <button 
+                        type="button"
+                        data-dashboard-branch="${b.id}"
+                        class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-lg font-bold text-[11px] shadow-2xs transition-all active:scale-95 cursor-pointer"
+                        title="View Dashboard metrics for this branch"
+                      >
+                        Metrics 📊
+                      </button>
+                      <button 
+                        type="button"
+                        data-switch-branch="${b.id}"
+                        class="px-2.5 py-1 ${isCurrentActive ? 'bg-emerald-600 text-white font-extrabold' : 'bg-white hover:bg-stone-50 text-[#C86D3B] font-bold'} border border-stone-200 rounded-lg text-[11px] shadow-2xs transition-all active:scale-95 cursor-pointer"
+                        title="${isCurrentActive ? 'Active POS terminal' : 'Switch active POS to this branch'}"
+                      >
+                        ${isCurrentActive ? 'POS 🟢' : 'POS ⚡'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </section>
+      ` : ''}
+
+      <!-- ======================================================== -->
+      <!-- OWNER EXCLUSIVE: CROSS-BRANCH PRODUCT STOCK MONITOR      -->
+      <!-- "WHICH BRANCH HOW MUCH LEFT" MATRIX TABLE                 -->
+      <!-- ======================================================== -->
+      ${isOwner ? `
+        <section class="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4" data-purpose="cross-branch-stock-matrix">
+          
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#F4EFE9] pb-4">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-base sm:text-lg font-black text-[#2A1F1D]">🏬 Cross-Branch Product Stock Monitor Matrix</span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase bg-emerald-100 text-emerald-950 border border-emerald-300">
+                  Which Branch Has How Much Left
+                </span>
+              </div>
+              <p class="text-xs text-stone-500 mt-0.5">
+                Real-time comparative inventory balances across all outlets with low-stock warnings and restock recommendations.
+              </p>
+            </div>
+
+            <!-- Matrix Search & Category Filter Pills -->
+            <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto">
+              <div class="relative flex-1 sm:w-64">
+                <input 
+                  type="text" 
+                  id="cross-branch-stock-search"
+                  value="${state.crossBranchSearchQuery || ''}"
+                  placeholder="Search sweets across branches..." 
+                  class="w-full pl-8 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-[#C86D3B]"
+                />
+                <span class="absolute left-2.5 top-2.5 text-stone-400">🔍</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Filter Pills -->
+          <div class="flex items-center gap-1.5 flex-wrap text-xs pb-1">
+            ${[
+              'All',
+              'Low Stock Alert (<15kg)',
+              'Pure Desi Ghee',
+              'Mawa Sweets',
+              'Kaju Sweets',
+              'Bengali Sweets',
+              'Farsan & Namkeen'
+            ].map(cat => `
+              <button 
+                type="button"
+                data-matrix-filter="${cat}"
+                class="px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                  (state.crossBranchFilterCategory || 'All') === cat 
+                    ? 'bg-[#1F1917] text-white shadow-2xs font-black' 
+                    : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                }"
+              >
+                ${cat}
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Responsive Cross-Branch Matrix Table -->
+          <div class="overflow-x-auto border border-stone-200/80 rounded-2xl">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-stone-50/90 text-stone-700 uppercase font-black text-[10px] tracking-wider border-b border-stone-200">
+                <tr>
+                  <th class="p-3.5 min-w-[200px]">Sweet Name &amp; Category</th>
+                  ${branches.map((b: any) => `
+                    <th class="p-3.5 text-center min-w-[130px] border-l border-stone-200/60">
+                      <span class="block truncate text-stone-900">${b.name}</span>
+                      <span class="text-[9px] text-stone-400 font-normal">Stock Level</span>
+                    </th>
+                  `).join('')}
+                  <th class="p-3.5 text-center min-w-[120px] border-l border-stone-200/60 bg-amber-50/60">
+                    <span class="block text-amber-950 font-black">Combined Stock</span>
+                    <span class="text-[9px] text-amber-700 font-normal">All Outlets</span>
+                  </th>
+                  <th class="p-3.5 text-right min-w-[150px] border-l border-stone-200/60">
+                    Inventory Status &amp; Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-100 text-stone-800">
+                ${filteredMatrixSweets.slice(0, 15).map((sweet: any) => {
+                  let totalSweetStock = 0;
+                  const perBranchStock: Record<string, number> = {};
+                  let anyLow = false;
+                  let anyOut = false;
+                  let lowBranchNames: string[] = [];
+
+                  branches.forEach((b: any) => {
+                    const bSweets = branchDataMap[b.id]?.sweets || [];
+                    const found = bSweets.find((s: any) => s.id === sweet.id || s.name === sweet.name);
+                    const stock = found ? Number(found.stock) || 0 : Number(sweet.stock) || 0;
+                    perBranchStock[b.id] = stock;
+                    totalSweetStock += stock;
+                    if (stock === 0) {
+                      anyOut = true;
+                      lowBranchNames.push(`${b.name.split(' ')[0]} (0 kg)`);
+                    } else if (stock <= 15) {
+                      anyLow = true;
+                      lowBranchNames.push(`${b.name.split(' ')[0]} (${stock} kg)`);
+                    }
+                  });
+
+                  return `
+                    <tr class="hover:bg-amber-50/30 transition-colors">
+                      
+                      <!-- Sweet Name, Image & Category -->
+                      <td class="p-3.5">
+                        <div class="flex items-center gap-2.5">
+                          <img 
+                            src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" 
+                            alt="${sweet.name}" 
+                            class="w-8 h-8 rounded-lg object-cover border border-amber-200 shadow-2xs shrink-0" 
+                            onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';"
+                          />
+                          <div class="min-w-0">
+                            <span class="font-extrabold text-[#2A1F1D] block truncate">${sweet.name}</span>
+                            <span class="text-[10px] text-stone-400">${sweet.category || 'Mithai'} • ₹${sweet.pricePerKg}/${sweet.unit || 'kg'}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Per-Branch Stock Columns -->
+                      ${branches.map((b: any) => {
+                        const stock = perBranchStock[b.id] || 0;
+                        const isOut = stock === 0;
+                        const isLow = stock <= 15;
+
+                        return `
+                          <td class="p-3.5 text-center border-l border-stone-200/60">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-xl font-bold font-mono text-[11px] ${
+                              isOut 
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200' 
+                                : isLow 
+                                  ? 'bg-amber-100 text-amber-900 border border-amber-300' 
+                                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            }">
+                              ${stock} ${sweet.unit || 'kg'}
+                            </span>
+                          </td>
+                        `;
+                      }).join('')}
+
+                      <!-- Total Combined Stock Column -->
+                      <td class="p-3.5 text-center border-l border-stone-200/60 bg-amber-50/40">
+                        <span class="font-black text-amber-950 text-xs font-mono">
+                          ${totalSweetStock} ${sweet.unit || 'kg'}
+                        </span>
+                      </td>
+
+                      <!-- Health & Recommendation -->
+                      <td class="p-3.5 text-right border-l border-stone-200/60">
+                        ${anyOut ? `
+                          <span class="px-2 py-0.5 rounded-lg bg-rose-100 text-rose-800 font-extrabold text-[10px] border border-rose-200 block truncate" title="Stock out at: ${lowBranchNames.join(', ')}">
+                            🚨 Out at ${lowBranchNames.join(', ')}
+                          </span>
+                        ` : anyLow ? `
+                          <span class="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-900 font-extrabold text-[10px] border border-amber-300 block truncate" title="Low stock at: ${lowBranchNames.join(', ')}">
+                            ⚠️ Low at ${lowBranchNames.join(', ')}
+                          </span>
+                        ` : `
+                          <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-200">
+                            ✓ Well Balanced
+                          </span>
+                        `}
+                      </td>
+
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-stone-500 pt-1">
+            <span>Showing top ${Math.min(15, filteredMatrixSweets.length)} of ${filteredMatrixSweets.length} sweets across ${branches.length} branches</span>
+            <button type="button" data-tab="products" class="font-extrabold text-[#C86D3B] hover:underline cursor-pointer">
+              View Complete 100 Sweets Inventory Catalog →
+            </button>
+          </div>
+
+        </section>
+      ` : ''}
+
+      <!-- ======================================================== -->
+      <!-- MAIN 12-COLUMN DASHBOARD GRID                            -->
+      <!-- Left (8 cols): Orders & Trajectory / Right (4 cols):     -->
+      <!-- Status Donut & Quick Billing POS                         -->
       <!-- ======================================================== -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6" data-purpose="main-dashboard-grid">
         
         <!-- ====================================================== -->
-        <!-- LEFT COLUMN (8 COLS): Sales Overview & Fast Selling Table -->
+        <!-- LEFT COLUMN (8 COLS): Sales & Fast Selling / Combined Orders -->
         <!-- ====================================================== -->
         <div class="lg:col-span-8 space-y-6">
           
@@ -444,156 +869,207 @@ export function renderDashboardView(state: any) {
           <section id="section-sales-overview" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="sales-chart-card">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F0ECE4]/70 gap-2">
               <div>
-                <h3 class="text-base font-bold text-[#2A1F1D]">Sales Overview</h3>
-                <p class="text-xs text-stone-400">Monthly trajectory &amp; revenue spikes</p>
+                <h3 class="text-base font-bold text-[#2A1F1D]">
+                  ${isOwner ? 'Consolidated Sales Trajectory' : 'Branch Sales Overview'}
+                </h3>
+                <p class="text-xs text-stone-400">
+                  ${isOwner ? 'Aggregated daily revenue spikes across all outlets' : 'Daily counter receipts & billing spikes'}
+                </p>
               </div>
 
               <!-- Legend -->
               <div class="flex items-center space-x-3 text-xs">
-                <span class="inline-flex items-center text-stone-600 font-medium">
-                  <span class="w-2.5 h-2.5 rounded-full bg-[#C86D3B] mr-1.5"></span>
-                  Gross Sales
+                <span class="flex items-center text-stone-600">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] mr-1.5"></span>
+                  Gross Revenue
                 </span>
-                <span class="text-stone-300">|</span>
-                <span class="text-stone-500 font-medium">1 Sep – 30 Sep</span>
+                <span class="flex items-center text-stone-600">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#C86D3B] mr-1.5"></span>
+                  Cost &amp; Inward
+                </span>
               </div>
             </div>
 
-            <!-- SVG Line & Area Graph (1:1 with Stitch reference) -->
-            <div class="relative w-full h-56 pt-3 overflow-hidden">
-              <svg class="w-full h-full overflow-hidden" viewBox="0 0 700 200" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#C86D3B" stop-opacity="0.25"></stop>
-                    <stop offset="100%" stop-color="#C86D3B" stop-opacity="0.0"></stop>
-                  </linearGradient>
-                </defs>
+            <!-- Trajectory Wave SVG -->
+            <div class="pt-4">
+              <div class="w-full h-44 sm:h-52 relative">
+                <svg class="w-full h-full" viewBox="0 0 500 160" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#10B981" stop-opacity="0.3"></stop>
+                      <stop offset="100%" stop-color="#10B981" stop-opacity="0.0"></stop>
+                    </linearGradient>
+                  </defs>
+                  <!-- Baseline lines -->
+                  <line x1="0" y1="40" x2="500" y2="40" stroke="#F5EFE9" stroke-width="1" stroke-dasharray="4 4" />
+                  <line x1="0" y1="80" x2="500" y2="80" stroke="#F5EFE9" stroke-width="1" stroke-dasharray="4 4" />
+                  <line x1="0" y1="120" x2="500" y2="120" stroke="#F5EFE9" stroke-width="1" stroke-dasharray="4 4" />
 
-                <!-- Horizontal Dashed Grid Lines -->
-                <line x1="40" y1="20" x2="700" y2="20" stroke="#F4EFEA" stroke-width="1" stroke-dasharray="4 4"></line>
-                <line x1="40" y1="65" x2="700" y2="65" stroke="#F4EFEA" stroke-width="1" stroke-dasharray="4 4"></line>
-                <line x1="40" y1="110" x2="700" y2="110" stroke="#F4EFEA" stroke-width="1" stroke-dasharray="4 4"></line>
-                <line x1="40" y1="155" x2="700" y2="155" stroke="#F4EFEA" stroke-width="1"></line>
+                  <!-- Revenue Curve Area -->
+                  <path d="M 0 130 Q 80 110, 150 70 T 300 50 T 420 30 T 500 20 L 500 160 L 0 160 Z" fill="url(#salesGrad)" />
+                  <!-- Revenue Curve Line -->
+                  <path d="M 0 130 Q 80 110, 150 70 T 300 50 T 420 30 T 500 20" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" />
 
-                <!-- Y-Axis Value Labels -->
-                <text x="5" y="24" fill="#A8A29E" font-size="10" font-family="sans-serif">50K</text>
-                <text x="5" y="69" fill="#A8A29E" font-size="10" font-family="sans-serif">40K</text>
-                <text x="5" y="114" fill="#A8A29E" font-size="10" font-family="sans-serif">20K</text>
-                <text x="5" y="159" fill="#A8A29E" font-size="10" font-family="sans-serif">10K</text>
-
-                <!-- Gradient Fill Under Curve -->
-                <path d="M 50 145 C 100 130, 140 148, 190 100 C 240 60, 280 95, 340 55 C 400 20, 450 70, 520 40 C 580 15, 630 65, 690 30 L 690 160 L 50 160 Z" fill="url(#chartFill)"></path>
-
-                <!-- Primary Curve Line -->
-                <path d="M 50 145 C 100 130, 140 148, 190 100 C 240 60, 280 95, 340 55 C 400 20, 450 70, 520 40 C 580 15, 630 65, 690 30" fill="none" stroke="#C86D3B" stroke-width="3.5" stroke-linecap="round"></path>
-
-                <!-- Peak Data Markers -->
-                <circle cx="520" cy="40" r="5" fill="#FFFFFF" stroke="#C86D3B" stroke-width="3"></circle>
-                <circle cx="690" cy="30" r="5" fill="#FFFFFF" stroke="#C86D3B" stroke-width="3"></circle>
-              </svg>
-
-              <!-- X-Axis Dates -->
-              <div class="flex justify-between pl-8 pr-2 pt-2 text-[11px] font-medium text-stone-400">
-                <span>1 Sep</span>
-                <span>5 Sep</span>
-                <span>10 Sep</span>
+                  <!-- Cost Line -->
+                  <path d="M 0 145 Q 80 135, 150 110 T 300 95 T 420 80 T 500 70" fill="none" stroke="#C86D3B" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="flex justify-between text-[11px] text-stone-400 font-mono pt-2">
+                <span>01 Sep</span>
+                <span>08 Sep</span>
                 <span>15 Sep</span>
-                <span>20 Sep</span>
-                <span>25 Sep</span>
+                <span>22 Sep</span>
                 <span>30 Sep</span>
               </div>
             </div>
           </section>
 
-          <!-- SECTION 2: Fast Selling Sweets & Stock Table (1:1 with Stitch screen.png) -->
-          <section id="section-fast-selling" class="scroll-reveal-item bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="fast-selling-sweets-table">
-            <div class="p-5 border-b border-[#F0ECE4] flex items-center justify-between">
-              <div>
-                <h3 class="text-base font-bold text-[#2A1F1D]">Fast Selling Sweets &amp; Stock</h3>
-                <p class="text-xs text-stone-400">Popular freshly prepared batch items for today</p>
+          <!-- SECTION 2: Fast Selling Sweets or Live Combined Orders Table -->
+          ${isOwner ? `
+            <!-- OWNER: Combined Live Orders Across Outlets -->
+            <section class="bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="combined-orders-table">
+              <div class="p-5 border-b border-[#F0ECE4] flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-[#2A1F1D]">Combined Live Orders Across Outlets</h3>
+                  <p class="text-xs text-stone-400">Chronological feed of bills generated at all store outlets</p>
+                </div>
+                <button class="text-xs font-bold text-[#C86D3B] hover:underline cursor-pointer" data-tab="orders">
+                  View All Orders →
+                </button>
               </div>
-              <button 
-                class="text-xs font-semibold text-[#C86D3B] hover:text-[#B25D2E] flex items-center cursor-pointer transition-colors"
-                data-tab="products"
-              >
-                <span>View Full Menu</span>
-                <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-              </button>
-            </div>
 
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs sm:text-sm">
-                <thead>
-                  <tr class="bg-stone-50/70 border-b border-[#F0ECE4] text-stone-500 font-semibold text-[11px] uppercase tracking-wider">
-                    <th class="py-3 px-5">Sweet Name</th>
-                    <th class="py-3 px-4">Category</th>
-                    <th class="py-3 px-4">Rate (₹)</th>
-                    <th class="py-3 px-4">Stock Status</th>
-                    <th class="py-3 px-4 text-right">Quick Order</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-[#F0ECE4]/60">
-                  ${(sweets.length > 0 ? sweets.slice(0, 6) : []).map((sweet: any) => {
-                    const isLow = sweet.stock <= (sweet.minStock || 15) || sweet.stockStatus === 'Low Stock';
-                    const isOutOfStock = sweet.stock === 0;
-                    return `
-                      <tr class="table-row-hover transition-all cursor-pointer">
-                        <td class="py-3 px-5 flex items-center space-x-3">
-                          <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-amber-50 shrink-0 shadow-2xs">
-                            <img src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" alt="${sweet.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';" />
-                          </div>
-                          <div class="min-w-0">
-                            <span class="font-semibold text-[#2A1F1D] block truncate">${sweet.name}</span>
-                            <span class="text-[10px] text-stone-400 font-mono">Stock: ${sweet.stock} ${sweet.unit || 'kg'}</span>
-                          </div>
-                        </td>
-                        <td class="py-3 px-4 text-stone-500">${sweet.category || 'Traditional'}</td>
-                        <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹${sweet.pricePerKg} <span class="text-[11px] font-normal text-stone-400">/${sweet.unit || 'kg'}</span></td>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-500 font-bold uppercase text-[10px]">
+                      <th class="py-3 px-4">Order #</th>
+                      <th class="py-3 px-4">Outlet Source</th>
+                      <th class="py-3 px-4">Patron</th>
+                      <th class="py-3 px-4">Items Summary</th>
+                      <th class="py-3 px-4">Amount</th>
+                      <th class="py-3 px-4 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-stone-100">
+                    ${(ordersList.length > 0 ? ordersList.slice(0, 6) : []).map((ord: any) => `
+                      <tr class="hover:bg-amber-50/30 transition-colors">
+                        <td class="py-3 px-4 font-mono font-bold text-stone-900">${ord.orderNumber || ord.id}</td>
                         <td class="py-3 px-4">
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                            isOutOfStock ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                            isLow ? 'bg-amber-50 text-amber-700 border border-amber-300' :
-                            'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          }">
-                            ${isOutOfStock ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
+                          <span class="px-2 py-0.5 rounded-lg bg-stone-100 text-stone-800 font-bold text-[10px] border border-stone-200">
+                            ${ord.branchName || 'Active Outlet'}
                           </span>
                         </td>
+                        <td class="py-3 px-4 font-semibold text-stone-800">
+                          ${ord.customer?.name || ord.customerName || 'Walk-in OTC'}
+                        </td>
+                        <td class="py-3 px-4 text-stone-500 max-w-[180px] truncate">
+                          ${(ord.items || []).map((i: any) => `${i.name} (${i.qty || 1}${i.unit || 'kg'})`).join(', ') || 'Assorted Mithai'}
+                        </td>
+                        <td class="py-3 px-4 font-black text-stone-900">₹${ord.total || 0}</td>
                         <td class="py-3 px-4 text-right">
-                          <button 
-                            class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
-                            data-id="${sweet.id}" 
-                            data-name="${sweet.name}" 
-                            data-price="${sweet.pricePerKg}"
-                          >
-                            + Add
-                          </button>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                            ord.paymentStatus === 'Paid' || ord.status === 'Completed' 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                              : 'bg-amber-100 text-amber-800 border border-amber-200'
+                          }">
+                            ${ord.paymentStatus || 'Completed'}
+                          </span>
                         </td>
                       </tr>
-                    `;
-                  }).join('')}
-                  ${sweets.length === 0 ? `
-                    <tr>
-                      <td colspan="5" class="py-8 text-center text-stone-400">
-                        No confectionery items loaded in catalog for this branch.
-                      </td>
+                    `).join('')}
+                    ${ordersList.length === 0 ? `
+                      <tr>
+                        <td colspan="6" class="py-8 text-center text-stone-400">
+                          No recent orders in the queue.
+                        </td>
+                      </tr>
+                    ` : ''}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ` : `
+            <!-- BRANCH MANAGER: Fast Selling Sweets & Stock Table -->
+            <section id="section-fast-selling" class="scroll-reveal-item bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="fast-selling-sweets-table">
+              <div class="p-5 border-b border-[#F0ECE4] flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-[#2A1F1D]">Fast Selling Sweets &amp; Stock</h3>
+                  <p class="text-xs text-stone-400">Live fresh batch stock for ${activeBranchObj.name}</p>
+                </div>
+                <button class="text-xs font-semibold text-[#C86D3B] hover:underline cursor-pointer" data-tab="products">
+                  View Full Menu →
+                </button>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr class="bg-stone-50 border-b border-[#F0ECE4] text-stone-500 font-semibold text-[11px] uppercase tracking-wider">
+                      <th class="py-3 px-5">Sweet Name</th>
+                      <th class="py-3 px-4">Category</th>
+                      <th class="py-3 px-4">Rate (₹)</th>
+                      <th class="py-3 px-4">Stock Status</th>
+                      <th class="py-3 px-4 text-right">Quick Order</th>
                     </tr>
-                  ` : ''}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  </thead>
+                  <tbody class="divide-y divide-[#F0ECE4]/60">
+                    ${(sweetsList.length > 0 ? sweetsList.slice(0, 6) : []).map((sweet: any) => {
+                      const isLow = sweet.stock <= (sweet.minStock || 15) || sweet.stockStatus === 'Low Stock';
+                      const isOutOfStock = sweet.stock === 0;
+                      return `
+                        <tr class="table-row-hover transition-all cursor-pointer">
+                          <td class="py-3 px-5 flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-lg overflow-hidden border border-amber-200 bg-amber-50 shrink-0 shadow-2xs">
+                              <img src="${sweet.image || `/assets/sweets/${sweet.id}.png`}" alt="${sweet.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='/assets/sweets/sw-1.png';" />
+                            </div>
+                            <div class="min-w-0">
+                              <span class="font-semibold text-[#2A1F1D] block truncate">${sweet.name}</span>
+                              <span class="text-[10px] text-stone-400 font-mono">Stock: ${sweet.stock} ${sweet.unit || 'kg'}</span>
+                            </div>
+                          </td>
+                          <td class="py-3 px-4 text-stone-500">${sweet.category || 'Traditional'}</td>
+                          <td class="py-3 px-4 font-semibold text-[#2A1F1D]">₹${sweet.pricePerKg} <span class="text-[11px] font-normal text-stone-400">/${sweet.unit || 'kg'}</span></td>
+                          <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                              isOutOfStock ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                              isLow ? 'bg-amber-50 text-amber-700 border border-amber-300' :
+                              'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }">
+                              ${isOutOfStock ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
+                            </span>
+                          </td>
+                          <td class="py-3 px-4 text-right">
+                            <button 
+                              class="quick-add-to-cart-btn interactive-scale px-2.5 py-1 rounded-lg text-xs font-semibold text-[#C86D3B] bg-orange-50 hover:bg-[#C86D3B] hover:text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
+                              data-id="${sweet.id}" 
+                              data-name="${sweet.name}" 
+                              data-price="${sweet.pricePerKg}"
+                            >
+                              + Add
+                            </button>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          `}
 
         </div>
 
         <!-- ====================================================== -->
-        <!-- RIGHT COLUMN (4 COLS): Order Status Donut & Quick Billing -->
+        <!-- RIGHT COLUMN (4 COLS): Order Status Donut & Quick POS  -->
         <!-- ====================================================== -->
         <div class="lg:col-span-4 space-y-6">
           
-          <!-- SECTION 3: Order Status Donut Chart (1:1 with Stitch screen.png) -->
+          <!-- SECTION 3: Order Status Donut Chart -->
           <section id="section-order-status" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="order-status-card">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-base font-bold text-[#2A1F1D]">Order Status</h3>
+              <h3 class="text-base font-bold text-[#2A1F1D]">
+                ${isOwner ? 'Consolidated Orders Breakdown' : 'Branch Order Status'}
+              </h3>
               <span class="text-xs text-stone-400">Live Today</span>
             </div>
 
@@ -601,19 +1077,14 @@ export function renderDashboardView(state: any) {
               <!-- SVG Donut Chart with Center Text -->
               <div class="relative w-36 h-36 flex-shrink-0 flex items-center justify-center">
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <!-- Background ring -->
                   <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F5EFE9" stroke-width="3.8"></circle>
                   ${totalOrders > 0 ? `
-                    <!-- Completed Counter Sales -->
                     <circle cx="18" cy="18" r="14.5" fill="none" stroke="#10B981" stroke-width="3.8" stroke-dasharray="${completedPct} 100" stroke-dashoffset="0" class="donut-segment"></circle>
-                    <!-- Advance Bookings -->
                     <circle cx="18" cy="18" r="14.5" fill="none" stroke="#0284C7" stroke-width="3.8" stroke-dasharray="${advancePct} 100" stroke-dashoffset="-${completedPct}" class="donut-segment"></circle>
-                    <!-- Kitchen Packing -->
                     <circle cx="18" cy="18" r="14.5" fill="none" stroke="#F59E0B" stroke-width="3.8" stroke-dasharray="${kitchenPct} 100" stroke-dashoffset="-${completedPct + advancePct}" class="donut-segment"></circle>
                   ` : ''}
                 </svg>
 
-                <!-- Center Total Metric -->
                 <div class="absolute text-center flex flex-col items-center justify-center pointer-events-none">
                   <div class="text-xl font-bold text-[#2A1F1D] leading-tight flex items-center justify-center">
                     ${renderCounter({
@@ -632,7 +1103,7 @@ export function renderDashboardView(state: any) {
                 <div class="flex items-center justify-between">
                   <span class="flex items-center text-stone-600">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span>
-                    Completed (Counter)
+                    Completed Counter
                   </span>
                   <span class="font-bold text-[#2A1F1D]">
                     ${renderCounter({ value: completedOrders, fontWeight: 700 })}
@@ -660,13 +1131,13 @@ export function renderDashboardView(state: any) {
             </div>
           </section>
 
-          <!-- SECTION 4: Quick Billing (POS) Widget (1:1 with Stitch screen.png) -->
+          <!-- SECTION 4: Quick Billing (POS) Widget -->
           <section id="section-quick-billing" class="scroll-reveal-item bg-white p-5 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] flex flex-col justify-between" data-purpose="quick-pos-widget">
             <div>
               <div class="flex items-center justify-between border-b border-[#F0ECE4] pb-3 mb-4">
                 <div>
-                  <h3 class="text-base font-bold text-[#2A1F1D]">Quick Billing (POS)</h3>
-                  <p class="text-xs text-stone-400">Order #SA-00${130 + orders.length}</p>
+                  <h3 class="text-base font-bold text-[#2A1F1D]">Quick Counter POS</h3>
+                  <p class="text-xs text-stone-400">${activeBranchObj.name}</p>
                 </div>
                 <span class="px-2.5 py-0.5 rounded-full bg-orange-100 text-[#C86D3B] text-[11px] font-semibold">Counter 1</span>
               </div>
@@ -685,73 +1156,36 @@ export function renderDashboardView(state: any) {
                     <p class="text-[11px] text-stone-500">${state.selectedCustomer ? state.selectedCustomer.phone : 'No phone attached'}</p>
                   </div>
                 </div>
-                <button type="button" id="dashboard-switch-customer-btn" class="text-xs font-bold text-[var(--brand-primary)] hover:underline p-1 transition-colors" title="Change Customer">
-                  ${state.selectedCustomer ? 'Change' : '+ Attach'}
-                </button>
               </div>
 
               <!-- Quick Order Selected Sweets Line Items -->
-              ${items.length > 0 ? `
-                <div class="space-y-2.5 mb-4 text-xs">
-                  ${items.map((item: any, idx: number) => `
-                    <div class="flex items-center justify-between py-1.5 ${idx < items.length - 1 ? 'border-b border-stone-100' : ''} group">
+              ${quickItems.length > 0 ? `
+                <div class="space-y-2 mb-4 text-xs">
+                  ${quickItems.slice(0, 3).map((item: any) => `
+                    <div class="flex items-center justify-between py-1 border-b border-stone-100">
                       <div>
                         <p class="font-semibold text-stone-800">${item.name}</p>
-                        <p class="text-[11px] text-stone-400">${item.qty < 1 ? Math.round(item.qty * 1000) + ' g' : item.qty + ' kg'} × ₹${item.rate || item.price || 0}</p>
+                        <p class="text-[10px] text-stone-400">${item.qty} ${item.unit || 'kg'} × ₹${item.rate || item.price || 0}</p>
                       </div>
-                      <div class="flex items-center space-x-2">
-                        <span class="font-bold text-[#2A1F1D]">₹${item.total || Math.round(item.qty * (item.rate || item.price || 0))}</span>
-                        <button class="remove-quick-item-btn opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-500 p-0.5 transition-opacity cursor-pointer" data-index="${idx}" title="Remove item">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-                        </button>
-                      </div>
+                      <span class="font-bold text-[#2A1F1D]">₹${item.total || Math.round(item.qty * (item.rate || item.price || 0))}</span>
                     </div>
                   `).join('')}
                 </div>
               ` : `
-                <div class="py-5 text-center text-stone-400 space-y-1 border border-dashed border-stone-200 rounded-xl mb-4 bg-stone-50/60 flex flex-col items-center justify-center">
-                  <svg class="w-6 h-6 text-stone-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                  <p class="text-xs font-semibold text-stone-600">Quick Cart is Empty</p>
-                  <p class="text-[10px] text-stone-400">Click '+ Add' on sweets to create a quick sale</p>
+                <div class="py-4 text-center text-stone-400 space-y-1 border border-dashed border-stone-200 rounded-xl mb-4 bg-stone-50/60 flex flex-col items-center justify-center">
+                  <p class="text-xs font-semibold text-stone-600">Quick Cart Ready</p>
+                  <p class="text-[10px] text-stone-400">Launch POS for high-speed barcode &amp; weight billing</p>
                 </div>
               `}
-
-              <!-- Price Breakdown Box -->
-              <div class="bg-stone-50 rounded-xl p-3 space-y-1.5 text-xs mb-4">
-                <div class="flex justify-between text-stone-500">
-                  <span>Subtotal</span>
-                  <span>₹${subtotal}</span>
-                </div>
-                <div class="flex justify-between text-stone-500">
-                  <span>Discount</span>
-                  <span class="text-emerald-600">- ₹0</span>
-                </div>
-                <div class="flex justify-between text-stone-500">
-                  <span>Tax (GST 0%)</span>
-                  <span>₹0</span>
-                </div>
-                <div class="border-t border-stone-200/80 pt-1.5 flex justify-between font-bold text-sm text-[#2A1F1D] items-center">
-                  <span>Total Payable</span>
-                  <span class="text-[#C86D3B] text-base font-bold">
-                    ${renderCounter({
-                      value: totalPayable,
-                      prefix: '₹',
-                      fontWeight: 800,
-                      textColor: '#C86D3B',
-                      gradientFrom: 'rgba(255, 255, 255, 0.7)'
-                    })}
-                  </span>
-                </div>
-              </div>
             </div>
 
             <!-- Proceed to Checkout Action -->
             <button 
               id="proceed-to-checkout-btn"
               data-tab="pos"
-              class="w-full py-3 px-4 bg-[#C86D3B] hover:bg-[#B25D2E] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
+              class="w-full py-3 px-4 bg-[#C86D3B] hover:bg-[#B25D2E] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer mt-2"
             >
-              <span>${items.length > 0 ? 'Proceed to Checkout' : 'Open Counter POS'}</span>
+              <span>Launch Point of Sale Counter</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>

@@ -73,8 +73,8 @@ export function renderAddBranchModal(state: any) {
                 type="text" 
                 name="branchCity" 
                 required 
-                value="Ahmedabad"
-                placeholder="e.g. Ahmedabad"
+                value="Gandhinagar"
+                placeholder="e.g. Gandhinagar"
                 class="w-full px-3.5 py-2.5 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs"
               />
             </div>
@@ -87,9 +87,22 @@ export function renderAddBranchModal(state: any) {
               <textarea 
                 name="branchAddress" 
                 rows="2"
-                placeholder="e.g. Shop No. 5-7, Ground Floor, Shivalik Plaza, IIM Road, Ahmedabad"
+                placeholder="e.g. 205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021"
                 class="w-full px-3.5 py-2 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs resize-none"
               ></textarea>
+            </div>
+
+            <!-- Google Maps Link -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-stone-700 mb-1">
+                Google Maps Location URL (Optional)
+              </label>
+              <input 
+                type="url" 
+                name="branchMapUrl" 
+                placeholder="e.g. https://maps.app.goo.gl/..."
+                class="w-full px-3.5 py-2.5 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs"
+              />
             </div>
 
             <!-- Store Phone -->
@@ -150,16 +163,16 @@ export function renderAddBranchModal(state: any) {
             <!-- Branch Specific UPI & Banking Settings -->
             <div class="sm:col-span-2 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
               <span class="text-[11px] font-black uppercase text-[#9A3412] tracking-wider flex items-center gap-1.5">
-                <span>📱</span> Branch Specific UPI &amp; Bill Printing Setup
+                <span>📱</span> Branch Specific UPI &amp; Counter QR Code
               </span>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Store UPI ID / VPA</label>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Store UPI ID / VPA *</label>
                   <input 
                     type="text" 
                     name="branchUpiId" 
                     placeholder="e.g. radhesweets.branch@oksbi"
-                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono font-bold text-[#2A1F1D] outline-none"
                   />
                 </div>
                 <div>
@@ -170,6 +183,34 @@ export function renderAddBranchModal(state: any) {
                     placeholder="e.g. Radhe Sweets Branch"
                     class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
                   />
+                </div>
+              </div>
+            </div>
+
+            <!-- Branch Specific Receipt & Thermal Printer Setup -->
+            <div class="sm:col-span-2 p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
+              <span class="text-[11px] font-black uppercase text-stone-800 tracking-wider flex items-center gap-1.5">
+                <span>🧾</span> Branch Thermal Receipt &amp; Bill Settings
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Receipt Header Subtitle</label>
+                  <input 
+                    type="text" 
+                    name="branchReceiptHeader" 
+                    placeholder="e.g. Swagat Twin City Outpost"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Thermal Paper Size</label>
+                  <select 
+                    name="branchPaperSize" 
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] font-bold outline-none"
+                  >
+                    <option value="80mm" selected>80mm (Standard Wide Roll)</option>
+                    <option value="58mm">58mm (Compact Mobile Roll)</option>
+                  </select>
                 </div>
                 <div>
                   <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Branch GSTIN</label>
@@ -187,6 +228,15 @@ export function renderAddBranchModal(state: any) {
                     name="branchFssai" 
                     placeholder="e.g. 10722026000414"
                     class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Custom Receipt Footer / Greeting</label>
+                  <input 
+                    type="text" 
+                    name="branchReceiptFooter" 
+                    placeholder="e.g. Thank You! Visit Again - Swagat Twin City Gandhinagar"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
                   />
                 </div>
               </div>
@@ -296,8 +346,8 @@ export function renderEditBranchModal(state: any) {
                 type="text" 
                 name="branchCity" 
                 required 
-                value="${branch.city || 'Ahmedabad'}"
-                placeholder="e.g. Ahmedabad"
+                value="${branch.city || 'Gandhinagar'}"
+                placeholder="e.g. Gandhinagar"
                 class="w-full px-3.5 py-2.5 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs"
               />
             </div>
@@ -310,9 +360,23 @@ export function renderEditBranchModal(state: any) {
               <textarea 
                 name="branchAddress" 
                 rows="2"
-                placeholder="e.g. Shop No. 12-14, Shivalik Plaza, IIM Road, Ahmedabad"
+                placeholder="e.g. 205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021"
                 class="w-full px-3.5 py-2 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs resize-none"
               >${branch.address || ''}</textarea>
+            </div>
+
+            <!-- Google Maps Link -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-stone-700 mb-1">
+                Google Maps Location URL (Optional)
+              </label>
+              <input 
+                type="url" 
+                name="branchMapUrl" 
+                value="${branch.mapUrl || ''}"
+                placeholder="e.g. https://maps.app.goo.gl/..."
+                class="w-full px-3.5 py-2.5 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs sm:text-sm text-[#2A1F1D] font-medium outline-none focus:ring-2 focus:ring-[#C86D3B]/20 transition-all shadow-2xs"
+              />
             </div>
 
             <!-- Store Phone -->
@@ -375,11 +439,11 @@ export function renderEditBranchModal(state: any) {
             <!-- Branch Specific UPI & Banking Settings -->
             <div class="sm:col-span-2 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
               <span class="text-[11px] font-black uppercase text-[#9A3412] tracking-wider flex items-center gap-1.5">
-                <span>📱</span> Branch Specific UPI &amp; Bill Printing Setup
+                <span>📱</span> Branch Specific UPI &amp; Counter QR Code
               </span>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Store UPI ID / VPA</label>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Store UPI ID / VPA *</label>
                   <input 
                     type="text" 
                     name="branchUpiId" 
@@ -397,6 +461,35 @@ export function renderEditBranchModal(state: any) {
                     placeholder="e.g. Radhe Sweets Branch"
                     class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
                   />
+                </div>
+              </div>
+            </div>
+
+            <!-- Branch Specific Receipt & Thermal Printer Setup -->
+            <div class="sm:col-span-2 p-3.5 bg-stone-50 border border-stone-200 rounded-2xl space-y-2.5">
+              <span class="text-[11px] font-black uppercase text-stone-800 tracking-wider flex items-center gap-1.5">
+                <span>🧾</span> Branch Thermal Receipt &amp; Bill Settings
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Receipt Header Subtitle</label>
+                  <input 
+                    type="text" 
+                    name="branchReceiptHeader" 
+                    value="${branch.receiptHeader || ''}"
+                    placeholder="e.g. Swagat Twin City Outpost"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Thermal Paper Size</label>
+                  <select 
+                    name="branchPaperSize" 
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] font-bold outline-none"
+                  >
+                    <option value="80mm" ${branch.paperSize === '80mm' || !branch.paperSize ? 'selected' : ''}>80mm (Standard Wide Roll)</option>
+                    <option value="58mm" ${branch.paperSize === '58mm' ? 'selected' : ''}>58mm (Compact Mobile Roll)</option>
+                  </select>
                 </div>
                 <div>
                   <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Branch GSTIN</label>
@@ -416,6 +509,16 @@ export function renderEditBranchModal(state: any) {
                     value="${branch.fssai || ''}"
                     placeholder="e.g. 10722026000411"
                     class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-mono text-[#2A1F1D] outline-none"
+                  />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-[11px] font-bold text-stone-700 mb-0.5">Custom Receipt Footer / Greeting</label>
+                  <input 
+                    type="text" 
+                    name="branchReceiptFooter" 
+                    value="${branch.receiptFooter || ''}"
+                    placeholder="e.g. Thank You! Visit Again - Sector 21 Gandhinagar"
+                    class="w-full px-3 py-2 bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs text-[#2A1F1D] outline-none"
                   />
                 </div>
               </div>

@@ -29,13 +29,19 @@ export function filterDialerCustomers(customers: any[], query: string): any[] {
   });
 }
 
-export function renderDialerMatchesHtml(customers: any[], query: string, rawDigits: string): string {
+export function renderDialerMatchesHtml(
+  customers: any[], 
+  query: string, 
+  rawDigits: string,
+  currentBranchId = 'br-1',
+  branches: any[] = []
+): string {
   const matches = filterDialerCustomers(customers, query);
   const cleanDigits = (rawDigits || '').replace(/\D/g, '').slice(0, 10);
   const formattedDialed = cleanDigits.length > 0 ? formatDialerPhone(cleanDigits) : '';
   const exactMatch = matches.find(c => {
     const cDigits = (c.phone || '').replace(/\D/g, '');
-    return cleanDigits.length > 0 && (cDigits.endsWith(cleanDigits) || cleanDigits.endsWith(cDigits));
+    return cleanDigits.length >= 4 && (cDigits.includes(cleanDigits) || cleanDigits.includes(cDigits));
   });
 
   // If no matches found in directory for this query or dialed digits
@@ -94,16 +100,22 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
       ${matches.map(c => {
         const isExact = exactMatch && exactMatch.id === c.id;
         const initials = (c.name || 'C').split(' ').filter(Boolean).map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+        const branchObj = (branches || []).find((b: any) => b.id === c.branchId);
+        const branchName = branchObj ? branchObj.name : (c.branchName || 'Radhe Sweets Flagship');
+        const isOtherBranch = Boolean(c.branchId && c.branchId !== currentBranchId);
+
         return `
           <div 
             class="p-3.5 sm:p-4 rounded-2xl border ${
               isExact 
                 ? 'border-emerald-500 bg-emerald-50/90 ring-2 ring-emerald-400/40 shadow-xs' 
-                : 'border-[var(--border-color)] bg-[var(--bg-surface)] hover:border-amber-400 hover:bg-[var(--brand-primary-light)]'
+                : isOtherBranch
+                  ? 'border-blue-200 bg-blue-50/50 hover:border-blue-400 hover:bg-blue-50/80 shadow-2xs'
+                  : 'border-[var(--border-color)] bg-[var(--bg-surface)] hover:border-amber-400 hover:bg-[var(--brand-primary-light)]'
             } transition-all flex items-center justify-between gap-3 group"
           >
             <div class="flex items-center space-x-3.5 min-w-0">
-              <div class="w-12 h-12 rounded-2xl ${isExact ? 'bg-emerald-600' : 'bg-stone-700'} text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+              <div class="w-12 h-12 rounded-2xl ${isExact ? 'bg-emerald-600' : isOtherBranch ? 'bg-blue-700' : 'bg-stone-700'} text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs">
                 ${initials}
               </div>
               <div class="min-w-0">
@@ -112,6 +124,15 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-black font-mono bg-stone-100 text-stone-800 border border-stone-200">
                     #${(c.id || 'CUST').toUpperCase()}
                   </span>
+                  ${isOtherBranch ? `
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-black bg-blue-100 text-blue-900 border border-blue-300">
+                      📍 ${branchName} Patron
+                    </span>
+                  ` : `
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-stone-100 text-stone-600">
+                      📍 ${branchName}
+                    </span>
+                  `}
                   ${isExact ? `
                     <span class="text-[10px] px-2 py-0.5 rounded-full font-black bg-emerald-600 text-white shadow-2xs">
                       ★ Matched
@@ -123,6 +144,8 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
                   <span class="font-bold text-stone-800">Spent: ₹${(c.totalSpent || 0).toLocaleString()}</span>
                   <span>•</span>
                   <span>${c.totalOrders || 1} orders</span>
+                  <span>•</span>
+                  <span class="text-amber-800 font-bold">⭐ ${c.loyaltyPoints || 0} Pts</span>
                 </div>
               </div>
             </div>
@@ -133,7 +156,9 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
               class="px-4 sm:px-5 py-3 rounded-xl ${
                 isExact 
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs' 
-                  : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)] group-hover:bg-[var(--brand-primary)] group-hover:text-white'
+                  : isOtherBranch
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
+                    : 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)] group-hover:bg-[var(--brand-primary)] group-hover:text-white'
               } text-xs sm:text-sm font-extrabold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <span>✓ Attach</span>
@@ -146,7 +171,7 @@ export function renderDialerMatchesHtml(customers: any[], query: string, rawDigi
 }
 
 export function renderCustomerDialerModal(state: any) {
-  const { customers = [], dialerInput = '' } = state;
+  const { customers = [], dialerInput = '', currentBranchId = 'br-1', branches = [] } = state;
   const rawDigits = (dialerInput || '').replace(/\D/g, '').slice(0, 10);
   const formattedPhone = formatDialerPhone(rawDigits);
   const hasDigits = rawDigits.length > 0;
@@ -352,7 +377,7 @@ export function renderCustomerDialerModal(state: any) {
 
             <!-- Matching Patrons Live Container (Updated in-place with zero flicker) -->
             <div id="dialer-matches-container">
-              ${renderDialerMatchesHtml(customers, dialerInput, rawDigits)}
+              ${renderDialerMatchesHtml(customers, dialerInput, rawDigits, currentBranchId, branches)}
             </div>
           </div>
         </div>
@@ -360,3 +385,85 @@ export function renderCustomerDialerModal(state: any) {
     </div>
   `;
 }
+
+// Auto-ask modal when a customer phone number is entered that is new to the database
+export function renderQuickNewCustomerPromptModal(prompt: { phone: string, cleanDigits: string }) {
+  return `
+    <div id="quick-new-cust-modal-backdrop" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
+      <div class="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 dark:border-stone-800 animate-slide-up space-y-4">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-2xl bg-[#C86D3B]/10 text-[#C86D3B] flex items-center justify-center text-lg font-bold shadow-2xs">
+              👤
+            </span>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-black text-base text-stone-900 dark:text-white">New Customer Detected!</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  +50 Pts
+                </span>
+              </div>
+              <p class="text-xs text-stone-500 font-mono font-bold mt-0.5">Mobile: ${prompt.phone}</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            id="close-quick-new-cust-modal-btn" 
+            class="w-8 h-8 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-500 dark:text-stone-400 hover:text-stone-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
+            title="Cancel"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Auto Ask for Name Form -->
+        <form id="quick-new-customer-name-form" class="space-y-4">
+          <div class="space-y-1.5">
+            <label class="block text-xs font-black text-stone-700 dark:text-stone-300">
+              Customer Full Name <span class="text-[#C86D3B]">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="quick-new-cust-name-input" 
+              placeholder="Enter customer name (e.g. Ramesh Bhai Patel)..." 
+              autofocus 
+              class="w-full px-4 py-3 bg-stone-50 dark:bg-stone-800/80 hover:bg-white focus:bg-white dark:focus:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 focus:border-[#C86D3B] rounded-2xl text-sm font-bold text-stone-900 dark:text-white outline-none focus:ring-4 focus:ring-[#C86D3B]/10 transition-all shadow-2xs"
+            />
+            <p class="text-[11px] text-stone-400">
+              Type name and press <kbd class="px-1.5 py-0.5 bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 rounded text-[10px] font-mono font-bold">Enter ↵</kbd> to save &amp; attach to bill instantly.
+            </p>
+          </div>
+
+          <div class="p-3 bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 rounded-2xl flex items-center gap-2.5">
+            <span class="text-base">📍</span>
+            <div class="text-[11px] text-amber-900 dark:text-amber-200 font-medium leading-tight">
+              <strong>Location: Gandhinagar, Gujarat</strong> • Auto-enrolled in Radhe Sweets VIP Loyalty with 50 bonus points.
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button 
+              type="button" 
+              id="quick-new-cust-skip-btn" 
+              class="flex-1 py-3 px-3 rounded-2xl border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 font-bold text-xs transition-all cursor-pointer"
+            >
+              Skip Name
+            </button>
+            <button 
+              type="submit" 
+              id="quick-new-cust-submit-btn" 
+              class="flex-2 py-3 px-4 rounded-2xl bg-[#C86D3B] hover:bg-[#b05a2b] text-white font-black text-xs sm:text-sm shadow-md transition-all active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Attach Customer</span>
+              <span>↵</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  `;
+}
+

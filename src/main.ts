@@ -32,9 +32,13 @@ import {
   firestoreLiveState,
   onFirestoreStatusChange,
   getBranchDefaultCatalog,
-  testFirestoreConnection,
   saveBranchSettingsToCloud,
-  saveBranchCategoriesToCloud
+  saveBranchCategoriesToCloud,
+  saveUserToCloud,
+  deleteUserFromCloud,
+  subscribeToUsers,
+  loadUsersFromCloud,
+  defaultMasterUser
 } from './firebase.js';
 import { initialData } from './data.js';
 import { renderSidebar } from './components/Sidebar.ts';
@@ -93,6 +97,7 @@ import { renderSettingsView } from './components/SettingsView.ts';
 import { renderSplashView } from './components/SplashView.ts';
 import { 
   renderCustomerDialerModal, 
+  renderQuickNewCustomerPromptModal,
   formatDialerPhone, 
   renderDialerMatchesHtml, 
   filterDialerCustomers 
@@ -110,8 +115,64 @@ import {
   renderAddBranchModal, 
   renderEditBranchModal 
 } from './components/BranchModals.ts';
+import { renderLoginView } from './components/LoginView.ts';
+import { renderOwnerManageView, renderCreateUserModal, renderEditUserModal } from './components/OwnerManageView.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
+const AUTH_USER_KEY = 'radhe_auth_user_v1';
+const USERS_STORAGE_KEY = 'radhe_users_list_v1';
+const GLOBAL_CUSTOMERS_KEY = 'radhe_global_customers_v2';
+
+export function getStoredGlobalCustomers(): any[] | null {
+  try {
+    const raw = localStorage.getItem(GLOBAL_CUSTOMERS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return null;
+}
+
+export function saveGlobalCustomers(customers: any[]) {
+  try {
+    if (Array.isArray(customers) && customers.length > 0) {
+      localStorage.setItem(GLOBAL_CUSTOMERS_KEY, JSON.stringify(customers));
+    }
+  } catch (_) {}
+}
+
+function getStoredAuthUser() {
+  try {
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u.role === 'branch_admin') {
+        u.allowedPages = ['dashboard', 'pos', 'orders', 'customers', 'products', 'expenses', 'analytics', 'staff', 'branch-admin'];
+      }
+      return u;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function getStoredUsersList() {
+  try {
+    const raw = localStorage.getItem(USERS_STORAGE_KEY);
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        return list.map((u: any) => {
+          if (u.role === 'branch_admin') {
+            return {
+              ...u,
+              allowedPages: ['dashboard', 'pos', 'orders', 'customers', 'products', 'expenses', 'analytics', 'staff', 'branch-admin']
+            };
+          }
+          return u;
+        });
+      }
+    }
+  } catch (_) {}
+  return [defaultMasterUser];
+}
 
 // Auto-delay timer holders for checkout completion & thermal receipt
 let receiptAutoTimer: any = null;
@@ -126,6 +187,103 @@ function getStoredState() {
     console.error('Failed to load local storage:', e);
   }
   return null;
+}
+
+// Sanitizer to guarantee only the official 8 Gandhinagar branches are loaded and persistent
+export function sanitizeBranchesList(inputBranches: any[]): any[] {
+  const seedList = [...initialData.branches];
+  if (!Array.isArray(inputBranches)) {
+    return seedList;
+  }
+  const hasObsolete = inputBranches.some((b: any) => 
+    b.name?.includes('Infocity') || 
+    b.name?.includes('GIFT') || 
+    b.name?.includes('Bhaijipura') ||
+    b.name?.includes('Navrangpura') || 
+    b.name?.includes('Satellite') || 
+    b.name?.includes('SG Highway') || 
+    b.city === 'Ahmedabad' ||
+    b.id === 'br-9' ||
+    b.id === 'br-10' ||
+    b.id === 'br-11'
+  );
+  if (hasObsolete || inputBranches.length < seedList.length) {
+    return seedList;
+  }
+  const allowed = inputBranches.filter((b: any) => 
+    !b.name?.includes('Infocity') &&
+    !b.name?.includes('GIFT') &&
+    !b.name?.includes('Bhaijipura') &&
+    !b.name?.includes('Navrangpura') &&
+    b.city !== 'Ahmedabad' &&
+    b.id !== 'br-9' &&
+    b.id !== 'br-10' &&
+    b.id !== 'br-11'
+  );
+  seedList.forEach(seedB => {
+    if (!allowed.some((b: any) => b.id === seedB.id)) {
+      allowed.push(seedB);
+    }
+  });
+  return allowed;
+}
+
+// Sanitizer to guarantee customers belong only to the official 8 branches (10 per branch)
+export function sanitizeCustomersList(inputCusts: any[]): any[] {
+  const seedCusts = [...initialData.customers];
+  if (!Array.isArray(inputCusts)) {
+    return seedCusts;
+  }
+  const hasObsolete = inputCusts.some((c: any) => 
+    c.branchName?.includes('Infocity') || 
+    c.branchName?.includes('GIFT') || 
+    c.branchName?.includes('Bhaijipura') ||
+    c.branchName?.includes('Navrangpura') ||
+    c.branchId === 'br-9' ||
+    c.branchId === 'br-10' ||
+    c.branchId === 'br-11'
+  );
+  if (hasObsolete || inputCusts.length < seedCusts.length) {
+    return seedCusts;
+  }
+  return inputCusts.filter((c: any) => 
+    !c.branchName?.includes('Infocity') &&
+    !c.branchName?.includes('GIFT') &&
+    !c.branchName?.includes('Bhaijipura') &&
+    !c.branchName?.includes('Navrangpura') &&
+    c.branchId !== 'br-9' &&
+    c.branchId !== 'br-10' &&
+    c.branchId !== 'br-11'
+  );
+}
+
+// Sanitizer to guarantee staff members belong only to the official 8 branches (3 per branch)
+export function sanitizeStaffList(inputStaff: any[]): any[] {
+  const seedStaff = [...initialData.staff];
+  if (!Array.isArray(inputStaff)) {
+    return seedStaff;
+  }
+  const hasObsolete = inputStaff.some((s: any) => 
+    s.branchName?.includes('Infocity') || 
+    s.branchName?.includes('GIFT') || 
+    s.branchName?.includes('Bhaijipura') ||
+    s.branchName?.includes('Navrangpura') ||
+    s.branchId === 'br-9' ||
+    s.branchId === 'br-10' ||
+    s.branchId === 'br-11'
+  );
+  if (hasObsolete || inputStaff.length < seedStaff.length) {
+    return seedStaff;
+  }
+  return inputStaff.filter((s: any) => 
+    !s.branchName?.includes('Infocity') &&
+    !s.branchName?.includes('GIFT') &&
+    !s.branchName?.includes('Bhaijipura') &&
+    !s.branchName?.includes('Navrangpura') &&
+    s.branchId !== 'br-9' &&
+    s.branchId !== 'br-10' &&
+    s.branchId !== 'br-11'
+  );
 }
 
 // Master reactive state
@@ -151,20 +309,26 @@ const state = {
   ],
   receiptSettings: stored?.receiptSettings || stored?.shopInfo?.receiptSettings || { ...defaultReceiptSettings },
   showMobileCartSheet: false,
-  customers: (stored?.customers && stored.customers.length > 0) ? stored.customers : [...initialData.customers],
+  customers: sanitizeCustomersList(getStoredGlobalCustomers() || stored?.customers),
   orders: stored?.orders || [...initialData.orders],
   expenses: stored?.expenses || { ...initialData.expenses },
   analytics: stored?.analytics || { ...initialData.analytics },
-  staff: (stored?.staff && stored.staff.length > 0) ? stored.staff : [...initialData.staff],
+  staff: sanitizeStaffList(stored?.staff),
   staffFilterTab: 'all',
   staffSearchQuery: '',
   staffDeptFilter: 'all',
   staffBranchFilter: stored?.staffBranchFilter || stored?.currentBranchId || 'br-1',
 
   // Enterprise Multi-Branch & Store Inventory State
-  branches: stored?.branches || [...initialData.branches],
+  branches: sanitizeBranchesList(stored?.branches),
   currentBranchId: stored?.currentBranchId || 'br-1',
   userRole: stored?.userRole || 'SUPER_ADMIN',
+  currentUser: getStoredAuthUser(),
+  users: getStoredUsersList(),
+  showCreateUserModal: false,
+  showEditUserModal: false,
+  editingUser: null as any,
+  loginError: '',
   parkedBills: stored?.parkedBills || [...initialData.parkedBills],
   rawMaterials: stored?.rawMaterials || [...initialData.rawMaterials],
   advanceOrders: stored?.advanceOrders || [...initialData.advanceOrders],
@@ -193,6 +357,8 @@ const state = {
   customersFilterTab: 'all',
   productsFilterCategory: 'All',
   expensesFilterCategory: 'All',
+  crossBranchSearchQuery: '',
+  crossBranchFilterCategory: 'All',
   timeFilter: 'month',
 
   // POS State (Walk-in counter by default - no pre-selected patron)
@@ -222,6 +388,12 @@ const state = {
   editingAdvanceOrder: null as any,
   showHeldCartsModal: false,
   customersSortBy: stored?.customersSortBy || 'most-spent',
+  expensesBranchFilter: 'all',
+  analyticsPLScope: stored?.analyticsPLScope || 'branch',
+  analyticsPLTimeframe: stored?.analyticsPLTimeframe || 'month',
+  analyticsPLDailyDate: stored?.analyticsPLDailyDate || '2026-09-25',
+  analyticsPLCustomFrom: stored?.analyticsPLCustomFrom || '2026-09-01',
+  analyticsPLCustomTo: stored?.analyticsPLCustomTo || '2026-09-25',
   expenseSavedSuccess: false,
   lastSavedExpense: null as any,
   showAddProductModal: false,
@@ -251,10 +423,15 @@ const state = {
   showRecordAdvanceModal: false,
   advanceStaffId: null,
 
-  // Branch Modals
+  // Branch Modals & Switching
   showAddBranchModal: false,
   showEditBranchModal: false,
   editingBranch: null,
+  isSwitchingBranch: false,
+
+  // Quick Customer Attach State
+  quickNewCustomerPrompt: null as { phone: string, cleanDigits: string } | null,
+
 
   // Customer Storefront State
   userCart: stored?.userCart || [],
@@ -304,14 +481,26 @@ function saveState() {
       customerPhone: state.customerPhone,
       customerAddress: state.customerAddress,
       categories: state.categories,
-      receiptSettings: state.receiptSettings
+      receiptSettings: state.receiptSettings,
+      analyticsPLScope: state.analyticsPLScope,
+      analyticsPLTimeframe: state.analyticsPLTimeframe,
+      analyticsPLDailyDate: state.analyticsPLDailyDate,
+      analyticsPLCustomFrom: state.analyticsPLCustomFrom,
+      analyticsPLCustomTo: state.analyticsPLCustomTo
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    if (state.customers && state.customers.length > 0) {
+      saveGlobalCustomers(state.customers);
+    }
     broadcastPeerSync('STATE_SAVED', toSave);
   } catch (e) {
     console.error('Failed to save state:', e);
   }
 }
+
+// Immediately enforce initial persistence of all 11 branches, 110 customers, 33 staff
+saveState();
+saveGlobalCustomers(state.customers);
 
 // Real-time Peer Bus for Multi-Tab & Device Viewport Synchronization
 const peerSyncBus = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('radhe_sweets_peer_bus') : null;
@@ -458,9 +647,27 @@ function syncActiveCheckoutDraft() {
   });
 }
 
-// Guard function: prevent background cloud sync from re-rendering active user modals (eliminates 3x modal popup flashing)
+// Guard function: prevent background cloud sync from re-rendering active user modals (eliminates 3x modal popup flashing & form resets)
 function shouldBackgroundSyncRender(): boolean {
-  if (state.showSuccessModal || state.showThermalModal || state.showCheckoutModal || state.showCustomerDialerModal) {
+  if (
+    state.isSwitchingBranch ||
+    state.showSuccessModal || 
+    state.showThermalModal || 
+    state.showCheckoutModal || 
+    state.showCustomerDialerModal ||
+    state.showAddProductModal ||
+    state.showEditProductModal ||
+    state.showAddBranchModal ||
+    state.showEditBranchModal ||
+    state.showAddExpenseModal ||
+    state.showAddStaffModal ||
+    state.showEditStaffModal ||
+    state.showManageCategoriesModal
+  ) {
+    return false;
+  }
+  // Bulletproof guard: check if any modal form is currently present in the DOM
+  if (typeof document !== 'undefined' && document.querySelector('#add-product-modal, #edit-product-modal, #add-branch-modal-backdrop, #edit-branch-modal-backdrop, #add-expense-modal, #checkout-modal, #staff-modal')) {
     return false;
   }
   return true;
@@ -668,8 +875,19 @@ export function setupBranchFirestoreListeners(branchId: string) {
 }
 
 // Master Branch Switch Handler: Switches stock, catalog, customers, orders, and resets profit/metrics to 0
-export async function handleBranchSwitch(targetBranchId: string) {
-  if (!targetBranchId || targetBranchId === state.currentBranchId) return;
+export async function handleBranchSwitch(targetBranchId: string, isSystemSwitch = false) {
+  if (!targetBranchId) return;
+
+  // Security Guard: Branch switching is restricted to the Owner / Super Admin only
+  if (!isSystemSwitch && state.currentUser && state.currentUser.role !== 'owner') {
+    showToast('Branch switching is restricted to the Owner (Super Admin) only.', 'warning');
+    return;
+  }
+
+  if (targetBranchId === state.currentBranchId) return;
+
+  // Mute background Firestore listeners during branch switch to prevent multiple rapid page re-renders/flashes
+  state.isSwitchingBranch = true;
 
   const departingBranchId = state.currentBranchId;
 
@@ -698,15 +916,14 @@ export async function handleBranchSwitch(targetBranchId: string) {
 
   if (existingSnapshot && existingSnapshot.sweets && existingSnapshot.sweets.length > 0) {
     state.sweets = existingSnapshot.sweets;
-    state.orders = existingSnapshot.orders || [];
-    if (targetBranchId !== 'br-1') {
-      const isLegacyInherited = existingSnapshot.customers && (
-        existingSnapshot.customers.length === initialData.customers.length &&
-        existingSnapshot.customers[0]?.id === initialData.customers[0]?.id
-      );
-      state.customers = isLegacyInherited ? [] : (existingSnapshot.customers || []);
-    } else {
-      state.customers = existingSnapshot.customers || [...initialData.customers];
+    // Customers are shared enterprise-wide: Patrons are recognized across all branches
+    const storedGlobalCusts = getStoredGlobalCustomers();
+    if (storedGlobalCusts && storedGlobalCusts.length > 0) {
+      state.customers = storedGlobalCusts;
+    } else if (existingSnapshot.customers && existingSnapshot.customers.length > 0) {
+      state.customers = existingSnapshot.customers;
+    } else if (!state.customers || state.customers.length === 0) {
+      state.customers = [...initialData.customers];
     }
     
     if (targetBranchId !== 'br-1' && state.orders.length === 0) {
@@ -739,12 +956,14 @@ export async function handleBranchSwitch(targetBranchId: string) {
     if (existingSnapshot.expenses) state.expenses = existingSnapshot.expenses;
   } else {
     // Brand new switch to this branch:
-    // User request: "make switching branch switch everything reset profit and etc to 0 switching branch switch portfolios customer stock mithais and everything"
     const branchDefaults = getBranchDefaultCatalog(targetBranchId);
     state.sweets = branchDefaults.sweets;
     state.orders = [];
     state.orderStatusCounts = { total: 0, completed: 0, advance: 0, kitchen: 0 };
-    state.customers = targetBranchId === 'br-1' ? [...initialData.customers] : [];
+    const storedGlobalCusts = getStoredGlobalCustomers();
+    state.customers = (storedGlobalCusts && storedGlobalCusts.length > 0) 
+      ? storedGlobalCusts 
+      : (state.customers && state.customers.length > 0 ? state.customers : [...initialData.customers]);
 
     // Explicit 0-metric reset
     state.kpis = {
@@ -787,7 +1006,9 @@ export async function handleBranchSwitch(targetBranchId: string) {
         state.kpis = { ...state.kpis, ...cloudData.kpis };
       }
       saveState();
-      renderApp();
+      if (!state.isSwitchingBranch && shouldBackgroundSyncRender()) {
+        renderApp();
+      }
     }
   }).catch(() => {});
 
@@ -803,6 +1024,11 @@ export async function handleBranchSwitch(targetBranchId: string) {
   renderApp();
 
   showToast(`Switched to ${activeBranchObj?.name || targetBranchId} • All stock, orders & metrics isolated`, 'info');
+
+  // Allow all background listeners to silently settle before unmuting re-renders
+  setTimeout(() => {
+    state.isSwitchingBranch = false;
+  }, 700);
 }
 
 (window as any).handleBranchSwitch = handleBranchSwitch;
@@ -811,17 +1037,18 @@ export async function handleBranchSwitch(targetBranchId: string) {
 function setupGlobalFirestoreListeners() {
   // Real-time branch network subscription across all devices & browser tabs
   subscribeToBranches((cloudBranches: any[]) => {
-    if (cloudBranches && Array.isArray(cloudBranches) && cloudBranches.length > 0) {
+    if (cloudBranches && Array.isArray(cloudBranches)) {
+      const sanitized = sanitizeBranchesList(cloudBranches);
       const currentJson = JSON.stringify(state.branches.map((b: any) => ({
         id: b.id, name: b.name, code: b.code, city: b.city, address: b.address,
         phone: b.phone, manager: b.manager, revenue: b.revenue, margin: b.margin
       })));
-      const incomingJson = JSON.stringify(cloudBranches.map((b: any) => ({
+      const incomingJson = JSON.stringify(sanitized.map((b: any) => ({
         id: b.id, name: b.name, code: b.code, city: b.city, address: b.address,
         phone: b.phone, manager: b.manager, revenue: b.revenue, margin: b.margin
       })));
-      if (currentJson !== incomingJson) {
-        state.branches = cloudBranches;
+      if (currentJson !== incomingJson || state.branches.length < 11) {
+        state.branches = sanitized;
         if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
           state.currentBranchId = state.branches[0].id;
         }
@@ -872,6 +1099,14 @@ function updatePageSeoMetadata(activeTab: string) {
     settings: {
       title: 'Store Configuration & Multi-Branch Management | Radhe Sweets',
       desc: 'Manage SG Highway and Satellite sweet branch profiles, thermal printer configurations, taxes and system preferences.'
+    },
+    'owner-manage': {
+      title: 'Owner Manage • User & Role Center | Radhe Sweets',
+      desc: 'Owner administration, user credentials, roles and branch-level permission security.'
+    },
+    'branch-admin': {
+      title: 'Branch Staff & Cashier Access | Radhe Sweets',
+      desc: 'Branch admin console to manage branch staff and counter cashier permissions.'
     }
   };
 
@@ -894,6 +1129,31 @@ let currentRenderedTab: string | null = null;
 export function renderApp() {
   const appContainer = document.getElementById('app');
   if (!appContainer) return;
+
+  // 1. Authentication Guard: If not logged in, render the Login Screen!
+  if (!state.currentUser) {
+    document.title = 'Sign in • Radhe Sweets ERP & POS';
+    appContainer.innerHTML = renderLoginView(state);
+    attachLoginListeners();
+    return;
+  }
+
+  // 2. Enforce Role-Based Page Access
+  if (state.currentUser.role === 'branch_admin') {
+    // Branch Admin can manage all 8 branch modules + branch-admin, but CANNOT access settings or owner-manage
+    if (state.activeTab === 'settings' || state.activeTab === 'owner-manage') {
+      state.activeTab = 'dashboard';
+      showToast('Store settings and multi-branch configuration are restricted to the Owner.', 'warning');
+    }
+  } else if (state.currentUser.role === 'cashier') {
+    // Cashier cannot access settings, owner-manage, or branch-admin
+    const allowed = (state.currentUser.allowedPages || ['pos']).filter(
+      (p: string) => p !== 'settings' && p !== 'owner-manage' && p !== 'branch-admin'
+    );
+    if (!allowed.includes(state.activeTab)) {
+      state.activeTab = allowed[0] || 'pos';
+    }
+  }
 
   // Sync Document Title, Meta Description & Canonical Hash Route
   updatePageSeoMetadata(state.activeTab);
@@ -918,7 +1178,7 @@ export function renderApp() {
       <div class="min-h-screen flex flex-col md:flex-row antialiased bg-[#FAF7F2] text-[#2A1F1D] w-full max-w-[100vw] overflow-x-hidden">
         <!-- Desktop Sidebar Navigation (Visible on md and up) -->
         <div id="desktop-sidebar-container" class="hidden md:block shrink-0">
-          ${renderSidebar(state.activeTab)}
+          ${renderSidebar(state.activeTab, state)}
         </div>
 
         <!-- Main Content Area with Persistent Scroll Container -->
@@ -956,20 +1216,20 @@ export function renderApp() {
 
     if (isTabSwitch) {
       // Tab changed: Update navigation, run entry animation, and scroll to top
-      if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
+      if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab, state);
       if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab, state);
 
-      mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8 animate-page-enter";
+      mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-8 animate-page-enter";
       mainTabContent.innerHTML = renderTabContent();
 
       if (mainScrollContainer && window.innerWidth >= 768) mainScrollContainer.scrollTop = 0;
       window.scrollTo(0, 0);
     } else {
       // In-page click/action: DO NOT play animate-page-enter (prevents blank/flicker flash!)
-      if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab);
+      if (desktopSidebarContainer) desktopSidebarContainer.innerHTML = renderSidebar(state.activeTab, state);
       if (mobileNavContainer) mobileNavContainer.innerHTML = renderMobileBottomNav(state.activeTab, state);
 
-      mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-28 sm:pb-32 md:pb-8";
+      mainTabContent.className = "flex-1 p-3 sm:p-5 md:p-8 space-y-4 sm:space-y-6 pb-8";
       mainTabContent.innerHTML = renderTabContent();
 
       // Restore scroll positions seamlessly
@@ -1043,8 +1303,12 @@ function renderTabContent() {
       return renderStaffView(state);
     case 'settings':
       return renderSettingsView(state);
+    case 'owner-manage':
+      return renderOwnerManageView(state);
+    case 'branch-admin':
+      return renderOwnerManageView(state);
     default:
-      return renderDashboardView(state);
+      return renderPosView(state);
   }
 }
 
@@ -1078,7 +1342,85 @@ function renderModals() {
     ${state.showAddBranchModal ? renderAddBranchModal(state) : ''}
     ${state.showEditBranchModal ? renderEditBranchModal(state) : ''}
     ${state.showProfitModal ? renderProfitDetailsModal(state) : ''}
+    ${state.showCreateUserModal ? renderCreateUserModal(state) : ''}
+    ${state.showEditUserModal && state.editingUser ? renderEditUserModal(state) : ''}
+    ${state.quickNewCustomerPrompt ? renderQuickNewCustomerPromptModal(state.quickNewCustomerPrompt) : ''}
   `;
+}
+
+// Authentication Listeners (Form submission, password toggle, quick fill)
+function attachLoginListeners() {
+  const form = document.getElementById('app-login-form');
+  const nameInput = document.getElementById('login-username') as HTMLInputElement | null;
+  const passInput = document.getElementById('login-password') as HTMLInputElement | null;
+  const toggleBtn = document.getElementById('toggle-login-password-btn');
+  const quickFillBtn = document.getElementById('quick-fill-owner-btn');
+  const eyeOpen = document.getElementById('eye-icon-open');
+  const eyeClosed = document.getElementById('eye-icon-closed');
+
+  toggleBtn?.addEventListener('click', () => {
+    if (passInput) {
+      const isPass = passInput.type === 'password';
+      passInput.type = isPass ? 'text' : 'password';
+      if (eyeOpen && eyeClosed) {
+        eyeOpen.classList.toggle('hidden', isPass);
+        eyeClosed.classList.toggle('hidden', !isPass);
+      }
+    }
+  });
+
+  quickFillBtn?.addEventListener('click', () => {
+    if (nameInput) nameInput.value = 'Owner';
+    if (passInput) passInput.value = 'admin';
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const typedName = (nameInput?.value || '').trim();
+    const typedPass = (passInput?.value || '').trim();
+
+    // Check credentials against state.users or default fallback
+    const matchedUser = (state.users || []).find((u: any) => 
+      u.name?.toLowerCase() === typedName.toLowerCase() && u.password === typedPass
+    );
+
+    if (matchedUser) {
+      // Ensure branch_admin always has the full branch operational permission suite
+      if (matchedUser.role === 'branch_admin') {
+        matchedUser.allowedPages = ['dashboard', 'pos', 'orders', 'customers', 'products', 'expenses', 'analytics', 'staff', 'branch-admin'];
+      } else if (matchedUser.role === 'owner') {
+        matchedUser.allowedPages = ['dashboard', 'pos', 'orders', 'customers', 'products', 'expenses', 'analytics', 'staff', 'settings', 'owner-manage'];
+      }
+
+      state.currentUser = matchedUser;
+      state.loginError = '';
+      try {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(matchedUser));
+      } catch (_) {}
+
+      // Branch lock for branch_admin and cashier (switch branch state if needed)
+      if (matchedUser.branchId && matchedUser.branchId !== 'all') {
+        await handleBranchSwitch(matchedUser.branchId, true);
+      }
+
+      // Tab selection
+      if (matchedUser.role === 'cashier') {
+        const allowed = matchedUser.allowedPages || ['pos'];
+        state.activeTab = allowed[0] || 'pos';
+      } else if (matchedUser.role === 'branch_admin') {
+        state.activeTab = 'dashboard';
+      } else {
+        state.activeTab = 'owner-manage';
+      }
+
+      saveState();
+      renderApp();
+      showToast(`Welcome back, ${matchedUser.name}! (${matchedUser.role.toUpperCase()})`, 'success');
+    } else {
+      state.loginError = 'Invalid name or password. Please verify credentials.';
+      renderApp();
+    }
+  });
 }
 
 // Unified Customer Selection & Attachment Handler (accessible across all event handlers & key listeners)
@@ -1620,9 +1962,36 @@ function attachEventListeners() {
     });
   }
 
-  // Enterprise Multi-Branch Switchers (TopBar, Settings, Analytics)
+  // Enterprise Multi-Branch Switchers (Sidebar, Drawer, TopBar, POS, Dashboard, Settings, Analytics)
+  document.getElementById('sidebar-branch-select')?.addEventListener('change', (e: any) => {
+    handleBranchSwitch(e.target.value);
+  });
+  document.getElementById('drawer-branch-select')?.addEventListener('change', (e: any) => {
+    handleBranchSwitch(e.target.value);
+  });
   document.getElementById('topbar-branch-select')?.addEventListener('change', (e: any) => {
     handleBranchSwitch(e.target.value);
+  });
+  document.getElementById('pos-branch-select')?.addEventListener('change', (e: any) => {
+    handleBranchSwitch(e.target.value);
+  });
+
+  // Dashboard Branch Selector (Overall Combined vs Branch-Wise)
+  document.getElementById('dashboard-branch-select')?.addEventListener('change', (e: any) => {
+    (state as any).dashboardBranchFilter = e.target.value;
+    renderApp();
+  });
+
+  // Quick switch buttons to branch-wise view on Dashboard
+  document.querySelectorAll('[data-dashboard-branch]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const bId = el.getAttribute('data-dashboard-branch');
+      if (bId) {
+        (state as any).dashboardBranchFilter = bId;
+        renderApp();
+      }
+    });
   });
 
   document.querySelectorAll('[data-setting-select-branch]').forEach(el => {
@@ -1645,12 +2014,21 @@ function attachEventListeners() {
 
   // ==========================================
   // Branch Management CRUD: Add, Edit, Delete with Cloud Firestore Sync
+  // STRICT SECURITY: Only Master Owner can add, edit, rename, or delete branches!
   // ==========================================
-  // 1. Open Add Branch Modal
-  document.getElementById('open-add-branch-modal-btn')?.addEventListener('click', (e) => {
+  // 1. Open Add Branch Modal (from Sidebar, POS Header, Dashboard Arena, or Settings)
+  const handleOpenAddBranch = (e: Event) => {
     e.preventDefault();
+    if (state.currentUser && state.currentUser.role !== 'owner' && state.currentUser.role !== 'admin') {
+      showToast('Only the Store Owner or Master Admin can add new retail branches.', 'warning');
+      return;
+    }
     state.showAddBranchModal = true;
     renderApp();
+  };
+
+  document.querySelectorAll('[data-action="open-add-branch"], #sidebar-add-branch-btn, #pos-add-branch-btn, #dashboard-add-branch-btn, #open-add-branch-modal-btn').forEach(btn => {
+    btn.addEventListener('click', handleOpenAddBranch);
   });
 
   // Close Add Branch Modal
@@ -1669,18 +2047,26 @@ function attachEventListeners() {
   // Submit Add Branch Form
   document.getElementById('add-branch-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (state.currentUser && state.currentUser.role !== 'owner' && state.currentUser.role !== 'admin') {
+      showToast('Only the Store Owner or Master Admin can add new retail branches.', 'warning');
+      return;
+    }
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const branchName = (formData.get('branchName') as string || '').trim();
     const branchCode = (formData.get('branchCode') as string || '').trim().toUpperCase();
-    const branchCity = (formData.get('branchCity') as string || 'Ahmedabad').trim();
+    const branchCity = (formData.get('branchCity') as string || 'Gandhinagar').trim();
     const branchAddress = (formData.get('branchAddress') as string || '').trim();
     const branchPhone = (formData.get('branchPhone') as string || '').trim();
+    const branchMapUrl = (formData.get('branchMapUrl') as string || '').trim();
     const branchManager = (formData.get('branchManager') as string || '').trim();
     const branchTargetRevenue = parseFloat(formData.get('branchTargetRevenue') as string || '45000') || 45000;
     const branchMargin = (formData.get('branchMargin') as string || '34.0%').trim();
     const branchUpiId = (formData.get('branchUpiId') as string || '').trim();
     const branchUpiName = (formData.get('branchUpiName') as string || '').trim();
+    const branchReceiptHeader = (formData.get('branchReceiptHeader') as string || '').trim();
+    const branchReceiptFooter = (formData.get('branchReceiptFooter') as string || '').trim();
+    const branchPaperSize = (formData.get('branchPaperSize') as string || '80mm').trim();
     const branchGstin = (formData.get('branchGstin') as string || '').trim();
     const branchFssai = (formData.get('branchFssai') as string || '').trim();
 
@@ -1694,12 +2080,16 @@ function attachEventListeners() {
       id: newBranchId,
       name: branchName,
       code: branchCode || `BR-${Math.floor(10 + Math.random() * 90)}`,
-      city: branchCity,
+      city: branchCity || 'Gandhinagar',
       address: branchAddress,
       phone: branchPhone,
+      mapUrl: branchMapUrl || (branchAddress ? `https://maps.google.com/?q=${encodeURIComponent(branchAddress)}` : ''),
       manager: branchManager,
       upiId: branchUpiId || `radhesweets.${(branchCode || 'branch').toLowerCase()}@oksbi`,
       upiName: branchUpiName || branchName,
+      receiptHeader: branchReceiptHeader || `${branchName} Outpost`,
+      receiptFooter: branchReceiptFooter || `Thank You! Visit Again - ${branchName}`,
+      paperSize: branchPaperSize || '80mm',
       gstin: branchGstin || '24AAACR1234F1Z1',
       fssai: branchFssai || '10722026000411',
       revenue: 0,
@@ -1738,6 +2128,10 @@ function attachEventListeners() {
   document.querySelectorAll('[data-action="edit-branch"]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      if (state.currentUser?.role !== 'owner') {
+        showToast('Only the Owner can modify branch details.', 'warning');
+        return;
+      }
       const branchId = btn.getAttribute('data-branch-id');
       const branch = state.branches.find((b: any) => b.id === branchId);
       if (branch) {
@@ -1765,19 +2159,27 @@ function attachEventListeners() {
   // Submit Edit Branch Form
   document.getElementById('edit-branch-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (state.currentUser && state.currentUser.role !== 'owner' && state.currentUser.role !== 'admin') {
+      showToast('Only the Store Owner or Master Admin can modify branch details.', 'warning');
+      return;
+    }
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const branchId = formData.get('branchId') as string;
     const branchName = (formData.get('branchName') as string || '').trim();
     const branchCode = (formData.get('branchCode') as string || '').trim().toUpperCase();
-    const branchCity = (formData.get('branchCity') as string || 'Ahmedabad').trim();
+    const branchCity = (formData.get('branchCity') as string || 'Gandhinagar').trim();
     const branchAddress = (formData.get('branchAddress') as string || '').trim();
     const branchPhone = (formData.get('branchPhone') as string || '').trim();
+    const branchMapUrl = (formData.get('branchMapUrl') as string || '').trim();
     const branchManager = (formData.get('branchManager') as string || '').trim();
     const branchTargetRevenue = parseFloat(formData.get('branchTargetRevenue') as string || '50000') || 50000;
     const branchMargin = (formData.get('branchMargin') as string || '34.0%').trim();
     const branchUpiId = (formData.get('branchUpiId') as string || '').trim();
     const branchUpiName = (formData.get('branchUpiName') as string || '').trim();
+    const branchReceiptHeader = (formData.get('branchReceiptHeader') as string || '').trim();
+    const branchReceiptFooter = (formData.get('branchReceiptFooter') as string || '').trim();
+    const branchPaperSize = (formData.get('branchPaperSize') as string || '80mm').trim();
     const branchGstin = (formData.get('branchGstin') as string || '').trim();
     const branchFssai = (formData.get('branchFssai') as string || '').trim();
 
@@ -1786,9 +2188,12 @@ function attachEventListeners() {
 
     targetBranch.name = branchName || targetBranch.name;
     targetBranch.code = branchCode || targetBranch.code;
-    targetBranch.city = branchCity;
+    targetBranch.city = branchCity || targetBranch.city || 'Gandhinagar';
     targetBranch.address = branchAddress;
     targetBranch.phone = branchPhone;
+    if (branchMapUrl !== undefined) {
+      targetBranch.mapUrl = branchMapUrl || (branchAddress ? `https://maps.google.com/?q=${encodeURIComponent(branchAddress)}` : (targetBranch.mapUrl || ''));
+    }
     targetBranch.manager = branchManager;
     targetBranch.targetDailyRevenue = branchTargetRevenue;
     targetBranch.targetDailySales = branchTargetRevenue;
@@ -1796,6 +2201,9 @@ function attachEventListeners() {
     targetBranch.targetMargin = branchMargin;
     if (branchUpiId) targetBranch.upiId = branchUpiId;
     if (branchUpiName) targetBranch.upiName = branchUpiName;
+    if (branchReceiptHeader !== undefined) targetBranch.receiptHeader = branchReceiptHeader;
+    if (branchReceiptFooter !== undefined) targetBranch.receiptFooter = branchReceiptFooter;
+    if (branchPaperSize) targetBranch.paperSize = branchPaperSize;
     if (branchGstin) targetBranch.gstin = branchGstin;
     if (branchFssai) targetBranch.fssai = branchFssai;
     targetBranch.updatedAt = new Date().toISOString();
@@ -1816,6 +2224,10 @@ function attachEventListeners() {
   document.querySelectorAll('[data-action="delete-branch"]').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
+      if (state.currentUser?.role !== 'owner') {
+        showToast('Only the Owner can delete branches.', 'warning');
+        return;
+      }
       const branchId = btn.getAttribute('data-branch-id');
       if (!branchId) return;
 
@@ -1892,6 +2304,369 @@ function attachEventListeners() {
         renderApp();
       }
     });
+  });
+
+  // User Sign Out / Logout Handler
+  const handleLogout = () => {
+    state.currentUser = null;
+    state.loginError = '';
+    try {
+      localStorage.removeItem(AUTH_USER_KEY);
+    } catch (_) {}
+    renderApp();
+    showToast('Signed out of Radhe Sweets', 'info');
+  };
+  document.querySelectorAll('[data-action="app-logout"], #sidebar-logout-btn, #drawer-logout-btn, #dashboard-logout-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleLogout();
+    });
+  });
+
+  // User & Role Management Handlers
+  document.getElementById('open-create-user-modal-btn')?.addEventListener('click', () => {
+    state.showCreateUserModal = true;
+    renderApp();
+  });
+
+  const closeCreateUser = () => {
+    state.showCreateUserModal = false;
+    renderApp();
+  };
+  document.getElementById('close-create-user-modal-btn')?.addEventListener('click', closeCreateUser);
+  document.getElementById('cancel-create-user-modal-btn')?.addEventListener('click', closeCreateUser);
+  document.getElementById('create-user-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'create-user-modal-backdrop') closeCreateUser();
+  });
+
+  // Create User Role Dropdown Switcher with Dynamic Info Banners
+  const syncCreateUserRoleUi = () => {
+    const roleSelect = (document.getElementById('create-user-role-select') || document.getElementById('user-role-select')) as HTMLSelectElement | null;
+    if (!roleSelect) return;
+    const role = roleSelect.value || 'branch_admin';
+    const branchContainer = document.getElementById('branch-select-container');
+    const allowedContainer = document.getElementById('allowed-pages-container');
+    const roleNoticeCard = document.getElementById('role-notice-card');
+    const roleNoticeTitle = document.getElementById('role-notice-title');
+    const roleNoticeDesc = document.getElementById('role-notice-desc');
+
+    const form = document.getElementById('create-user-form');
+    const setCheckedPages = (pages: string[]) => {
+      if (!form) return;
+      form.querySelectorAll('input[name="allowedPages"]').forEach((cb: any) => {
+        cb.checked = pages.includes(cb.value);
+      });
+    };
+
+    // Allowed pages container is ALWAYS visible so owner can grant or revoke any pages!
+    if (allowedContainer) allowedContainer.style.display = 'block';
+
+    if (role === 'owner') {
+      if (branchContainer) branchContainer.style.display = 'none';
+      if (roleNoticeCard) roleNoticeCard.style.display = 'block';
+      if (roleNoticeTitle) roleNoticeTitle.innerHTML = '<span>👑</span><span>Owner (Master Super Admin)</span>';
+      if (roleNoticeDesc) roleNoticeDesc.textContent = 'Full global command over all outlets, settings, user credentials, and combined analytics.';
+      setCheckedPages(['pos', 'dashboard', 'orders', 'customers', 'products', 'expenses', 'staff', 'branch-admin', 'analytics', 'settings', 'owner-manage']);
+    } else if (role === 'branch_admin') {
+      if (branchContainer) branchContainer.style.display = 'block';
+      if (roleNoticeCard) roleNoticeCard.style.display = 'block';
+      if (roleNoticeTitle) roleNoticeTitle.innerHTML = '<span>🏢</span><span>Branch Admin Operational Command</span>';
+      if (roleNoticeDesc) roleNoticeDesc.textContent = 'Operational management of this branch. Check/uncheck pages below to customize access.';
+      // Note: analytics is NOT checked by default for branch admin unless granted!
+      setCheckedPages(['pos', 'dashboard', 'orders', 'customers', 'products', 'expenses', 'staff', 'branch-admin']);
+    } else if (role === 'kitchen_manager') {
+      if (branchContainer) branchContainer.style.display = 'block';
+      if (roleNoticeCard) roleNoticeCard.style.display = 'block';
+      if (roleNoticeTitle) roleNoticeTitle.innerHTML = '<span>👨‍🍳</span><span>Kitchen Manager / Master Halwai</span>';
+      if (roleNoticeDesc) roleNoticeDesc.textContent = 'Manages kitchen batch restock, inventory adjustments, dairy/sugar expenses, and halwai staff attendance.';
+      setCheckedPages(['products', 'expenses', 'staff', 'dashboard']);
+    } else if (role === 'inventory_auditor') {
+      if (branchContainer) branchContainer.style.display = 'block';
+      if (roleNoticeCard) roleNoticeCard.style.display = 'block';
+      if (roleNoticeTitle) roleNoticeTitle.innerHTML = '<span>📦</span><span>Inventory & Stock Auditor</span>';
+      if (roleNoticeDesc) roleNoticeDesc.textContent = 'Audits sweet stocks, sets low stock thresholds, and monitors asset valuation and margins.';
+      setCheckedPages(['products', 'dashboard']);
+    } else if (role === 'delivery_dispatch') {
+      if (branchContainer) branchContainer.style.display = 'block';
+      if (roleNoticeCard) roleNoticeCard.style.display = 'block';
+      if (roleNoticeTitle) roleNoticeTitle.innerHTML = '<span>🛵</span><span>Delivery & Dispatch Lead</span>';
+      if (roleNoticeDesc) roleNoticeDesc.textContent = 'Coordinates home delivery, wedding hamper dispatches, customer address lookups, and WhatsApp alerts.';
+      setCheckedPages(['orders', 'customers']);
+    } else if (role === 'cashier') {
+      if (branchContainer) branchContainer.style.display = 'block';
+      if (roleNoticeCard) roleNoticeCard.style.display = 'block';
+      if (roleNoticeTitle) roleNoticeTitle.innerHTML = '<span>🛍️</span><span>Cashier / Counter Executive</span>';
+      if (roleNoticeDesc) roleNoticeDesc.textContent = 'Front counter POS sales, instant weight pricing, customer mobile dialer, and thermal receipt printing.';
+      setCheckedPages(['pos', 'orders']);
+    } else {
+      // custom
+      if (branchContainer) branchContainer.style.display = 'block';
+      if (roleNoticeCard) roleNoticeCard.style.display = 'block';
+      if (roleNoticeTitle) roleNoticeTitle.innerHTML = '<span>⚙️</span><span>Custom Staff Access</span>';
+      if (roleNoticeDesc) roleNoticeDesc.textContent = 'Check each individual module page you wish to grant to this staff member.';
+    }
+  };
+
+  const createRoleEl = document.getElementById('create-user-role-select') || document.getElementById('user-role-select');
+  createRoleEl?.addEventListener('change', syncCreateUserRoleUi);
+  if (createRoleEl) {
+    syncCreateUserRoleUi();
+  }
+
+  // Submit Create User Form
+  document.getElementById('create-user-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const name = (formData.get('userName') as string || '').trim();
+    const password = (formData.get('userPassword') as string || '').trim();
+    const role = (formData.get('userRole') as string || 'cashier') as 'owner' | 'branch_admin' | 'cashier';
+    let branchId = (formData.get('userBranchId') as string || state.currentBranchId || 'br-1');
+
+    if (!name || !password) {
+      showToast('Please enter both name and password', 'warning');
+      return;
+    }
+
+    // Check duplicate name
+    if (state.users.some((u: any) => u.name?.toLowerCase() === name.toLowerCase())) {
+      showToast(`User name "${name}" already exists! Choose another name.`, 'warning');
+      return;
+    }
+
+    let branchName = 'All Branches';
+    let allowedPages: string[] = [];
+
+    const allowedCheckboxes = form.querySelectorAll('input[name="allowedPages"]:checked');
+    const checkedPages: string[] = [];
+    allowedCheckboxes.forEach((cb: any) => checkedPages.push(cb.value));
+
+    if (role === 'owner') {
+      branchId = 'all';
+      branchName = 'All Branches';
+    } else {
+      if (branchId === 'all') {
+        branchId = state.branches[0]?.id || 'br-1';
+      }
+      const branchObj = (state.branches || []).find((b: any) => b.id === branchId) || state.branches[0];
+      branchId = branchObj ? branchObj.id : 'br-1';
+      branchName = branchObj ? branchObj.name : 'Active Branch';
+    }
+
+    // Save exactly what pages the admin selected in the checkboxes
+    allowedPages = checkedPages.length > 0 
+      ? checkedPages 
+      : (role === 'owner' ? ['pos', 'dashboard', 'orders', 'customers', 'products', 'expenses', 'staff', 'branch-admin', 'settings', 'owner-manage'] : ['pos']);
+
+    const newUser = {
+      id: `usr-${Date.now().toString(36)}`,
+      name,
+      password,
+      role,
+      branchId,
+      branchName,
+      allowedPages,
+      createdAt: new Date().toISOString()
+    };
+
+    state.users.push(newUser);
+    state.showCreateUserModal = false;
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(state.users));
+    } catch (_) {}
+    saveState();
+    renderApp();
+    showToast(`Saving ${role === 'branch_admin' ? 'Branch Admin' : role} "${name}" to Cloud Firestore...`, 'info');
+
+    await saveUserToCloud(newUser);
+    saveState();
+    renderApp();
+    showToast(`User "${name}" active in Cloud Firestore across all devices!`, 'success');
+  });
+
+  // Delete User Action with Role Guard
+  document.querySelectorAll('[data-action="delete-user"]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const userId = btn.getAttribute('data-user-id');
+      const userName = btn.getAttribute('data-user-name') || 'User';
+      if (!userId) return;
+
+      const targetUser = (state.users || []).find((u: any) => u.id === userId);
+      if (!targetUser) return;
+
+      if (targetUser.role === 'owner') {
+        showToast('Cannot delete master Owner account!', 'warning');
+        return;
+      }
+
+      // Branch Admins can ONLY delete cashiers from their own branch
+      if (state.currentUser?.role === 'branch_admin') {
+        if (targetUser.role !== 'cashier' || targetUser.branchId !== state.currentUser.branchId) {
+          showToast('Branch Admins can only delete cashiers from their own branch.', 'warning');
+          return;
+        }
+      }
+
+      if (!window.confirm(`Are you sure you want to permanently delete user "${userName}" from Cloud Firestore?`)) return;
+
+      state.users = state.users.filter((u: any) => u.id !== userId);
+      try {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(state.users));
+      } catch (_) {}
+      saveState();
+      renderApp();
+      showToast(`Deleting user from Cloud Firestore...`, 'info');
+
+      await deleteUserFromCloud(userId);
+      saveState();
+      renderApp();
+      showToast(`User "${userName}" deleted from Cloud Firestore`, 'info');
+    });
+  });
+
+  // Direct Self-Edit: Owner / Current User updates their own username and password
+  document.getElementById('quick-edit-self-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target as HTMLFormElement);
+    const myUsername = (fd.get('myUsername') as string || '').trim();
+    const myPassword = (fd.get('myPassword') as string || '').trim();
+
+    if (!myUsername || !myPassword) {
+      showToast('Please enter both username and password.', 'warning');
+      return;
+    }
+
+    if (state.currentUser) {
+      const oldName = state.currentUser.name;
+      state.currentUser.name = myUsername;
+      state.currentUser.password = myPassword;
+      try {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(state.currentUser));
+      } catch (_) {}
+
+      // Find user in users list
+      const matched = (state.users || []).find((u: any) => u.id === state.currentUser.id || u.name?.toLowerCase() === oldName?.toLowerCase());
+      if (matched) {
+        matched.name = myUsername;
+        matched.password = myPassword;
+        try {
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(state.users));
+        } catch (_) {}
+        await saveUserToCloud(matched);
+      } else {
+        await saveUserToCloud(state.currentUser);
+      }
+
+      saveState();
+      renderApp();
+      showToast(`✓ Your account credentials updated! (Username: ${myUsername})`, 'success');
+    }
+  });
+
+  // Edit User Modal Triggers
+  document.querySelectorAll('[data-action="edit-user"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const userId = btn.getAttribute('data-user-id');
+      const targetUser = (state.users || []).find((u: any) => u.id === userId);
+      if (targetUser) {
+        state.editingUser = { ...targetUser };
+        state.showEditUserModal = true;
+        renderApp();
+      }
+    });
+  });
+
+  const closeEditUserModal = () => {
+    state.showEditUserModal = false;
+    state.editingUser = null;
+    renderApp();
+  };
+  document.getElementById('close-edit-user-modal-btn')?.addEventListener('click', closeEditUserModal);
+  document.getElementById('cancel-edit-user-modal-btn')?.addEventListener('click', closeEditUserModal);
+  document.getElementById('edit-user-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'edit-user-modal-backdrop') closeEditUserModal();
+  });
+
+  // Dynamic role change in edit-user-modal
+  document.getElementById('edit-user-role-select')?.addEventListener('change', (e: any) => {
+    const role = e.target.value;
+    const branchContainer = document.getElementById('edit-branch-select-container');
+    const allowedContainer = document.getElementById('edit-allowed-pages-container');
+    if (branchContainer) {
+      branchContainer.style.display = role === 'owner' ? 'none' : 'block';
+    }
+    // Allowed pages container ALWAYS stays visible so owner can grant or revoke any page
+    if (allowedContainer) {
+      allowedContainer.style.display = 'block';
+    }
+  });
+
+  // Submit Edit User Form
+  document.getElementById('edit-user-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const userId = formData.get('userId') as string;
+    const userName = (formData.get('userName') as string || '').trim();
+    const userPassword = (formData.get('userPassword') as string || '').trim();
+    const userRole = (formData.get('userRole') as string || 'cashier');
+    let userBranchId = (formData.get('userBranchId') as string || state.currentBranchId || 'br-1');
+
+    if (!userName || !userPassword) {
+      showToast('Please enter both username and password', 'warning');
+      return;
+    }
+
+    const targetUser = (state.users || []).find((u: any) => u.id === userId);
+    if (!targetUser) return;
+
+    targetUser.name = userName;
+    targetUser.password = userPassword;
+    targetUser.role = userRole;
+
+    const checkedBoxes = form.querySelectorAll('input[name="allowedPages"]:checked');
+    const pages: string[] = [];
+    checkedBoxes.forEach((cb: any) => pages.push(cb.value));
+
+    if (userRole === 'owner') {
+      targetUser.branchId = 'all';
+      targetUser.branchName = 'All Branches';
+    } else {
+      targetUser.branchId = userBranchId;
+      const bObj = (state.branches || []).find((b: any) => b.id === userBranchId);
+      targetUser.branchName = bObj ? bObj.name : 'Branch';
+    }
+
+    // Save exactly the pages checked by user!
+    targetUser.allowedPages = pages.length > 0 ? pages : ['pos'];
+
+    // If currently logged-in user edited their own profile, sync session & navigation
+    if (state.currentUser && (state.currentUser.id === targetUser.id || state.currentUser.name === targetUser.name)) {
+      state.currentUser = { ...targetUser };
+      if (state.currentUser.allowedPages && state.currentUser.allowedPages.length > 0 && !state.currentUser.allowedPages.includes(state.activeTab)) {
+        state.activeTab = state.currentUser.allowedPages[0];
+      }
+      try {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(state.currentUser));
+      } catch (_) {}
+    }
+
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(state.users));
+    } catch (_) {}
+
+    state.showEditUserModal = false;
+    state.editingUser = null;
+    saveState();
+    renderApp();
+    showToast(`Saving "${userName}" updates to Cloud Firestore...`, 'info');
+
+    await saveUserToCloud(targetUser);
+    saveState();
+    renderApp();
+    showToast(`✓ User "${userName}" credentials and permissions updated in Cloud!`, 'success');
   });
 
   // Fast Selling Sweets Table: + Add to Quick Cart
@@ -2004,6 +2779,26 @@ function attachEventListeners() {
     saveState();
     showToast(`Time period updated: ${val.toUpperCase()}`, 'info');
     renderApp();
+  });
+
+  // Cross-Branch Stock Monitor Matrix Search & Category Filters
+  const matrixSearch = document.getElementById('cross-branch-stock-search') as HTMLInputElement | null;
+  if (matrixSearch) {
+    matrixSearch.addEventListener('input', (e: any) => {
+      state.crossBranchSearchQuery = e.target.value;
+      renderApp();
+    });
+  }
+
+  document.querySelectorAll('[data-matrix-filter]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const filter = btn.getAttribute('data-matrix-filter');
+      if (filter) {
+        state.crossBranchFilterCategory = filter;
+        renderApp();
+      }
+    });
   });
 
   // Brand Logo Click -> Go to Dashboard
@@ -2489,7 +3284,142 @@ function attachEventListeners() {
     state.selectedCustomer = null;
     saveState();
     renderApp();
-    showToast('Customer detached. Switched to Walk-in.', 'info');
+    showToast('Customer detached. Switched to Walk-in OTC.', 'info');
+  });
+
+  // Quick Customer Mobile Attach with Auto-Ask for Name on Enter
+  const handleQuickPhoneAttach = (rawVal: string) => {
+    const cleanDigits = (rawVal || '').replace(/\D/g, '').slice(-10);
+    if (cleanDigits.length < 7) {
+      showToast('Please enter a valid 10-digit mobile number.', 'warning');
+      return;
+    }
+    const formattedPhone = cleanDigits.length === 10
+      ? `+91 ${cleanDigits.slice(0, 5)} ${cleanDigits.slice(5)}`
+      : `+91 ${cleanDigits}`;
+
+    // 1. Check if customer already exists across ANY branch
+    const existing = (state.customers || []).find((c: any) => {
+      const cDigits = (c.phone || '').replace(/\D/g, '').slice(-10);
+      return (cDigits.length >= 6 && cDigits.endsWith(cleanDigits)) || 
+             (cleanDigits.length >= 6 && cleanDigits.endsWith(cDigits)) || 
+             c.phone === formattedPhone;
+    });
+
+    if (existing) {
+      completeCustomerSelection(existing);
+      showToast(`✓ Recognized patron ${existing.name}! Attached with ${existing.loyaltyPoints || 0} pts.`, 'success');
+      const input = document.getElementById('pos-quick-phone-input') as HTMLInputElement | null;
+      if (input) input.value = '';
+      return;
+    }
+
+    // 2. New Customer! Auto-ask for customer name
+    state.quickNewCustomerPrompt = { phone: formattedPhone, cleanDigits };
+    renderApp();
+    setTimeout(() => {
+      const nInput = document.getElementById('quick-new-cust-name-input') as HTMLInputElement | null;
+      nInput?.focus();
+    }, 60);
+  };
+
+  const posQuickInput = document.getElementById('pos-quick-phone-input') as HTMLInputElement | null;
+  if (posQuickInput) {
+    posQuickInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleQuickPhoneAttach(posQuickInput.value);
+      }
+    });
+  }
+  document.getElementById('pos-quick-phone-enter-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const input = document.getElementById('pos-quick-phone-input') as HTMLInputElement | null;
+    handleQuickPhoneAttach(input?.value || '');
+  });
+
+  // Quick New Customer Modal Handlers
+  document.getElementById('quick-new-customer-name-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!state.quickNewCustomerPrompt) return;
+    const nameInput = document.getElementById('quick-new-cust-name-input') as HTMLInputElement | null;
+    const typedName = nameInput?.value?.trim();
+    const phone = state.quickNewCustomerPrompt.phone;
+    const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
+    const assignedId = `CUST-${1000 + (state.customers?.length || 0) + 1}`;
+    const newCust = {
+      id: assignedId,
+      branchId: state.currentBranchId,
+      branchName: curBranch ? curBranch.name : 'Sector 21',
+      name: typedName || `Patron (${phone})`,
+      phone: phone,
+      email: '',
+      address: curBranch ? curBranch.address : 'Gandhinagar, Gujarat',
+      type: 'Regular',
+      tier: 'Regular',
+      loyaltyPoints: 50,
+      totalOrders: 1,
+      totalSpent: 0,
+      notes: 'Registered via Quick Counter Attach'
+    };
+
+    state.customers.unshift(newCust);
+    if (state.kpis?.customers) {
+      state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+      state.kpis.customers.formatted = String(state.kpis.customers.value);
+    }
+    saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
+    saveBranchSnapshot(state.currentBranchId);
+    state.quickNewCustomerPrompt = null;
+    completeCustomerSelection(newCust);
+    showToast(`✓ Registered patron ${newCust.name} (ID: #${newCust.id}) with +50 Welcome Points!`, 'success');
+  });
+
+  document.getElementById('quick-new-cust-skip-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!state.quickNewCustomerPrompt) return;
+    const phone = state.quickNewCustomerPrompt.phone;
+    const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
+    const assignedId = `CUST-${1000 + (state.customers?.length || 0) + 1}`;
+    const newCust = {
+      id: assignedId,
+      branchId: state.currentBranchId,
+      branchName: curBranch ? curBranch.name : 'Sector 21',
+      name: `Patron (${phone})`,
+      phone: phone,
+      email: '',
+      address: curBranch ? curBranch.address : 'Gandhinagar, Gujarat',
+      type: 'Regular',
+      tier: 'Regular',
+      loyaltyPoints: 50,
+      totalOrders: 1,
+      totalSpent: 0,
+      notes: 'Registered via Quick Counter Attach'
+    };
+
+    state.customers.unshift(newCust);
+    if (state.kpis?.customers) {
+      state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
+      state.kpis.customers.formatted = String(state.kpis.customers.value);
+    }
+    saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
+    saveBranchSnapshot(state.currentBranchId);
+    state.quickNewCustomerPrompt = null;
+    completeCustomerSelection(newCust);
+    showToast(`✓ Attached customer ${newCust.name} (+50 Points)!`, 'success');
+  });
+
+  const closeQuickNewCustModal = () => {
+    state.quickNewCustomerPrompt = null;
+    renderApp();
+  };
+  document.getElementById('close-quick-new-cust-modal-btn')?.addEventListener('click', closeQuickNewCustModal);
+  document.getElementById('quick-new-cust-modal-backdrop')?.addEventListener('click', (e) => {
+    if (e.target && (e.target as HTMLElement).id === 'quick-new-cust-modal-backdrop') {
+      closeQuickNewCustModal();
+    }
   });
   document.getElementById('dashboard-switch-customer-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -2709,18 +3639,6 @@ function attachEventListeners() {
     });
   });
 
-  // Box Tare Deduction Buttons (Legal Metrology Compliance)
-  document.querySelectorAll('[data-set-tare]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tare = parseFloat(btn.getAttribute('data-set-tare') || '0');
-      state.boxTareGrams = tare;
-      playBeep('click');
-      showToast(tare > 0 ? `Box Tare Set: -${tare}g per box` : 'Box Tare Cleared (0g)', 'info');
-      renderApp();
-    });
-  });
-
   // Checkout Modal Customer Attachment / Switch / Detach
   document.getElementById('checkout-edit-customer-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -2784,6 +3702,9 @@ function attachEventListeners() {
         branchPhone: activeBranch.phone || state.shopInfo?.phone || '+91 98250 12345',
         branchUpiId: activeBranch.upiId || state.shopInfo?.upiId || 'radhesweets@oksbi',
         branchUpiName: activeBranch.upiName || activeBranch.name || state.shopInfo?.upiName || 'Radhe Sweets',
+        branchReceiptHeader: activeBranch.receiptHeader || '',
+        branchReceiptFooter: activeBranch.receiptFooter || '',
+        branchPaperSize: activeBranch.paperSize || '80mm',
         branchGstin: activeBranch.gstin || state.shopInfo?.gstin || '24AAACR1234F1Z8',
         branchFssai: activeBranch.fssai || state.shopInfo?.fssai || '10722026000412',
         date: `25 Sep 2026, ${timeStr}`,
@@ -3454,6 +4375,74 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     }
   });
 
+  // Live Phone Lookup in Add Customer Modal (Detect patrons from other branches instantly!)
+  const addPhoneInput = document.getElementById('add-customer-phone-input') as HTMLInputElement | null;
+  const addPhoneMatchCard = document.getElementById('add-customer-phone-match-card');
+  if (addPhoneInput && addPhoneMatchCard) {
+    addPhoneInput.addEventListener('input', (e: any) => {
+      const typed = e.target.value.replace(/\D/g, '');
+      if (typed.length >= 4) {
+        const found = state.customers.find((c: any) => {
+          const cDigits = (c.phone || '').replace(/\D/g, '');
+          return cDigits.includes(typed) || (cDigits.length >= 6 && typed.includes(cDigits));
+        });
+        if (found) {
+          // Auto-prefill form fields if they are currently blank
+          const nameInput = document.querySelector('#add-customer-form input[name="name"]') as HTMLInputElement;
+          const emailInput = document.querySelector('#add-customer-form input[name="email"]') as HTMLInputElement;
+          const addrInput = document.querySelector('#add-customer-form input[name="address"]') as HTMLInputElement;
+          const notesInput = document.querySelector('#add-customer-form input[name="notes"]') as HTMLInputElement;
+          if (nameInput && (!nameInput.value || nameInput.value.trim() === '')) {
+            nameInput.value = found.name || '';
+          }
+          if (emailInput && (!emailInput.value || emailInput.value.trim() === '') && found.email) {
+            emailInput.value = found.email;
+          }
+          if (addrInput && (!addrInput.value || addrInput.value.trim() === '') && found.address) {
+            addrInput.value = found.address;
+          }
+          if (notesInput && (!notesInput.value || notesInput.value.trim() === '') && found.notes) {
+            notesInput.value = found.notes;
+          }
+
+          const bObj = (state.branches || []).find((b: any) => b.id === found.branchId);
+          const bName = bObj ? bObj.name : (found.branchName || 'Radhe Sweets Gandhinagar');
+          const isOther = Boolean(found.branchId && found.branchId !== state.currentBranchId);
+          addPhoneMatchCard.className = `p-3 rounded-2xl border ${isOther ? 'bg-blue-50/90 border-blue-200 text-blue-950' : 'bg-emerald-50/90 border-emerald-200 text-emerald-950'} space-y-2 mt-2 animate-fadeIn`;
+          addPhoneMatchCard.innerHTML = `
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-extrabold flex items-center gap-1.5">
+                <span>${isOther ? '🏢' : '👤'}</span>
+                <span>${isOther ? `Patron recognized from ${bName}` : 'Customer Found in System'}</span>
+              </span>
+              <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/80 border">#${(found.id || 'CUST').toUpperCase()}</span>
+            </div>
+            <div class="text-[11px] font-medium leading-tight">
+              <strong>${found.name}</strong> • ${found.phone}
+              <div class="text-[10px] opacity-80 mt-0.5">Orders: ${found.totalOrders || 0} • Spent: ₹${(found.totalSpent || 0).toLocaleString()} • ⭐ ${found.loyaltyPoints || 0} Pts • 📍 ${found.address || bName}</div>
+            </div>
+            <button 
+              type="button" 
+              id="add-modal-attach-existing-btn"
+              class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+            >
+              <span>⚡ Use &amp; Attach ${found.name}</span>
+            </button>
+          `;
+          document.getElementById('add-modal-attach-existing-btn')?.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            completeCustomerSelection(found);
+            showToast(`✓ Patron ${found.name} (from ${bName}) attached!`, 'success');
+          });
+          return;
+        }
+      }
+      addPhoneMatchCard.className = 'mt-2 hidden';
+      addPhoneMatchCard.innerHTML = '';
+    });
+  }
+
   document.getElementById('add-customer-form')?.addEventListener('submit', (e: any) => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -3462,15 +4451,41 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const rawPhone = (fd.get('phone') as string || '').replace(/\D/g, '');
     const formattedPhone = rawPhone.length === 10 ? `+91 ${rawPhone.slice(0, 5)} ${rawPhone.slice(5)}` : `+91 ${fd.get('phone')}`;
 
+    // Check if customer with this phone number already exists across ANY branch
+    const cleanPhoneDigits = rawPhone.slice(-10);
+    const existing = state.customers.find((c: any) => {
+      const cDigits = (c.phone || '').replace(/\D/g, '').slice(-10);
+      return cleanPhoneDigits.length >= 6 && (cDigits === cleanPhoneDigits || cDigits.includes(cleanPhoneDigits) || cleanPhoneDigits.includes(cDigits));
+    });
+
+    if (existing) {
+      if (fd.get('name')) existing.name = (fd.get('name') as string).trim();
+      if (fd.get('email')) existing.email = (fd.get('email') as string).trim();
+      if (fd.get('address')) existing.address = (fd.get('address') as string).trim();
+      
+      const bObj = (state.branches || []).find((b: any) => b.id === existing.branchId);
+      const bName = bObj ? bObj.name : (existing.branchName || 'Radhe Sweets Flagship');
+      
+      saveCustomerToCloud(existing, state.currentBranchId, state.customers);
+      saveBranchSnapshot(state.currentBranchId);
+      saveState();
+      showToast(`✓ Patron recognized: ${existing.name} (from ${bName}) attached!`, 'success');
+      completeCustomerSelection(existing);
+      return;
+    }
+
+    const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
     const newCust = {
       id: assignedId,
+      branchId: state.currentBranchId,
+      branchName: curBranch ? curBranch.name : 'Radhe Sweets',
       name: (fd.get('name') as string || 'New Customer').trim(),
       phone: formattedPhone,
       email: (fd.get('email') as string || '').trim(),
       address: (fd.get('address') as string || 'Ahmedabad, Gujarat').trim(),
       type: 'Regular',
       tier: 'Regular',
-      loyaltyPoints: 0,
+      loyaltyPoints: 50,
       totalOrders: 0,
       totalSpent: 0,
       notes: (fd.get('notes') as string || '').trim()
@@ -3843,10 +4858,121 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
   document.getElementById('add-sweet-image-input')?.addEventListener('input', handleAddSweetUrlInput);
   document.getElementById('add-sweet-image-url')?.addEventListener('input', handleAddSweetUrlInput);
 
+  // Safe backdrop click: don't dismiss if user entered data
+  document.getElementById('add-product-modal')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'add-product-modal') {
+      const nameInput = document.querySelector('#add-product-form input[name="name"]') as HTMLInputElement | null;
+      if (nameInput && nameInput.value.trim().length > 0) {
+        return; // Preserve input on accidental backdrop tap
+      }
+      state.showAddProductModal = false;
+      renderApp();
+    }
+  });
+
+  // 100 Sweet Photos Gallery: Click to Select Photo (Add & Edit modals)
+  document.querySelectorAll('[data-pick-sweet-photo]').forEach(btn => {
+    btn.addEventListener('click', (e: any) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const photoUrl = btn.getAttribute('data-pick-sweet-photo');
+      const photoId = btn.getAttribute('data-pick-id');
+      const prefix = btn.getAttribute('data-target-prefix') || 'add';
+
+      if (photoUrl) {
+        if (prefix === 'add') {
+          updateAddSweetPreview(photoUrl);
+        } else {
+          updateEditSweetPreview(photoUrl);
+        }
+
+        const labelEl = document.getElementById(`${prefix}-sweet-selected-label`);
+        if (labelEl) {
+          labelEl.textContent = `Collection Photo #${photoId}`;
+        }
+
+        // Highlight selected thumbnail with active ring & checkmark
+        const grid = document.getElementById(`${prefix}-collection-grid`);
+        if (grid) {
+          grid.querySelectorAll('.sweet-picker-item').forEach(item => {
+            item.classList.remove('border-[#C86D3B]', 'ring-2', 'ring-[#C86D3B]/40', 'shadow-xs');
+            item.classList.add('border-stone-200');
+            const check = item.querySelector('.pick-check-mark');
+            if (check) check.remove();
+          });
+          btn.classList.add('border-[#C86D3B]', 'ring-2', 'ring-[#C86D3B]/40', 'shadow-xs');
+          btn.classList.remove('border-stone-200');
+          if (!btn.querySelector('.pick-check-mark')) {
+            const checkSpan = document.createElement('span');
+            checkSpan.className = 'pick-check-mark absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#C86D3B] text-white flex items-center justify-center text-[8px] font-black';
+            checkSpan.textContent = '✓';
+            btn.appendChild(checkSpan);
+          }
+        }
+      }
+    });
+  });
+
+  // Gallery Pagination / Range Filtering Tabs
+  document.querySelectorAll('[data-gallery-tab]').forEach(tabBtn => {
+    tabBtn.addEventListener('click', (e: any) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const tab = tabBtn.getAttribute('data-gallery-tab');
+      const prefix = tabBtn.getAttribute('data-prefix') || 'add';
+      const grid = document.getElementById(`${prefix}-collection-grid`);
+      if (!grid) return;
+
+      const parent = tabBtn.parentElement;
+      if (parent) {
+        parent.querySelectorAll('.gallery-tab-btn').forEach(b => {
+          b.classList.remove('bg-[#C86D3B]', 'text-white');
+          b.classList.add('bg-stone-100', 'text-stone-700');
+        });
+        tabBtn.classList.add('bg-[#C86D3B]', 'text-white');
+        tabBtn.classList.remove('bg-stone-100', 'text-stone-700');
+      }
+
+      grid.querySelectorAll<HTMLElement>('.sweet-picker-item').forEach(item => {
+        const id = Number(item.getAttribute('data-pick-id') || 0);
+        let show = true;
+        if (tab === '1-25') show = id >= 1 && id <= 25;
+        else if (tab === '26-50') show = id >= 26 && id <= 50;
+        else if (tab === '51-75') show = id >= 51 && id <= 75;
+        else if (tab === '76-100') show = id >= 76 && id <= 100;
+        item.style.display = show ? 'block' : 'none';
+      });
+    });
+  });
+
+  // Toggle Collection Gallery Panel
+  document.getElementById('add-toggle-collection-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const panel = document.getElementById('add-collection-gallery-panel');
+    if (panel) panel.classList.toggle('hidden');
+  });
+  document.getElementById('edit-toggle-collection-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const panel = document.getElementById('edit-collection-gallery-panel');
+    if (panel) panel.classList.toggle('hidden');
+  });
+
   // Clear Image for Add Product
   document.getElementById('add-sweet-clear-img-btn')?.addEventListener('click', () => {
     updateAddSweetPreview('/assets/sweets/sw-1.png');
+    const labelEl = document.getElementById('add-sweet-selected-label');
+    if (labelEl) labelEl.textContent = 'Collection Photo #1';
     const fileInput = document.getElementById('add-sweet-file-input') as HTMLInputElement | null;
+    if (fileInput) fileInput.value = '';
+  });
+
+  // Clear / Reset Image for Edit Product
+  document.getElementById('edit-sweet-clear-img-btn')?.addEventListener('click', () => {
+    const fallbackSrc = state.editingSweet ? (state.editingSweet.image || `/assets/sweets/${state.editingSweet.id}.png`) : '/assets/sweets/sw-1.png';
+    updateEditSweetPreview(fallbackSrc);
+    const labelEl = document.getElementById('edit-sweet-selected-label');
+    if (labelEl) labelEl.textContent = 'Default Photo';
+    const fileInput = document.getElementById('edit-sweet-file-input') as HTMLInputElement | null;
     if (fileInput) fileInput.value = '';
   });
 
@@ -4161,16 +5287,24 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
   document.getElementById('add-expense-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const fd = new FormData(e.target);
+    const fd = new FormData(e.target as HTMLFormElement);
     const amount = Number(fd.get('amount'));
     const category = fd.get('category') as string;
     const dateVal = (fd.get('date') as string) || new Date().toISOString().split('T')[0];
+    const branchId = (fd.get('branchId') as string) || 'all';
+    const branchObj = (state.branches || []).find((b: any) => b.id === branchId);
+    const branchName = branchId === 'all' 
+      ? 'All Branches (Combined)' 
+      : (branchObj ? branchObj.name : 'Branch');
+
     const newExp = {
       id: `exp-${Date.now()}`,
       date: dateVal,
-      description: (fd.get('description') as string || 'Expense').trim(),
+      description: ((fd.get('description') as string) || 'Expense').trim(),
       category: category,
       amount: amount,
+      branchId: branchId,
+      branchName: branchName,
       status: 'Paid'
     };
 
@@ -4178,25 +5312,63 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.expenses.total += amount;
 
     // Update breakdown
-    const catItem = state.expenses.breakdown.find(b => b.category === category);
+    const catItem = state.expenses.breakdown.find((b: any) => b.category === category);
     if (catItem) {
       catItem.amount += amount;
       catItem.percentage = Math.round((catItem.amount / state.expenses.total) * 100);
+    } else {
+      state.expenses.breakdown.push({
+        category: category,
+        amount: amount,
+        percentage: Math.round((amount / state.expenses.total) * 100) || 10,
+        color: category === 'Raw Materials' ? '#C86D3B' : '#7C7267'
+      });
     }
 
     state.kpis.cost.value += amount;
     state.kpis.cost.formatted = `₹${state.kpis.cost.value.toLocaleString()}`;
     
-    // User requested: "when i save expanse dilog dont go away make it and when saved popup expensee is saved then in popup there is button close or add onther"
-    state.expenseSavedSuccess = true;
-    state.lastSavedExpense = newExp;
-    saveExpenseToCloud(newExp, state.currentBranchId, state.expenses);
+    // User requested: "expenss click on save it still show up dont go that pop up"
+    // Modal closes immediately upon clicking Save Expense!
+    state.showAddExpenseModal = false;
+    state.expenseSavedSuccess = false;
+    state.lastSavedExpense = null;
+
+    saveExpenseToCloud(newExp, branchId, state.expenses);
     saveState();
     renderApp();
-    showToast(`✓ Recorded expense ₹${amount.toLocaleString()} for ${newExp.description}`, 'success');
+    showToast(`✓ Recorded expense ₹${amount.toLocaleString()} for ${newExp.description} [${branchName}]`, 'success');
   });
 
-  // Action buttons inside post-save confirmation
+  // Cancel & Close buttons inside Add Expense Modal
+  document.getElementById('cancel-add-expense-btn')?.addEventListener('click', () => {
+    state.showAddExpenseModal = false;
+    state.expenseSavedSuccess = false;
+    state.lastSavedExpense = null;
+    renderApp();
+  });
+  document.getElementById('close-add-expense-btn')?.addEventListener('click', () => {
+    state.showAddExpenseModal = false;
+    state.expenseSavedSuccess = false;
+    state.lastSavedExpense = null;
+    renderApp();
+  });
+  document.getElementById('add-expense-modal')?.addEventListener('click', (e: any) => {
+    if (e.target.id === 'add-expense-modal') {
+      state.showAddExpenseModal = false;
+      state.expenseSavedSuccess = false;
+      state.lastSavedExpense = null;
+      renderApp();
+    }
+  });
+
+  // Expenses Branch Filter selector dropdown
+  document.getElementById('expenses-branch-filter')?.addEventListener('change', (e: any) => {
+    state.expensesBranchFilter = e.target.value;
+    renderApp();
+  });
+
+  // Action buttons inside post-save confirmation (if ever triggered)
   document.getElementById('add-another-expense-btn')?.addEventListener('click', () => {
     state.expenseSavedSuccess = false;
     state.lastSavedExpense = null;
@@ -4216,9 +5388,10 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       if (item) {
         state.expenses.total = Math.max(0, state.expenses.total - item.amount);
         state.expenses.items = state.expenses.items.filter((i: any) => i.id !== id);
-        deleteExpenseFromCloud(id, state.currentBranchId, state.expenses);
+        deleteExpenseFromCloud(id, item.branchId || state.currentBranchId, state.expenses);
         saveState();
         renderApp();
+        showToast(`Expense removed from ledger`, 'info');
       }
     });
   });
@@ -4230,6 +5403,66 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       state.expensesFilterCategory = cat;
       renderApp();
     });
+  });
+
+  // P&L Statement Scope & Timeframe Selectors
+  document.getElementById('analytics-pl-scope')?.addEventListener('change', (e: any) => {
+    state.analyticsPLScope = e.target.value;
+    saveState();
+    renderApp();
+  });
+  document.getElementById('analytics-pl-timeframe')?.addEventListener('change', (e: any) => {
+    state.analyticsPLTimeframe = e.target.value;
+    saveState();
+    renderApp();
+  });
+  document.getElementById('analytics-top-timeframe')?.addEventListener('change', (e: any) => {
+    state.analyticsPLTimeframe = e.target.value;
+    saveState();
+    renderApp();
+  });
+
+  // Daily Single Date Picker Handlers
+  document.getElementById('analytics-pl-daily-date')?.addEventListener('change', (e: any) => {
+    state.analyticsPLDailyDate = e.target.value;
+    saveState();
+    renderApp();
+  });
+  document.getElementById('analytics-top-daily-date')?.addEventListener('change', (e: any) => {
+    state.analyticsPLDailyDate = e.target.value;
+    saveState();
+    renderApp();
+  });
+
+  // Custom Date Range Handlers for Analytics / P&L
+  document.getElementById('analytics-pl-custom-from')?.addEventListener('change', (e: any) => {
+    state.analyticsPLCustomFrom = e.target.value;
+  });
+  document.getElementById('analytics-pl-custom-to')?.addEventListener('change', (e: any) => {
+    state.analyticsPLCustomTo = e.target.value;
+  });
+  document.getElementById('analytics-pl-apply-custom-btn')?.addEventListener('click', () => {
+    const fromInput = document.getElementById('analytics-pl-custom-from') as HTMLInputElement;
+    const toInput = document.getElementById('analytics-pl-custom-to') as HTMLInputElement;
+    if (fromInput?.value) state.analyticsPLCustomFrom = fromInput.value;
+    if (toInput?.value) state.analyticsPLCustomTo = toInput.value;
+    saveState();
+    renderApp();
+  });
+
+  document.getElementById('analytics-top-custom-from')?.addEventListener('change', (e: any) => {
+    state.analyticsPLCustomFrom = e.target.value;
+  });
+  document.getElementById('analytics-top-custom-to')?.addEventListener('change', (e: any) => {
+    state.analyticsPLCustomTo = e.target.value;
+  });
+  document.getElementById('analytics-top-apply-custom-btn')?.addEventListener('click', () => {
+    const fromInput = document.getElementById('analytics-top-custom-from') as HTMLInputElement;
+    const toInput = document.getElementById('analytics-top-custom-to') as HTMLInputElement;
+    if (fromInput?.value) state.analyticsPLCustomFrom = fromInput.value;
+    if (toInput?.value) state.analyticsPLCustomTo = toInput.value;
+    saveState();
+    renderApp();
   });
 
   // ==========================================
@@ -4909,18 +6142,6 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     });
   });
 
-  // RBAC Role Switcher
-  document.getElementById('user-role-select')?.addEventListener('change', (e) => {
-    state.userRole = e.target.value;
-    state.auditLogs.unshift({
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      user: state.shopInfo.owner,
-      action: 'Role Switched',
-      details: `Active role updated to ${state.userRole}`
-    });
-    saveState();
-    renderApp();
-  });
 
   // Dual-Unit Weighing Mode Toggle (kg vs g)
   document.getElementById('unit-toggle-kg')?.addEventListener('click', (e) => {
@@ -5181,17 +6402,29 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       return;
     }
 
-    // 2. Otherwise create a new customer profile and attach instantly!
+    // 2. Otherwise auto-ask for customer name or create profile
     const nameInput = document.getElementById('dialer-new-customer-name') as HTMLInputElement | null;
     const typedName = nameInput?.value?.trim();
-    const customerName = typedName || `Patron (${formattedPhone})`;
+    if (!typedName) {
+      state.showCustomerDialerModal = false;
+      state.quickNewCustomerPrompt = { phone: formattedPhone, cleanDigits: rawDigits };
+      renderApp();
+      setTimeout(() => {
+        const nInput = document.getElementById('quick-new-cust-name-input') as HTMLInputElement | null;
+        nInput?.focus();
+      }, 60);
+      return;
+    }
 
+    const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
     const newCustomer = {
       id: `CUST-${1000 + state.customers.length + 1}`,
-      name: customerName,
+      branchId: state.currentBranchId,
+      branchName: curBranch ? curBranch.name : 'Sector 21',
+      name: typedName,
       phone: formattedPhone,
       email: '',
-      address: 'Ahmedabad, Gujarat',
+      address: curBranch ? curBranch.address : 'Gandhinagar, Gujarat',
       type: 'Regular',
       tier: 'Regular',
       loyaltyPoints: 50, // Welcome points!
@@ -5798,13 +7031,25 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
         } else {
           const nameInput = document.getElementById('dialer-new-customer-name') as HTMLInputElement | null;
           const typedName = nameInput?.value?.trim();
-          const customerName = typedName || `Patron (${phone})`;
+          if (!typedName) {
+            state.showCustomerDialerModal = false;
+            state.quickNewCustomerPrompt = { phone: phone, cleanDigits: rawDigits };
+            renderApp();
+            setTimeout(() => {
+              const nInput = document.getElementById('quick-new-cust-name-input') as HTMLInputElement | null;
+              nInput?.focus();
+            }, 60);
+            return;
+          }
+          const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
           const newCustomer = {
             id: `CUST-${1000 + state.customers.length + 1}`,
-            name: customerName,
+            branchId: state.currentBranchId,
+            branchName: curBranch ? curBranch.name : 'Sector 21',
+            name: typedName,
             phone: phone,
             email: '',
-            address: 'Ahmedabad, Gujarat',
+            address: curBranch ? curBranch.address : 'Gandhinagar, Gujarat',
             type: 'Regular',
             tier: 'Regular',
             loyaltyPoints: 50,
@@ -5944,31 +7189,22 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
       if (existing) {
         completeCustomerSelection(existing);
       } else {
-        const newCust = {
-          id: `CUST-${1000 + state.customers.length + 1}`,
-          name: `Patron (${phone})`,
-          phone: phone,
-          email: '',
-          address: 'Ahmedabad, Gujarat',
-          type: 'Regular',
-          tier: 'Regular',
-          loyaltyPoints: 50,
-          totalOrders: 1,
-          totalSpent: 0,
-          notes: 'Registered via Phone Dialer'
-        };
-        state.customers.unshift(newCust);
-        if (state.kpis?.customers) {
-          state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
-          state.kpis.customers.formatted = String(state.kpis.customers.value);
-        }
-        saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
-        saveBranchSnapshot(state.currentBranchId);
-        completeCustomerSelection(newCust);
+        state.showCustomerDialerModal = false;
+        state.quickNewCustomerPrompt = { phone: phone, cleanDigits: rawDigits };
+        renderApp();
+        setTimeout(() => {
+          const nInput = document.getElementById('quick-new-cust-name-input') as HTMLInputElement | null;
+          nInput?.focus();
+        }, 60);
       }
     }
   } else if (e.key === 'Escape') {
     e.preventDefault();
+    if (state.quickNewCustomerPrompt) {
+      state.quickNewCustomerPrompt = null;
+      renderApp();
+      return;
+    }
     state.showCustomerDialerModal = false;
     if (state.returnToCheckout) {
       state.showCheckoutModal = true;
@@ -6029,7 +7265,7 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 // Initialize with Google Deep Linking & Cloud Sync
 function initApp() {
   const initialHash = window.location.hash.replace('#/', '').replace('#', '');
-  if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(initialHash)) {
+  if (initialHash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings', 'owner-manage', 'branch-admin'].includes(initialHash)) {
     state.activeTab = initialHash;
   }
   renderApp();
@@ -6058,14 +7294,20 @@ function initApp() {
 
 
   // 4. Background Cloud Sync for branches from Cloud Firestore
-  loadBranchesFromCloud().then((cloudBranches: any) => {
-    if (cloudBranches && Array.isArray(cloudBranches) && cloudBranches.length > 0) {
-      state.branches = cloudBranches;
-      if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
-        state.currentBranchId = state.branches[0].id;
+  loadBranchesFromCloud().then(async (cloudBranches: any) => {
+    const sanitized = sanitizeBranchesList(cloudBranches);
+    state.branches = sanitized;
+    if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
+      state.currentBranchId = state.branches[0].id;
+    }
+    saveState();
+    renderApp();
+
+    // If cloud has fewer than 11 branches or old Ahmedabad branches, persist all 11 to Cloud Firestore!
+    if (!cloudBranches || cloudBranches.length < 11 || cloudBranches.some((b: any) => b.name?.includes('Navrangpura') || b.city === 'Ahmedabad')) {
+      for (const branch of initialData.branches) {
+        await saveBranchToCloud(branch, initialData.branches).catch(() => {});
       }
-      saveState();
-      renderApp();
     }
   }).catch(() => {});
 
@@ -6078,6 +7320,55 @@ function initApp() {
   window.addEventListener('focus', () => {
     handleIncomingPeerSync();
   });
+
+  // 6. User Directory Real-time Cloud Firestore Listener with Auto-Normalization
+  const normalizeUsers = (usersList: any[]) => {
+    return (usersList || []).map((u: any) => {
+      if (u.role === 'branch_admin') {
+        return {
+          ...u,
+          allowedPages: ['dashboard', 'pos', 'orders', 'customers', 'products', 'expenses', 'analytics', 'staff', 'branch-admin']
+        };
+      }
+      if (u.role === 'owner') {
+        return {
+          ...u,
+          branchId: 'all',
+          allowedPages: ['dashboard', 'pos', 'orders', 'customers', 'products', 'expenses', 'analytics', 'staff', 'settings', 'owner-manage']
+        };
+      }
+      return u;
+    });
+  };
+
+  subscribeToUsers((cloudUsers: any[]) => {
+    if (cloudUsers && Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+      const normalized = normalizeUsers(cloudUsers);
+      state.users = normalized;
+      try {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(normalized));
+      } catch (_) {}
+      if (state.currentUser) {
+        const updatedSelf = normalized.find((u: any) => u.id === state.currentUser.id || u.name?.toLowerCase() === state.currentUser.name?.toLowerCase());
+        if (updatedSelf) {
+          state.currentUser = updatedSelf;
+        }
+      }
+      renderApp();
+    }
+  });
+
+  // 7. Background load users from cloud
+  loadUsersFromCloud().then((cloudUsers: any[]) => {
+    if (cloudUsers && Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+      const normalized = normalizeUsers(cloudUsers);
+      state.users = normalized;
+      try {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(normalized));
+      } catch (_) {}
+      renderApp();
+    }
+  }).catch(() => {});
 }
 
 if (document.readyState === 'loading') {
@@ -6089,7 +7380,7 @@ if (document.readyState === 'loading') {
 // Google Sitemap Deep Linking - Listen for browser URL hash changes
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#/', '').replace('#', '');
-  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings'].includes(hash) && state.activeTab !== hash) {
+  if (hash && ['dashboard', 'pos', 'products', 'customers', 'orders', 'expenses', 'analytics', 'staff', 'settings', 'owner-manage', 'branch-admin'].includes(hash) && state.activeTab !== hash) {
     state.activeTab = hash;
     saveState();
     renderApp();

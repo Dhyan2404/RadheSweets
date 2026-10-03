@@ -122,68 +122,42 @@ export async function testFirestoreConnection() {
  */
 export function getBranchDefaultCatalog(branchId) {
   const masterSweets = initialData.sweets || [];
+  const branchObj = (initialData.branches || []).find(b => b.id === branchId) || {
+    id: branchId,
+    name: "Sector 21 Flagship Sweets",
+    revenue: 48500,
+    orders: 132
+  };
   
-  if (branchId === "br-2") {
-    return {
-      name: "Satellite Luxury Boutique",
-      branchId: "br-2",
-      kpis: {
-        revenue: { value: 0, target: 35000, progress: 0, change: "0.0% margin" },
-        orders: { value: 0, target: 100, progress: 0, change: "0 orders" },
-        sweetsSold: { value: 0, unit: "kg", target: 110, progress: 0, change: "0 kg" },
-        customers: { value: 0, target: 85, progress: 0, change: "0 patrons" },
-        profit: { value: 0, change: "0.0% margin", isUp: false, formatted: "₹0" },
-        sales: { value: 0, formatted: "₹0" },
-        cost: { value: 0, formatted: "₹0" },
-        returningCustomers: { value: 0 }
-      },
-      sweets: masterSweets.map((s, idx) => ({
+  const bIndex = parseInt(branchId.replace(/\D/g, '') || '1', 10);
+  const isFlagship = branchId === 'br-1';
+
+  return {
+    name: branchObj.name,
+    branchId: branchId,
+    kpis: {
+      revenue: { value: isFlagship ? 48500 : branchObj.revenue || 0, target: 50000, progress: isFlagship ? 97 : 0, change: isFlagship ? "+14.2% vs last week" : "0.0% margin" },
+      orders: { value: isFlagship ? 132 : branchObj.orders || 0, target: 150, progress: isFlagship ? 88 : 0, change: isFlagship ? "+9.8% vs last week" : "0 orders" },
+      sweetsSold: { value: isFlagship ? 195 : 0, unit: "kg", target: 220, progress: isFlagship ? 88.6 : 0, change: isFlagship ? "+16.5% vs last week" : "0 kg" },
+      customers: { value: isFlagship ? 110 : 10, target: 120, progress: isFlagship ? 91.6 : 0, change: isFlagship ? "+8.3% patrons" : "10 patrons" },
+      profit: { value: isFlagship ? 16580 : 0, change: "34.2% margin", isUp: true, formatted: isFlagship ? "₹16,580" : "₹0" },
+      sales: { value: isFlagship ? 48500 : branchObj.revenue || 0, formatted: isFlagship ? "₹48,500" : `₹${(branchObj.revenue || 0).toLocaleString()}` },
+      cost: { value: isFlagship ? 31920 : 0, formatted: isFlagship ? "₹31,920" : "₹0" },
+      returningCustomers: { value: isFlagship ? 84 : 0 }
+    },
+    sweets: masterSweets.map((s, idx) => {
+      // Deterministic variation per branch based on branch index
+      const stockFactor = 0.75 + ((bIndex * 7 + idx) % 8) * 0.08;
+      const priceFactor = 1.0 + (((bIndex + idx) % 5) - 2) * 0.02;
+      return {
         ...s,
-        pricePerKg: Math.round(s.pricePerKg * 1.08),
-        costPrice: Math.round(s.costPrice * 1.04),
-        stock: Math.max(15, Math.round(s.stock * 0.85)),
-        badge: idx % 8 === 0 ? "Luxury Vark" : s.badge
-      }))
-    };
-  } else if (branchId === "br-3") {
-    return {
-      name: "SG Highway Central Kitchen",
-      branchId: "br-3",
-      kpis: {
-        revenue: { value: 0, target: 60000, progress: 0, change: "0.0% margin" },
-        orders: { value: 0, target: 180, progress: 0, change: "0 orders" },
-        sweetsSold: { value: 0, unit: "kg", target: 350, progress: 0, change: "0 kg" },
-        customers: { value: 0, target: 150, progress: 0, change: "0 patrons" },
-        profit: { value: 0, change: "0.0% margin", isUp: false, formatted: "₹0" },
-        sales: { value: 0, formatted: "₹0" },
-        cost: { value: 0, formatted: "₹0" },
-        returningCustomers: { value: 0 }
-      },
-      sweets: masterSweets.map((s, idx) => ({
-        ...s,
-        pricePerKg: Math.round(s.pricePerKg * 0.95),
-        costPrice: Math.round(s.costPrice * 0.92),
-        stock: Math.max(45, Math.round(s.stock * 2.2)),
-        badge: idx % 6 === 0 ? "Kitchen Fresh" : s.badge
-      }))
-    };
-  } else {
-    return {
-      name: "Navrangpura Flagship",
-      branchId: "br-1",
-      kpis: {
-        revenue: { value: 42850, target: 45000, progress: 95.2, change: "+12.4% vs last week" },
-        orders: { value: 126, target: 140, progress: 90.0, change: "+8.1% vs last week" },
-        sweetsSold: { value: 184, unit: "kg", target: 200, progress: 92.0, change: "+15.2% vs last week" },
-        customers: { value: 98, target: 110, progress: 89.1, change: "+6.3% vs last week" },
-        profit: { value: 14620, change: "34.1% margin", isUp: true, formatted: "₹14,620" },
-        sales: { value: 42850, formatted: "₹42,850" },
-        cost: { value: 28230, formatted: "₹28,230" },
-        returningCustomers: { value: 76 }
-      },
-      sweets: masterSweets.map(s => ({ ...s }))
-    };
-  }
+        pricePerKg: Math.round(s.pricePerKg * priceFactor),
+        costPrice: Math.round(s.costPrice * priceFactor),
+        stock: Math.max(12, Math.round(s.stock * stockFactor)),
+        badge: (idx + bIndex) % 6 === 0 ? "Fresh Batch" : s.badge
+      };
+    })
+  };
 }
 
 /**
@@ -274,7 +248,7 @@ export function subscribeToBranches(callback) {
           id: docSnap.id,
           name: d.name || docSnap.id,
           code: d.code || 'BR-LOC',
-          city: d.city || 'Ahmedabad',
+          city: d.city || 'Gandhinagar',
           address: d.address || '',
           phone: d.phone || '',
           manager: d.manager || '',
@@ -320,7 +294,7 @@ export async function loadBranchesFromCloud() {
           id: docSnap.id,
           name: d.name || docSnap.id,
           code: d.code || 'BR-LOC',
-          city: d.city || 'Ahmedabad',
+          city: d.city || 'Gandhinagar',
           address: d.address || '',
           phone: d.phone || '',
           manager: d.manager || '',
@@ -640,40 +614,35 @@ export async function updateCustomerStatsInCloud(customerId, orderAmount) {
 }
 
 /**
- * Real-time Listener for Branch Customers Directory (Firestore)
+ * Real-time Listener for Unified Enterprise Customers Directory (Firestore)
+ * Subscribes to global patrons collection so customers from any branch are instantly recognized anywhere
  */
 export function subscribeToBranchCustomers(branchId, callback) {
   try {
-    const branchCustCol = collection(db, "branches", branchId, "customers");
-    return onSnapshot(branchCustCol, (snapshot) => {
-      if (snapshot.empty) {
-        callback(branchId === "br-1" ? initialData.customers : []);
-        return;
-      }
+    const custCol = collection(db, "customers");
+    return onSnapshot(custCol, (snapshot) => {
       const cloudCustomers = [];
       snapshot.forEach(docSnap => {
         cloudCustomers.push(docSnap.data());
       });
 
-      if (branchId === "br-1") {
-        const merged = initialData.customers.map(c => {
-          const match = cloudCustomers.find(cc => cc.id === c.id);
-          return match ? { ...c, ...match } : c;
-        });
-        cloudCustomers.forEach(cc => {
-          if (!merged.some(m => m.id === cc.id)) merged.push(cc);
-        });
-        updateStatus('synced');
-        callback(merged);
-      } else {
-        updateStatus('synced');
-        callback(cloudCustomers);
-      }
+      const seed = Array.isArray(initialData?.customers) ? initialData.customers : [];
+      const merged = seed.map(c => {
+        const match = cloudCustomers.find(cc => cc.id === c.id || ((cc.phone && c.phone) && cc.phone.replace(/\D/g, '') === c.phone.replace(/\D/g, '')));
+        return match ? { ...c, ...match } : c;
+      });
+      cloudCustomers.forEach(cc => {
+        if (!merged.some(m => m.id === cc.id || ((m.phone && cc.phone) && m.phone.replace(/\D/g, '') === cc.phone.replace(/\D/g, '')))) {
+          merged.push(cc);
+        }
+      });
+      updateStatus('synced');
+      callback(merged);
     }, (err) => {
-      handleFirestoreError(`Branch ${branchId} customers listener`, err);
+      handleFirestoreError(`Global customers directory listener`, err);
     });
   } catch (e) {
-    handleFirestoreError('Failed to subscribe to branch customers', e);
+    handleFirestoreError('Failed to subscribe to customers', e);
     return () => {};
   }
 }
@@ -1031,4 +1000,110 @@ export async function syncAllToFirebaseCloud(state) {
   const successCount = results.filter(r => r.status === 'fulfilled').length;
   updateStatus('synced');
   return { success: true, count: successCount };
+}
+
+/**
+ * =========================================================
+ * User Authentication & Role Management (Cloud Firestore)
+ * =========================================================
+ */
+export const defaultMasterUser = {
+  id: 'usr-owner-root',
+  name: 'Owner',
+  password: 'admin',
+  role: 'owner',
+  branchId: 'all',
+  branchName: 'All Branches',
+  allowedPages: ['dashboard', 'pos', 'orders', 'customers', 'products', 'expenses', 'analytics', 'staff', 'settings', 'owner-manage'],
+  createdAt: '2026-01-01T00:00:00.000Z'
+};
+
+/**
+ * Save or update a user in Cloud Firestore
+ */
+export async function saveUserToCloud(user) {
+  updateStatus('syncing');
+  try {
+    const userDocRef = doc(db, "users", user.id || `usr-${Date.now()}`);
+    const payload = {
+      ...user,
+      id: userDocRef.id,
+      updatedAt: new Date().toISOString()
+    };
+    await setDoc(userDocRef, payload, { merge: true });
+    updateStatus('synced');
+    return payload;
+  } catch (error) {
+    handleFirestoreError(`Save user ${user.name}`, error);
+    return null;
+  }
+}
+
+/**
+ * Delete a user from Cloud Firestore
+ */
+export async function deleteUserFromCloud(userId) {
+  updateStatus('syncing');
+  try {
+    const userDocRef = doc(db, "users", userId);
+    await deleteDoc(userDocRef);
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Delete user ${userId}`, error);
+    return false;
+  }
+}
+
+/**
+ * Real-time listener for users in Cloud Firestore
+ */
+export function subscribeToUsers(callback) {
+  try {
+    const usersCol = collection(db, "users");
+    return onSnapshot(usersCol, (snapshot) => {
+      const usersList = [];
+      snapshot.forEach(docSnap => {
+        usersList.push(docSnap.data());
+      });
+      // Ensure master Owner exists if collection empty or Owner missing
+      const hasOwner = usersList.some(u => u.name?.toLowerCase() === 'owner');
+      if (!hasOwner) {
+        usersList.unshift(defaultMasterUser);
+      }
+      updateStatus('synced');
+      callback(usersList);
+    }, (err) => {
+      handleFirestoreError('Users collection listener', err);
+    });
+  } catch (e) {
+    handleFirestoreError('Failed to subscribe to users', e);
+    return () => {};
+  }
+}
+
+/**
+ * Load all users directly from Cloud Firestore
+ */
+export async function loadUsersFromCloud() {
+  try {
+    const snap = await Promise.race([
+      getDocs(collection(db, "users")),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+    if (snap && snap.docs) {
+      const list = [];
+      snap.docs.forEach(docSnap => {
+        list.push(docSnap.data());
+      });
+      const hasOwner = list.some(u => u.name?.toLowerCase() === 'owner');
+      if (!hasOwner) {
+        list.unshift(defaultMasterUser);
+      }
+      return list;
+    }
+  } catch (error) {
+    handleFirestoreError('Load users from cloud', error);
+  }
+  return [defaultMasterUser];
 }

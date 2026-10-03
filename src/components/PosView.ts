@@ -192,6 +192,33 @@ export function renderPosView(state: any) {
                 <span id="pos-sync-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span id="pos-sync-status-text">Online • Auto-Sync Active</span>
               </span>
+              <!-- Branch / Outlet Badge or Switcher -->
+              ${(state?.currentUser?.role || 'owner') === 'owner' ? `
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-50/90 border border-amber-300 rounded-full text-[11px] font-bold text-amber-950 shadow-2xs">
+                  <span class="text-amber-800 font-extrabold">📍 Outlet:</span>
+                  <select id="pos-branch-select" class="bg-transparent font-extrabold text-amber-950 focus:outline-none cursor-pointer pr-1">
+                    ${(branches || []).map((b: any) => `
+                      <option value="${b.id}" ${b.id === currentBranchId ? 'selected' : ''}>
+                        ${b.name} (${b.code || b.id})
+                      </option>
+                    `).join('')}
+                  </select>
+                  <button 
+                    type="button" 
+                    data-action="open-add-branch" 
+                    id="pos-add-branch-btn" 
+                    class="ml-0.5 px-2 py-0.5 bg-amber-200/90 hover:bg-amber-300 text-amber-950 rounded-full text-[10px] font-black transition-all active:scale-95 cursor-pointer shadow-2xs"
+                    title="Add a new branch outlet"
+                  >
+                    + Add
+                  </button>
+                </div>
+              ` : `
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-50/90 border border-amber-300 rounded-full text-[11px] font-bold text-amber-950 shadow-2xs">
+                  <span class="text-amber-800 font-extrabold">📍 Outlet:</span>
+                  <span class="font-extrabold text-amber-950">${((branches || []).find((b: any) => b.id === currentBranchId) || branches[0] || {}).name || 'Main Store'}</span>
+                </div>
+              `}
               <button type="button" id="pos-manual-sync-btn" class="hidden text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 transition-all cursor-pointer" title="Auto-sync queued offline bills to Cloud Firestore">
                 Sync Now 🔄
               </button>
@@ -270,7 +297,27 @@ export function renderPosView(state: any) {
               </div>
             </div>
 
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+              <!-- Quick Number Attach Bar -->
+              <div class="flex items-center bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#C86D3B]/20 focus-within:border-[#C86D3B] transition-all shadow-2xs">
+                <span class="text-stone-400 text-xs mr-1">📞</span>
+                <input 
+                  type="tel" 
+                  id="pos-quick-phone-input" 
+                  placeholder="Attach Mobile &amp; Enter..." 
+                  class="bg-transparent text-xs font-bold text-stone-800 placeholder-stone-400 focus:outline-none w-36 sm:w-44"
+                  autocomplete="off"
+                />
+                <button 
+                  type="button" 
+                  id="pos-quick-phone-enter-btn" 
+                  class="ml-1 px-2 py-0.5 bg-[#C86D3B] hover:bg-[#b05a2b] text-white text-[10px] font-black rounded-lg transition-all active:scale-95 cursor-pointer shadow-2xs"
+                  title="Attach or register customer"
+                >
+                  Enter ↵
+                </button>
+              </div>
+
               ${selectedCustomer ? `
                 <button 
                   type="button" 
@@ -284,10 +331,11 @@ export function renderPosView(state: any) {
               <button 
                 type="button" 
                 id="pos-select-customer-btn" 
-                class="px-3.5 py-2 bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white border border-[var(--border-color)] text-[var(--text-main)] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                class="px-3 py-1.5 bg-[var(--bg-subtle)] hover:bg-[var(--brand-primary)] hover:text-white border border-[var(--border-color)] text-[var(--text-main)] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                title="Open Phone Dialer & Patron Directory"
               >
-                <span>📞</span>
-                <span>${selectedCustomer ? 'Switch Customer' : 'Dial Number / Attach Customer'}</span>
+                <span>🔢</span>
+                <span>Dialer</span>
               </button>
             </div>
           </div>
@@ -331,35 +379,6 @@ export function renderPosView(state: any) {
                     title="Weigh in Grams"
                   >
                     grams (g)
-                  </button>
-                </div>
-
-                <!-- Box Tare Weight Deduction (Legal Metrology Compliance) -->
-                <div class="hidden sm:flex items-center bg-[var(--bg-subtle)] p-0.5 rounded-xl border border-[var(--border-color)] text-[11px] font-bold">
-                  <span class="text-[10px] text-stone-500 font-bold px-1.5">Tare:</span>
-                  <button 
-                    type="button" 
-                    data-set-tare="0"
-                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer ${(!state.boxTareGrams || state.boxTareGrams === 0) ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'text-stone-500 hover:text-stone-800'}"
-                    title="No Box Tare (0g)"
-                  >
-                    0g
-                  </button>
-                  <button 
-                    type="button" 
-                    data-set-tare="50"
-                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer ${state.boxTareGrams === 50 ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'text-stone-500 hover:text-stone-800'}"
-                    title="Standard Sweet Box (-50g)"
-                  >
-                    -50g Box
-                  </button>
-                  <button 
-                    type="button" 
-                    data-set-tare="100"
-                    class="px-2 py-0.5 rounded-lg transition-all cursor-pointer ${state.boxTareGrams === 100 ? 'bg-amber-600 text-white shadow-2xs font-extrabold' : 'text-stone-500 hover:text-stone-800'}"
-                    title="Heavy Tin Box (-100g)"
-                  >
-                    -100g Box
                   </button>
                 </div>
 

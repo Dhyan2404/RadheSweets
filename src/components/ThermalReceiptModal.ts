@@ -105,7 +105,7 @@ export function renderReceiptSlipHtml(order: any, shopInfo: any, settingsInput?:
   const safeShopInfo = shopInfo || {};
 
   const shopName = order.branchName || safeShopInfo.name || 'Radhe Sweets';
-  const subName = safeShopInfo.subName || 'SWEETS & MORE';
+  const subName = order.branchReceiptHeader || safeShopInfo.subName || 'SWEETS & MORE';
   const address = order.branchAddress || safeShopInfo.address || 'Opposite Iscon Mall, S.G. Highway, Satellite, Ahmedabad, Gujarat 380015';
   const phone = order.branchPhone || safeShopInfo.phone || '+91 98765 43210';
   const gstin = order.branchGstin || safeShopInfo.gstin || '24AAACR1234F1Z8';
@@ -132,8 +132,11 @@ export function renderReceiptSlipHtml(order: any, shopInfo: any, settingsInput?:
   }
 
   // QR Size calculation
+  const paperSize = order.branchPaperSize || cfg.paperSize || '80mm';
+  const is58mm = paperSize === '58mm';
+
   let qrPixelSize = 116;
-  if (cfg.paperSize === '58mm') {
+  if (is58mm) {
     qrPixelSize = 92;
   } else if (cfg.upiQrSize === 'small') {
     qrPixelSize = 95;
@@ -149,7 +152,6 @@ export function renderReceiptSlipHtml(order: any, shopInfo: any, settingsInput?:
   const dateStr = order.date ? (order.date.includes(',') ? order.date.split(',')[0] : order.date) : new Date().toLocaleDateString('en-IN');
   const timeStr = order.date && order.date.includes(',') ? order.date.split(',')[1].trim() : new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-  const is58mm = cfg.paperSize === '58mm';
   const widthClass = is58mm ? 'size-58mm max-w-[240px] text-[10px]' : 'size-80mm max-w-[320px] text-[11px]';
 
   return `
@@ -299,7 +301,7 @@ export function renderReceiptSlipHtml(order: any, shopInfo: any, settingsInput?:
       <div class="text-center pt-1 space-y-1">
         ${cfg.showDevotionalMotto ? `<p class="text-[10px] font-bold">${cfg.devotionalMotto || '🙏 JAI RADHE KRISHNA 🙏'}</p>` : ''}
         ${cfg.thankYouNote ? `<p class="text-[9px] italic text-stone-600">"${cfg.thankYouNote}"</p>` : ''}
-        ${cfg.customFooterNote ? `<p class="text-[8px] text-stone-500">${cfg.customFooterNote}</p>` : ''}
+        ${(order.branchReceiptFooter || cfg.customFooterNote) ? `<p class="text-[8px] text-stone-500">${order.branchReceiptFooter || cfg.customFooterNote}</p>` : ''}
 
         ${cfg.showBarcode ? `
           <!-- Barcode Mock -->
