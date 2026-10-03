@@ -320,7 +320,7 @@ export async function loadBranchesFromCloud() {
 }
 
 /**
- * Load complete branch data (all 100 sweets, KPIs) from Cloud Firestore
+ * Load complete branch data (sweets, KPIs, advanceOrders, rawMaterials, parkedBills, zReports, auditLogs) from Cloud Firestore
  */
 export async function loadBranchDataFromCloud(branchId) {
   const seed = getBranchDefaultCatalog(branchId);
@@ -330,11 +330,21 @@ export async function loadBranchDataFromCloud(branchId) {
       getDoc(branchDocRef),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
     ]);
-    if (snap && snap.exists && snap.exists() && snap.data()?.sweets && snap.data().sweets.length >= 50) {
+    if (snap && snap.exists && snap.exists() && snap.data()?.sweets && snap.data().sweets.length > 0) {
       const data = snap.data();
       let branchKpis = data.kpis || seed.kpis;
       updateStatus('synced');
-      return { sweets: data.sweets, kpis: branchKpis };
+      return { 
+        sweets: data.sweets, 
+        kpis: branchKpis,
+        advanceOrders: data.advanceOrders || null,
+        rawMaterials: data.rawMaterials || null,
+        parkedBills: data.parkedBills || null,
+        zReports: data.zReports || null,
+        auditLogs: data.auditLogs || null,
+        categories: data.categories || null,
+        receiptSettings: data.receiptSettings || null
+      };
     }
   } catch (error) {
     handleFirestoreError(`Load branch ${branchId}`, error);
@@ -342,9 +352,19 @@ export async function loadBranchDataFromCloud(branchId) {
 
   // Fallback to local snapshot
   try {
-    const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
-    if (localSnap && localSnap.sweets && localSnap.sweets.length >= 50) {
-      return { sweets: localSnap.sweets, kpis: localSnap.kpis || seed.kpis };
+    const localSnap = JSON.parse(localStorage.getItem(`radhe_branch_${branchId}_snapshot_v2`) || localStorage.getItem(`radhe_branch_${branchId}_snapshot`) || 'null');
+    if (localSnap && localSnap.sweets && localSnap.sweets.length > 0) {
+      return { 
+        sweets: localSnap.sweets, 
+        kpis: localSnap.kpis || seed.kpis,
+        advanceOrders: localSnap.advanceOrders || null,
+        rawMaterials: localSnap.rawMaterials || null,
+        parkedBills: localSnap.parkedBills || null,
+        zReports: localSnap.zReports || null,
+        auditLogs: localSnap.auditLogs || null,
+        categories: localSnap.categories || null,
+        receiptSettings: localSnap.receiptSettings || null
+      };
     }
   } catch(e) {}
   return { sweets: seed.sweets, kpis: seed.kpis };
@@ -372,21 +392,126 @@ export async function saveBranchSweetsToCloud(branchId, sweets) {
 }
 
 /**
- * Real-time Listener for Branch Sweets Catalog & Stock (Firestore)
+ * Save advance catering and festival bookings to Cloud Firestore
+ */
+export async function saveBranchAdvanceOrdersToCloud(branchId, advanceOrders) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await setDoc(branchDocRef, {
+      advanceOrders: advanceOrders || [],
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Branch ${branchId} advance orders sync`, error);
+    return false;
+  }
+}
+
+/**
+ * Save raw materials kitchen inventory ledger to Cloud Firestore
+ */
+export async function saveBranchRawMaterialsToCloud(branchId, rawMaterials) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await setDoc(branchDocRef, {
+      rawMaterials: rawMaterials || [],
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Branch ${branchId} raw materials sync`, error);
+    return false;
+  }
+}
+
+/**
+ * Save parked customer carts to Cloud Firestore for multi-counter resumption
+ */
+export async function saveBranchParkedBillsToCloud(branchId, parkedBills) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await setDoc(branchDocRef, {
+      parkedBills: parkedBills || [],
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Branch ${branchId} parked bills sync`, error);
+    return false;
+  }
+}
+
+/**
+ * Save day-end Z-reports and cash drawer settlements to Cloud Firestore
+ */
+export async function saveBranchZReportsToCloud(branchId, zReports) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await setDoc(branchDocRef, {
+      zReports: zReports || [],
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Branch ${branchId} z-reports sync`, error);
+    return false;
+  }
+}
+
+/**
+ * Save audit logs and security events to Cloud Firestore
+ */
+export async function saveBranchAuditLogsToCloud(branchId, auditLogs) {
+  updateStatus('syncing');
+  try {
+    const branchDocRef = doc(db, "branches", branchId);
+    await setDoc(branchDocRef, {
+      auditLogs: auditLogs || [],
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    updateStatus('synced');
+    return true;
+  } catch (error) {
+    handleFirestoreError(`Branch ${branchId} audit logs sync`, error);
+    return false;
+  }
+}
+
+/**
+ * Real-time Listener for Branch Sweets Catalog, Advance Orders, Raw Materials, Parked Bills, Z-Reports & Audit Logs (Firestore)
  */
 export function subscribeToBranchSweets(branchId, callback) {
   try {
     const branchDocRef = doc(db, "branches", branchId);
     return onSnapshot(branchDocRef, (snap) => {
-      if (snap.exists() && snap.data()?.sweets && snap.data().sweets.length > 0) {
+      if (snap.exists()) {
+        const data = snap.data() || {};
         updateStatus('synced');
-        callback(snap.data().sweets, snap.data().categories, snap.data().receiptSettings);
+        callback(
+          data.sweets || [],
+          data.categories || null,
+          data.receiptSettings || null,
+          data.advanceOrders || null,
+          data.rawMaterials || null,
+          data.parkedBills || null,
+          data.zReports || null,
+          data.auditLogs || null
+        );
       }
     }, (err) => {
-      handleFirestoreError('Sweets listener', err);
+      handleFirestoreError('Sweets & branch data listener', err);
     });
   } catch (e) {
-    handleFirestoreError('Failed to subscribe to sweets', e);
+    handleFirestoreError('Failed to subscribe to branch data', e);
     return () => {};
   }
 }
@@ -953,9 +1078,9 @@ export async function syncAllToFirebaseCloud(state) {
     tasks.push(saveBranchSweetsToCloud(branchId, state.sweets));
   }
 
-  // 2. Orders into Firestore
+  // 2. Orders into Firestore - Up to 100 orders
   if (state.orders && state.orders.length > 0) {
-    state.orders.slice(0, 30).forEach(order => {
+    state.orders.slice(0, 100).forEach(order => {
       tasks.push(saveBranchOrderToCloud(branchId, order, state.sweets, state.customers));
     });
   }
@@ -994,6 +1119,48 @@ export async function syncAllToFirebaseCloud(state) {
   // 8. Printer & Receipt Settings into Firestore
   if (state.receiptSettings) {
     tasks.push(saveBranchSettingsToCloud(branchId, state.receiptSettings));
+  }
+
+  // 9. Advance Catering & Festival Orders into Firestore
+  if (state.advanceOrders && state.advanceOrders.length > 0) {
+    tasks.push(saveBranchAdvanceOrdersToCloud(branchId, state.advanceOrders));
+  }
+
+  // 10. Raw Materials Kitchen Inventory into Firestore
+  if (state.rawMaterials && state.rawMaterials.length > 0) {
+    tasks.push(saveBranchRawMaterialsToCloud(branchId, state.rawMaterials));
+  }
+
+  // 11. Multi-Counter Parked Bills into Firestore
+  if (state.parkedBills) {
+    tasks.push(saveBranchParkedBillsToCloud(branchId, state.parkedBills));
+  }
+
+  // 12. Day-End Z-Reports into Firestore
+  if (state.zReports && state.zReports.length > 0) {
+    tasks.push(saveBranchZReportsToCloud(branchId, state.zReports));
+  }
+
+  // 13. Security Audit Trail into Firestore
+  if (state.auditLogs && state.auditLogs.length > 0) {
+    tasks.push(saveBranchAuditLogsToCloud(branchId, state.auditLogs));
+  }
+
+  // 14. Branches Master Metadata
+  if (state.branches && state.branches.length > 0) {
+    const metaRef = doc(db, "metadata", "branches");
+    tasks.push(setDoc(metaRef, {
+      list: state.branches,
+      count: state.branches.length,
+      lastUpdated: new Date().toISOString()
+    }, { merge: true }));
+  }
+
+  // 15. User Authentication Accounts
+  if (state.users && state.users.length > 0) {
+    state.users.forEach(u => {
+      tasks.push(saveUserToCloud(u));
+    });
   }
 
   const results = await Promise.allSettled(tasks);

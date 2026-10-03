@@ -34,6 +34,11 @@ import {
   getBranchDefaultCatalog,
   saveBranchSettingsToCloud,
   saveBranchCategoriesToCloud,
+  saveBranchAdvanceOrdersToCloud,
+  saveBranchRawMaterialsToCloud,
+  saveBranchParkedBillsToCloud,
+  saveBranchZReportsToCloud,
+  saveBranchAuditLogsToCloud,
   saveUserToCloud,
   deleteUserFromCloud,
   subscribeToUsers,
@@ -462,6 +467,7 @@ function saveState() {
       currentBranchId: state.currentBranchId,
       staffBranchFilter: state.staffBranchFilter,
       userRole: state.userRole,
+      users: state.users,
       parkedBills: state.parkedBills,
       rawMaterials: state.rawMaterials,
       advanceOrders: state.advanceOrders,
@@ -475,6 +481,18 @@ function saveState() {
       selectedCustomer: state.selectedCustomer,
       posCart: state.posCart,
       quickCart: state.quickCart,
+      discountPercent: state.discountPercent,
+      paymentMethod: state.paymentMethod,
+      boxTareGrams: state.boxTareGrams,
+      orderNote: state.orderNote,
+      activeCategory: state.activeCategory,
+      ordersFilterTab: state.ordersFilterTab,
+      ordersViewMode: state.ordersViewMode,
+      customersFilterTab: state.customersFilterTab,
+      productsFilterCategory: state.productsFilterCategory,
+      expensesFilterCategory: state.expensesFilterCategory,
+      staffFilterTab: state.staffFilterTab,
+      staffDeptFilter: state.staffDeptFilter,
       productsViewMode: state.productsViewMode,
       userCart: state.userCart,
       customerName: state.customerName,
@@ -519,7 +537,16 @@ function broadcastPeerSync(type = 'STATE_SAVED', payload?: any) {
         expenses: state.expenses,
         kpis: state.kpis,
         orderStatusCounts: state.orderStatusCounts,
-        auditLogs: state.auditLogs
+        auditLogs: state.auditLogs,
+        branches: state.branches,
+        categories: state.categories,
+        receiptSettings: state.receiptSettings,
+        advanceOrders: state.advanceOrders,
+        zReports: state.zReports,
+        rawMaterials: state.rawMaterials,
+        parkedBills: state.parkedBills,
+        users: state.users,
+        shopInfo: state.shopInfo
       }
     });
   } catch (_) {}
@@ -537,7 +564,7 @@ function handleIncomingPeerSync(incomingData?: any) {
 
     let hasUpdate = false;
 
-    // 1. Synchronize customers & loyalty directory (Checks actual content, not just length!)
+    // 1. Synchronize customers & loyalty directory
     if (Array.isArray(fresh.customers) && fresh.customers.length > 0) {
       const isDiff = JSON.stringify(fresh.customers) !== JSON.stringify(state.customers);
       if (isDiff) {
@@ -561,8 +588,8 @@ function handleIncomingPeerSync(incomingData?: any) {
       }
     }
 
-    // 3. Synchronize sweets stock & catalog
-    if (Array.isArray(fresh.sweets) && fresh.sweets.length >= 50) {
+    // 3. Synchronize sweets stock & catalog (Any positive count)
+    if (Array.isArray(fresh.sweets) && fresh.sweets.length > 0) {
       const isDiff = JSON.stringify(fresh.sweets) !== JSON.stringify(state.sweets);
       if (isDiff) {
         state.sweets = fresh.sweets;
@@ -597,19 +624,132 @@ function handleIncomingPeerSync(incomingData?: any) {
       }
     }
 
-    // 7. Synchronize audit logs
-    if (Array.isArray(fresh.auditLogs)) {
-      state.auditLogs = fresh.auditLogs;
+    // 7. Synchronize branches roster
+    if (Array.isArray(fresh.branches) && fresh.branches.length > 0) {
+      const isDiff = JSON.stringify(fresh.branches) !== JSON.stringify(state.branches);
+      if (isDiff) {
+        state.branches = fresh.branches;
+        hasUpdate = true;
+      }
     }
 
-    // 8. Synchronize parked bills
+    // 8. Synchronize categories
+    if (Array.isArray(fresh.categories) && fresh.categories.length > 0) {
+      const isDiff = JSON.stringify(fresh.categories) !== JSON.stringify(state.categories);
+      if (isDiff) {
+        state.categories = fresh.categories;
+        hasUpdate = true;
+      }
+    }
+
+    // 9. Synchronize receipt & thermal printer settings
+    if (fresh.receiptSettings) {
+      const isDiff = JSON.stringify(fresh.receiptSettings) !== JSON.stringify(state.receiptSettings);
+      if (isDiff) {
+        state.receiptSettings = { ...state.receiptSettings, ...fresh.receiptSettings };
+        hasUpdate = true;
+      }
+    }
+
+    // 10. Synchronize advance bookings
+    if (Array.isArray(fresh.advanceOrders)) {
+      const isDiff = JSON.stringify(fresh.advanceOrders) !== JSON.stringify(state.advanceOrders);
+      if (isDiff) {
+        state.advanceOrders = fresh.advanceOrders;
+        hasUpdate = true;
+      }
+    }
+
+    // 11. Synchronize raw materials kitchen ledger
+    if (Array.isArray(fresh.rawMaterials)) {
+      const isDiff = JSON.stringify(fresh.rawMaterials) !== JSON.stringify(state.rawMaterials);
+      if (isDiff) {
+        state.rawMaterials = fresh.rawMaterials;
+        hasUpdate = true;
+      }
+    }
+
+    // 12. Synchronize Z-reports day-end closings
+    if (Array.isArray(fresh.zReports)) {
+      const isDiff = JSON.stringify(fresh.zReports) !== JSON.stringify(state.zReports);
+      if (isDiff) {
+        state.zReports = fresh.zReports;
+        hasUpdate = true;
+      }
+    }
+
+    // 13. Synchronize parked bills (Trigger re-render on change)
     if (Array.isArray(fresh.parkedBills)) {
-      state.parkedBills = fresh.parkedBills;
+      const isDiff = JSON.stringify(fresh.parkedBills) !== JSON.stringify(state.parkedBills);
+      if (isDiff) {
+        state.parkedBills = fresh.parkedBills;
+        hasUpdate = true;
+      }
     }
 
-    // 9. Synchronize shop info
+    // 14. Synchronize audit logs (Trigger re-render on change)
+    if (Array.isArray(fresh.auditLogs)) {
+      const isDiff = JSON.stringify(fresh.auditLogs) !== JSON.stringify(state.auditLogs);
+      if (isDiff) {
+        state.auditLogs = fresh.auditLogs;
+        hasUpdate = true;
+      }
+    }
+
+    // 15. Synchronize users accounts
+    if (Array.isArray(fresh.users) && fresh.users.length > 0) {
+      const isDiff = JSON.stringify(fresh.users) !== JSON.stringify(state.users);
+      if (isDiff) {
+        state.users = fresh.users;
+        hasUpdate = true;
+      }
+    }
+
+    // 16. Synchronize shop info
     if (fresh.shopInfo) {
-      state.shopInfo = { ...state.shopInfo, ...fresh.shopInfo };
+      const isDiff = JSON.stringify(fresh.shopInfo) !== JSON.stringify(state.shopInfo);
+      if (isDiff) {
+        state.shopInfo = { ...state.shopInfo, ...fresh.shopInfo };
+        hasUpdate = true;
+      }
+    }
+
+    // 17. Synchronize financial P&L controls
+    if (fresh.analyticsPLTimeframe && fresh.analyticsPLTimeframe !== state.analyticsPLTimeframe) {
+      state.analyticsPLTimeframe = fresh.analyticsPLTimeframe;
+      hasUpdate = true;
+    }
+    if (fresh.analyticsPLDailyDate && fresh.analyticsPLDailyDate !== state.analyticsPLDailyDate) {
+      state.analyticsPLDailyDate = fresh.analyticsPLDailyDate;
+      hasUpdate = true;
+    }
+    if (fresh.analyticsPLScope && fresh.analyticsPLScope !== state.analyticsPLScope) {
+      state.analyticsPLScope = fresh.analyticsPLScope;
+      hasUpdate = true;
+    }
+    if (fresh.analyticsPLCustomFrom && fresh.analyticsPLCustomFrom !== state.analyticsPLCustomFrom) {
+      state.analyticsPLCustomFrom = fresh.analyticsPLCustomFrom;
+      hasUpdate = true;
+    }
+    if (fresh.analyticsPLCustomTo && fresh.analyticsPLCustomTo !== state.analyticsPLCustomTo) {
+      state.analyticsPLCustomTo = fresh.analyticsPLCustomTo;
+      hasUpdate = true;
+    }
+
+    // 18. Synchronize theme & units
+    if (fresh.selectedWeightUnit && fresh.selectedWeightUnit !== state.selectedWeightUnit) {
+      state.selectedWeightUnit = fresh.selectedWeightUnit;
+      hasUpdate = true;
+    }
+    if (fresh.currentTheme && fresh.currentTheme !== state.currentTheme) {
+      state.currentTheme = fresh.currentTheme;
+      document.documentElement.setAttribute('data-theme', state.currentTheme);
+      hasUpdate = true;
+    }
+    if (fresh.isDarkMode !== undefined && fresh.isDarkMode !== state.isDarkMode) {
+      state.isDarkMode = fresh.isDarkMode;
+      document.documentElement.classList.toggle('dark', state.isDarkMode);
+      hasUpdate = true;
     }
 
     if (hasUpdate && shouldBackgroundSyncRender()) {
@@ -733,12 +873,33 @@ export function saveBranchSnapshot(branchId: string) {
       expenses: state.expenses,
       customers: state.customers,
       parkedBills: state.parkedBills,
+      advanceOrders: state.advanceOrders,
+      rawMaterials: state.rawMaterials,
+      zReports: state.zReports,
+      auditLogs: state.auditLogs,
+      categories: state.categories,
+      receiptSettings: state.receiptSettings,
       savedAt: Date.now()
     };
     localStorage.setItem(getBranchStorageKey(branchId), JSON.stringify(snapshot));
     // Backup to Cloud Firestore
     saveBranchSweetsToCloud(branchId, state.sweets);
     saveBranchKpisToCloud(branchId, state.kpis);
+    if (state.advanceOrders && state.advanceOrders.length > 0) {
+      saveBranchAdvanceOrdersToCloud(branchId, state.advanceOrders);
+    }
+    if (state.rawMaterials && state.rawMaterials.length > 0) {
+      saveBranchRawMaterialsToCloud(branchId, state.rawMaterials);
+    }
+    if (state.parkedBills) {
+      saveBranchParkedBillsToCloud(branchId, state.parkedBills);
+    }
+    if (state.zReports && state.zReports.length > 0) {
+      saveBranchZReportsToCloud(branchId, state.zReports);
+    }
+    if (state.auditLogs && state.auditLogs.length > 0) {
+      saveBranchAuditLogsToCloud(branchId, state.auditLogs);
+    }
   } catch (e) {
     console.error('Failed to save branch snapshot:', e);
   }
@@ -784,19 +945,54 @@ export function setupBranchFirestoreListeners(branchId: string) {
   });
   activeSubscriptions.push(unsubOrders);
 
-  // 2. Live Sweets Catalog (All sweets, categories, and printer settings for this branch)
-  const unsubSweets = subscribeToBranchSweets(branchId, (cloudSweets: any[], cloudCategories?: string[], cloudSettings?: any) => {
+  // 2. Live Sweets Catalog (All sweets, categories, printer settings, advance orders, raw materials, parked bills, z-reports, audit logs)
+  const unsubSweets = subscribeToBranchSweets(branchId, (
+    cloudSweets: any[], 
+    cloudCategories?: string[], 
+    cloudSettings?: any,
+    cloudAdvanceOrders?: any[],
+    cloudRawMaterials?: any[],
+    cloudParkedBills?: any[],
+    cloudZReports?: any[],
+    cloudAuditLogs?: any[]
+  ) => {
     if (branchId !== state.currentBranchId) return;
+    let hasChanges = false;
     if (cloudSweets && cloudSweets.length > 0) {
       state.sweets = cloudSweets;
-      if (cloudCategories && Array.isArray(cloudCategories) && cloudCategories.length > 0) {
-        state.categories = cloudCategories;
-      }
-      if (cloudSettings) {
-        state.receiptSettings = { ...state.receiptSettings, ...cloudSettings };
-      }
+      hasChanges = true;
+    }
+    if (cloudCategories && Array.isArray(cloudCategories) && cloudCategories.length > 0) {
+      state.categories = cloudCategories;
+      hasChanges = true;
+    }
+    if (cloudSettings) {
+      state.receiptSettings = { ...state.receiptSettings, ...cloudSettings };
+      hasChanges = true;
+    }
+    if (cloudAdvanceOrders && Array.isArray(cloudAdvanceOrders)) {
+      state.advanceOrders = cloudAdvanceOrders;
+      hasChanges = true;
+    }
+    if (cloudRawMaterials && Array.isArray(cloudRawMaterials)) {
+      state.rawMaterials = cloudRawMaterials;
+      hasChanges = true;
+    }
+    if (cloudParkedBills && Array.isArray(cloudParkedBills)) {
+      state.parkedBills = cloudParkedBills;
+      hasChanges = true;
+    }
+    if (cloudZReports && Array.isArray(cloudZReports)) {
+      state.zReports = cloudZReports;
+      hasChanges = true;
+    }
+    if (cloudAuditLogs && Array.isArray(cloudAuditLogs)) {
+      state.auditLogs = cloudAuditLogs;
+      hasChanges = true;
+    }
+    if (hasChanges) {
       saveState();
-      if (['pos', 'products', 'dashboard', 'settings'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
+      if (['pos', 'products', 'dashboard', 'settings', 'orders'].includes(state.activeTab) && shouldBackgroundSyncRender()) {
         renderApp();
       }
     }
@@ -954,6 +1150,13 @@ export async function handleBranchSwitch(targetBranchId: string, isSystemSwitch 
       kitchen: state.orders.filter(o => o.status === 'Kitchen Packing').length
     };
     if (existingSnapshot.expenses) state.expenses = existingSnapshot.expenses;
+    if (existingSnapshot.advanceOrders) state.advanceOrders = existingSnapshot.advanceOrders;
+    if (existingSnapshot.rawMaterials) state.rawMaterials = existingSnapshot.rawMaterials;
+    if (existingSnapshot.parkedBills) state.parkedBills = existingSnapshot.parkedBills;
+    if (existingSnapshot.zReports) state.zReports = existingSnapshot.zReports;
+    if (existingSnapshot.auditLogs) state.auditLogs = existingSnapshot.auditLogs;
+    if (existingSnapshot.categories) state.categories = existingSnapshot.categories;
+    if (existingSnapshot.receiptSettings) state.receiptSettings = existingSnapshot.receiptSettings;
   } else {
     // Brand new switch to this branch:
     const branchDefaults = getBranchDefaultCatalog(targetBranchId);
@@ -1000,10 +1203,31 @@ export async function handleBranchSwitch(targetBranchId: string, isSystemSwitch 
   // 7. Background Firestore load for target branch
   loadBranchDataFromCloud(targetBranchId).then((cloudData: any) => {
     if (targetBranchId !== state.currentBranchId) return;
-    if (cloudData && cloudData.sweets && cloudData.sweets.length >= 50) {
+    if (cloudData && cloudData.sweets && cloudData.sweets.length > 0) {
       state.sweets = cloudData.sweets;
       if (cloudData.kpis && (targetBranchId === 'br-1' || state.orders.length > 0)) {
         state.kpis = { ...state.kpis, ...cloudData.kpis };
+      }
+      if (cloudData.advanceOrders && Array.isArray(cloudData.advanceOrders)) {
+        state.advanceOrders = cloudData.advanceOrders;
+      }
+      if (cloudData.rawMaterials && Array.isArray(cloudData.rawMaterials)) {
+        state.rawMaterials = cloudData.rawMaterials;
+      }
+      if (cloudData.parkedBills && Array.isArray(cloudData.parkedBills)) {
+        state.parkedBills = cloudData.parkedBills;
+      }
+      if (cloudData.zReports && Array.isArray(cloudData.zReports)) {
+        state.zReports = cloudData.zReports;
+      }
+      if (cloudData.auditLogs && Array.isArray(cloudData.auditLogs)) {
+        state.auditLogs = cloudData.auditLogs;
+      }
+      if (cloudData.categories && Array.isArray(cloudData.categories)) {
+        state.categories = cloudData.categories;
+      }
+      if (cloudData.receiptSettings) {
+        state.receiptSettings = { ...state.receiptSettings, ...cloudData.receiptSettings };
       }
       saveState();
       if (!state.isSwitchingBranch && shouldBackgroundSyncRender()) {
@@ -3202,6 +3426,7 @@ function attachEventListeners() {
       const rm = state.rawMaterials.find(r => r.id === rmId);
       if (rm) {
         rm.stock += 25;
+        saveBranchSnapshot(state.currentBranchId);
         saveState();
         renderApp();
         showToast(`Restocked ${rm.name} (+25 ${rm.unit})`, 'success');
@@ -3229,6 +3454,7 @@ function attachEventListeners() {
         });
         showToast(`Created new ingredient PO: ${rawName} (+25 kg)`, 'success');
       }
+      saveBranchSnapshot(state.currentBranchId);
       saveState();
       renderApp();
     }
@@ -6197,6 +6423,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     state.selectedCustomer = null;
     state.discountPercent = 0;
     state.showHeldCartsModal = false;
+    saveBranchSnapshot(state.currentBranchId);
     saveState();
     playBeep('add');
     showToast(`✓ Cart on hold as Token #${10 + state.parkedBills.length - 1} (${customerLabel})`, 'success');
@@ -6266,6 +6493,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       state.discountPercent = billToResume.discountPercent || 0;
       state.showHeldCartsModal = false;
 
+      saveBranchSnapshot(state.currentBranchId);
       saveState();
       playBeep('add');
       showToast(`✓ Recalled ${billToResume.label}`, 'success');
@@ -6286,6 +6514,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       }
 
       state.parkedBills = state.parkedBills.filter((b: any) => b.id !== id);
+      saveBranchSnapshot(state.currentBranchId);
       saveState();
       renderApp();
       showToast('✓ Held cart discarded', 'info');
