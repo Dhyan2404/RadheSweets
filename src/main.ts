@@ -197,22 +197,7 @@ function getStoredState() {
 // Sanitizer to guarantee only the official 8 Gandhinagar branches are loaded and persistent
 export function sanitizeBranchesList(inputBranches: any[]): any[] {
   const seedList = [...initialData.branches];
-  if (!Array.isArray(inputBranches)) {
-    return seedList;
-  }
-  const hasObsolete = inputBranches.some((b: any) => 
-    b.name?.includes('Infocity') || 
-    b.name?.includes('GIFT') || 
-    b.name?.includes('Bhaijipura') ||
-    b.name?.includes('Navrangpura') || 
-    b.name?.includes('Satellite') || 
-    b.name?.includes('SG Highway') || 
-    b.city === 'Ahmedabad' ||
-    b.id === 'br-9' ||
-    b.id === 'br-10' ||
-    b.id === 'br-11'
-  );
-  if (hasObsolete || inputBranches.length < seedList.length) {
+  if (!Array.isArray(inputBranches) || inputBranches.length === 0) {
     return seedList;
   }
   const allowed = inputBranches.filter((b: any) => 
@@ -220,17 +205,11 @@ export function sanitizeBranchesList(inputBranches: any[]): any[] {
     !b.name?.includes('GIFT') &&
     !b.name?.includes('Bhaijipura') &&
     !b.name?.includes('Navrangpura') &&
-    b.city !== 'Ahmedabad' &&
-    b.id !== 'br-9' &&
-    b.id !== 'br-10' &&
-    b.id !== 'br-11'
+    !b.name?.includes('Satellite') &&
+    !b.name?.includes('SG Highway') &&
+    b.city !== 'Ahmedabad'
   );
-  seedList.forEach(seedB => {
-    if (!allowed.some((b: any) => b.id === seedB.id)) {
-      allowed.push(seedB);
-    }
-  });
-  return allowed;
+  return allowed.length > 0 ? allowed : seedList;
 }
 
 // Sanitizer to guarantee customers belong only to the official 8 branches (10 per branch)
@@ -510,14 +489,16 @@ function saveState() {
     if (state.customers && state.customers.length > 0) {
       saveGlobalCustomers(state.customers);
     }
-    broadcastPeerSync('STATE_SAVED', toSave);
+    if (broadcast) {
+      broadcastPeerSync('STATE_SAVED', toSave);
+    }
   } catch (e) {
     console.error('Failed to save state:', e);
   }
 }
 
-// Immediately enforce initial persistence of all 11 branches, 110 customers, 33 staff
-saveState();
+// Initial persistence without broadcasting to peer tabs
+saveState(false);
 saveGlobalCustomers(state.customers);
 
 // Real-time Peer Bus for Multi-Tab & Device Viewport Synchronization
@@ -807,8 +788,14 @@ function shouldBackgroundSyncRender(): boolean {
     return false;
   }
   // Bulletproof guard: check if any modal form is currently present in the DOM
-  if (typeof document !== 'undefined' && document.querySelector('#add-product-modal, #edit-product-modal, #add-branch-modal-backdrop, #edit-branch-modal-backdrop, #add-expense-modal, #checkout-modal, #staff-modal')) {
-    return false;
+  if (typeof document !== 'undefined') {
+    if (document.querySelector('#add-product-modal, #edit-product-modal, #add-branch-modal-backdrop, #edit-branch-modal-backdrop, #add-expense-modal, #checkout-modal, #staff-modal')) {
+      return false;
+    }
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+      return false;
+    }
   }
   return true;
 }
@@ -1261,7 +1248,7 @@ export async function handleBranchSwitch(targetBranchId: string, isSystemSwitch 
 function setupGlobalFirestoreListeners() {
   // Real-time branch network subscription across all devices & browser tabs
   subscribeToBranches((cloudBranches: any[]) => {
-    if (cloudBranches && Array.isArray(cloudBranches)) {
+    if (cloudBranches && Array.isArray(cloudBranches) && cloudBranches.length > 0) {
       const sanitized = sanitizeBranchesList(cloudBranches);
       const currentJson = JSON.stringify(state.branches.map((b: any) => ({
         id: b.id, name: b.name, code: b.code, city: b.city, address: b.address,
@@ -1271,12 +1258,12 @@ function setupGlobalFirestoreListeners() {
         id: b.id, name: b.name, code: b.code, city: b.city, address: b.address,
         phone: b.phone, manager: b.manager, revenue: b.revenue, margin: b.margin
       })));
-      if (currentJson !== incomingJson || state.branches.length < 11) {
+      if (currentJson !== incomingJson) {
         state.branches = sanitized;
         if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
           state.currentBranchId = state.branches[0].id;
         }
-        saveState();
+        saveState(false);
         if (shouldBackgroundSyncRender()) {
           renderApp();
         }
@@ -7525,15 +7512,21 @@ function initApp() {
   // 4. Background Cloud Sync for branches from Cloud Firestore
   loadBranchesFromCloud().then(async (cloudBranches: any) => {
     const sanitized = sanitizeBranchesList(cloudBranches);
-    state.branches = sanitized;
-    if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
-      state.currentBranchId = state.branches[0].id;
-    }
-    saveState();
-    renderApp();
-
-    // If cloud has fewer than 11 branches or old Ahmedabad branches, persist all 11 to Cloud Firestore!
-    if (!cloudBranches || cloudBranches.length < 11 || cloudBranches.some((b: any) => b.name?.includes('Navrangpura') || b.city === 'Ahmedabad')) {
+    if (sanitized && sanitized.length > 0) {
+      const prevJson = JSON.stringify(state.branches || []);
+      const newJson = JSON.stringify(sanitized);
+      if (prevJson !== newJson) {
+        state.branches = sanitized;
+        if (!state.branches.some((b: any) => b.id === state.currentBranchId)) {
+          state.currentBranchId = state.branches[0]?.id || 'br-1';
+        }
+        saveState(false);
+        if (shouldBackgroundSyncRender()) {
+          renderApp();
+        }
+      }
+    } else {
+      // Cloud is completely empty, initialize once
       for (const branch of initialData.branches) {
         await saveBranchToCloud(branch, initialData.branches).catch(() => {});
       }

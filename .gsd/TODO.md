@@ -141,3 +141,6 @@ This document tracks all 100 critical items, real-world retail edge cases, legal
 - [ ] 098. Conflict Resolution on Concurrent Orders: Handle multiple counter cashiers placing orders simultaneously in same branch. `medium` — 2026-10-01
 - [ ] 099. Offline Storage Quota Warning: Banner warning when local disk storage is nearing browser capacity. `low` — 2026-10-01
 - [ ] 100. Database Export & One-Click System Restore: Download full JSON backup and restore entire shop database on new POS tablet. `high` — 2026-10-01
+- [x] 101. Fix POS render crash (branches destructuring in PosView.ts) and CustomersView import path `high` — 2026-10-04
+- [x] 102. Eliminate 100x refresh loop in Firestore subscribeToBranches and startup branch sync `high` — 2026-10-04
+- [x] 103. Strictly hide desktop sidebar and navigation elements on mobile viewports `high` — 2026-10-04

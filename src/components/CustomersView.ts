@@ -1,6 +1,6 @@
 // Customers, Loyalty Club & Advance Bulk Orders Component
 // Radhe Sweets - Warm Terracotta Confectionery Design System with Top 3 Customers, Sorting & Edit Customer Modal
-import { renderCounter } from './Counter';
+import { renderCounter } from './Counter.ts';
 
 export function renderCustomersView(state: any) {
   const { 

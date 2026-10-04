@@ -848,3 +848,38 @@ body.is-printing-receipt #toast-container {
     padding-right: 0.5rem !important;
   }
 }
+
+/* Core display utilities to guarantee elements marked hidden are never shown */
+.hidden {
+  display: none !important;
+}
+
+/* Ensure navbar and desktop sidebar are 100% hidden on mobile screens */
+@media (max-width: 767px) {
+  #desktop-sidebar-container,
+  aside[data-purpose="desktop-sidebar"],
+  #mobile-nav-container,
+  nav[data-purpose="main-nav"],
+  .desktop-sidebar {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:block {
+    display: block !important;
+  }
+  .md\:flex {
+    display: flex !important;
+  }
+  .md\:hidden {
+    display: none !important;
+  }
+}

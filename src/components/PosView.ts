@@ -147,8 +147,10 @@ export function renderPosView(state: any) {
     discountPercent = 0,
     parkedBills = [],
     selectedWeightUnit = 'kg', // 'kg' or 'g'
-    showMobileCartSheet = false
-  } = state;
+    showMobileCartSheet = false,
+    branches = [],
+    currentBranchId = 'br-1'
+  } = state || {};
 
   const categories = [
     "All", 
