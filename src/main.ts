@@ -1394,8 +1394,39 @@ export function renderApp() {
 
         <!-- Main Content Area with Persistent Scroll Container -->
         <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto w-full max-w-[100vw] overflow-x-hidden">
+          <!-- Mobile Top Navigation Bar (Mobile / Small Screens Only) -->
+          <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-[#F0ECE4] sticky top-0 z-30 shadow-2xs">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/70 flex items-center justify-center text-[#C86D3B] shadow-2xs">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path d="M12 3c1.5 3.5 4 6 8 7-2 4-5 6-8 11-3-5-6-7-8-11 4-1 6.5-3.5 8-7Z"></path>
+                  <path d="M12 10c0 4 2 7 5 9"></path>
+                  <path d="M12 10c0 4-2 7-5 9"></path>
+                </svg>
+              </div>
+              <div>
+                <h1 class="text-sm font-black tracking-tight text-[#2A1F1D] leading-none">Radhe Sweets</h1>
+                <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mt-0.5">${state.branches?.find((b: any) => b.id === state.currentBranchId)?.name || 'Main Store'}</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button 
+                id="mobile-menu-toggle"
+                type="button"
+                class="w-9 h-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-stone-200/80"
+                aria-label="Open Navigation Menu"
+                title="Open All Modules Menu"
+              >
+                <svg class="w-5 h-5 text-stone-800" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          </header>
+
           <!-- Active Tab Body -->
-          <main id="main-tab-content" class="flex-1 p-2.5 sm:p-5 md:p-8 space-y-3 sm:space-y-6 pb-16 sm:pb-20 md:pb-8">
+          <main id="main-tab-content" class="flex-1 p-2.5 sm:p-5 md:p-8 space-y-3 sm:space-y-6 pb-28 sm:pb-32 md:pb-8">
             ${renderTabContent()}
           </main>
         </div>
