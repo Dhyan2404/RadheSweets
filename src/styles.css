@@ -849,9 +849,37 @@ body.is-printing-receipt #toast-container {
   }
 }
 
-/* Core display utilities to guarantee elements marked hidden are never shown */
+/* Core display utilities */
 .hidden {
+  display: none;
+}
+
+[hidden] {
   display: none !important;
+}
+
+/* POS Desktop Cart Panel responsiveness */
+@media (max-width: 1023px) {
+  .pos-desktop-cart {
+    display: none !important;
+  }
+}
+@media (min-width: 1024px) {
+  .pos-desktop-cart {
+    display: flex !important;
+  }
+  .lg\:flex {
+    display: flex !important;
+  }
+  .lg\:block {
+    display: block !important;
+  }
+  .lg\:grid {
+    display: grid !important;
+  }
+  .lg\:hidden {
+    display: none !important;
+  }
 }
 
 /* Ensure navbar and desktop sidebar are 100% hidden on mobile screens */

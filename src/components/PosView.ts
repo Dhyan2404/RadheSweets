@@ -509,7 +509,7 @@ export function renderPosView(state: any) {
         </div>
 
         <!-- Live Cart Panel (Desktop 4 Columns) with Hold & Resume Parked Bills -->
-        <div class="hidden lg:flex lg:col-span-4 bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--border-color)] shadow-subtle flex-col justify-between sticky top-20">
+        <div id="pos-desktop-cart-panel" class="pos-desktop-cart lg:col-span-4 bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--border-color)] shadow-subtle flex flex-col justify-between sticky top-20">
           <div>
             <!-- Cart Header & Rush Queue (Parked Bills) -->
             <div class="border-b border-[var(--border-color)] pb-3 mb-4 space-y-2">
