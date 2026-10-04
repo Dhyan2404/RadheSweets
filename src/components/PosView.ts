@@ -177,11 +177,17 @@ export function renderPosView(state: any) {
 
   // Count matching sweets
   const matchingSweetsCount = sweets.filter((item: any) => {
-    const matchesCategory = !activeCategory || activeCategory === 'All' || item.category === activeCategory;
-    const matchesSearch = !posSearchQuery || 
-      item.name.toLowerCase().includes(posSearchQuery.toLowerCase()) ||
-      (item.tagline && item.tagline.toLowerCase().includes(posSearchQuery.toLowerCase())) ||
-      (item.num && String(item.num) === posSearchQuery.trim());
+    const q = (posSearchQuery || '').toLowerCase().trim();
+    const matchesSearch = !q || 
+      (item.name && item.name.toLowerCase().includes(q)) ||
+      (item.code && item.code.toLowerCase().includes(q)) ||
+      (item.category && item.category.toLowerCase().includes(q)) ||
+      (item.tagline && item.tagline.toLowerCase().includes(q)) ||
+      (item.num && String(item.num) === q) ||
+      (item.id && String(item.id).toLowerCase().includes(q));
+
+    // When searching, match across all categories; otherwise filter by activeCategory
+    const matchesCategory = q ? true : (!activeCategory || activeCategory === 'All' || item.category === activeCategory);
     return matchesCategory && matchesSearch;
   }).length;
 
@@ -420,19 +426,28 @@ export function renderPosView(state: any) {
             <div id="pos-sweets-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-4 lg:pb-6">
               ${sweets.map((sweet: any) => {
                 const inCartItem = posCart.find((i: any) => i.id === sweet.id);
-                const matchesCategory = !activeCategory || activeCategory === 'All' || sweet.category === activeCategory;
-                const matchesSearch = !posSearchQuery || 
-                  sweet.name.toLowerCase().includes(posSearchQuery.toLowerCase()) ||
-                  (sweet.tagline && sweet.tagline.toLowerCase().includes(posSearchQuery.toLowerCase())) ||
-                  (sweet.num && String(sweet.num) === posSearchQuery.trim());
+                const q = (posSearchQuery || '').toLowerCase().trim();
+                const matchesSearch = !q || 
+                  (sweet.name && sweet.name.toLowerCase().includes(q)) ||
+                  (sweet.code && sweet.code.toLowerCase().includes(q)) ||
+                  (sweet.category && sweet.category.toLowerCase().includes(q)) ||
+                  (sweet.tagline && sweet.tagline.toLowerCase().includes(q)) ||
+                  (sweet.num && String(sweet.num) === q) ||
+                  (sweet.id && String(sweet.id).toLowerCase().includes(q));
+
+                const matchesCategory = q ? true : (!activeCategory || activeCategory === 'All' || sweet.category === activeCategory);
                 const isVisible = matchesCategory && matchesSearch;
 
                 return `
                   <div 
                     class="sweet-card flex flex-col justify-between group bg-white border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all ${isVisible ? '' : 'hidden'}"
                     data-sweet-card="${sweet.id}"
-                    data-category="${sweet.category}"
-                    data-name="${sweet.name.toLowerCase()}"
+                    data-card-id="${sweet.id}"
+                    data-card-name="${(sweet.name || '').toLowerCase()}"
+                    data-name="${(sweet.name || '').toLowerCase()}"
+                    data-card-category="${sweet.category || ''}"
+                    data-category="${sweet.category || ''}"
+                    data-card-code="${(sweet.code || '').toLowerCase()}"
                     data-tagline="${(sweet.tagline || '').toLowerCase()}"
                     data-num="${sweet.num || ''}"
                   >

@@ -15,8 +15,12 @@ export function renderSearchResultsBody(state: any): string {
   const matchedSweets = query 
     ? sweets.filter((s: any) => 
         (s.name && s.name.toLowerCase().includes(query)) ||
+        (s.code && s.code.toLowerCase().includes(query)) ||
         (s.category && s.category.toLowerCase().includes(query)) ||
-        (s.description && s.description.toLowerCase().includes(query))
+        (s.description && s.description.toLowerCase().includes(query)) ||
+        (s.tagline && s.tagline.toLowerCase().includes(query)) ||
+        (s.num && String(s.num) === query) ||
+        (s.id && String(s.id).toLowerCase().includes(query))
       )
     : sweets.slice(0, 6);
 

@@ -28,13 +28,19 @@ export function renderProductsView(state: any) {
   const outOfStockItems = sweets.filter((item: any) => (Number(item.stock) || 0) <= 0);
 
   // Filter products based on search and category
+  const q = (productsSearchQuery || '').toLowerCase().trim();
   const filteredProducts = sweets.filter((item: any) => {
-    const matchesSearch = !productsSearchQuery || 
-      item.name.toLowerCase().includes(productsSearchQuery.toLowerCase()) ||
-      (item.code && item.code.toLowerCase().includes(productsSearchQuery.toLowerCase())) ||
-      (item.category && item.category.toLowerCase().includes(productsSearchQuery.toLowerCase()));
+    const matchesSearch = !q || 
+      (item.name && item.name.toLowerCase().includes(q)) ||
+      (item.code && item.code.toLowerCase().includes(q)) ||
+      (item.category && item.category.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.id && String(item.id).toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
+
+    // When actively searching with query, show matches across all categories
+    if (q) return true;
 
     if (isLowStockTab) {
       return (Number(item.stock) || 0) <= (item.minStock || 15);

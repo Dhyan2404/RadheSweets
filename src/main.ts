@@ -3288,10 +3288,23 @@ function attachEventListeners() {
 
     cards.forEach(c => {
       const card = c as HTMLElement;
-      const cat = card.getAttribute('data-card-category') || '';
-      const name = (card.getAttribute('data-card-name') || '').toLowerCase();
-      const matchCat = state.activeCategory === 'All' || cat === state.activeCategory;
-      const matchSearch = !q || name.includes(q);
+      const cat = card.getAttribute('data-card-category') || card.getAttribute('data-category') || '';
+      const name = (card.getAttribute('data-card-name') || card.getAttribute('data-name') || '').toLowerCase();
+      const code = (card.getAttribute('data-card-code') || '').toLowerCase();
+      const tagline = (card.getAttribute('data-tagline') || '').toLowerCase();
+      const num = card.getAttribute('data-num') || '';
+      const id = (card.getAttribute('data-card-id') || card.getAttribute('data-sweet-card') || '').toLowerCase();
+
+      const matchSearch = !q || 
+        name.includes(q) || 
+        code.includes(q) || 
+        cat.toLowerCase().includes(q) || 
+        tagline.includes(q) || 
+        (num && num === q) || 
+        id.includes(q);
+
+      // When search query is entered, match across all categories; otherwise filter by active category
+      const matchCat = q ? true : (state.activeCategory === 'All' || cat === state.activeCategory);
 
       if (matchCat && matchSearch) {
         card.classList.remove('hidden');
@@ -3303,7 +3316,7 @@ function attachEventListeners() {
 
     // 3. Update count & clear button
     const countEl = document.getElementById('pos-sweets-count');
-    if (countEl) countEl.textContent = `${visibleCount} of 100 sweets available`;
+    if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount}</strong> of ${(state.sweets || []).length} Mithais`;
     const clearBtn = document.getElementById('pos-clear-filter-btn');
     if (clearBtn) {
       if (state.activeCategory !== 'All' || q) {
@@ -4963,9 +4976,16 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     });
   });
 
-  document.getElementById('products-search-input')?.addEventListener('input', (e: any) => {
+  const prodSearchInput = document.getElementById('products-search-input') as HTMLInputElement | null;
+  prodSearchInput?.addEventListener('input', (e: any) => {
     state.productsSearchQuery = e.target.value;
+    const pos = e.target.selectionStart;
     renderApp();
+    const newProdInput = document.getElementById('products-search-input') as HTMLInputElement | null;
+    if (newProdInput) {
+      newProdInput.focus();
+      if (pos !== null) newProdInput.setSelectionRange(pos, pos);
+    }
   });
 
   document.getElementById('clear-products-search-btn')?.addEventListener('click', () => {
@@ -5323,8 +5343,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       code: name.slice(0, 2).toUpperCase(),
       category: category,
       unit: unit,
+      num: (state.sweets?.length || 0) + 1,
+      tagline: (fd.get('description') as string) || `${category} • Fresh Batch`,
       pricePerKg: price,
       costPrice: cost,
+      pieceWeightGrams: unit === 'pcs' ? 50 : undefined,
       stock: stock,
       minStock: minStock,
       stockStatus: stock <= minStock ? 'Low Stock' : 'In Stock',
