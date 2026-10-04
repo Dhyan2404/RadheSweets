@@ -122,6 +122,7 @@ import {
 } from './components/BranchModals.ts';
 import { renderLoginView } from './components/LoginView.ts';
 import { renderOwnerManageView, renderCreateUserModal, renderEditUserModal } from './components/OwnerManageView.ts';
+import { renderFactoryResetModal } from './components/FactoryResetModal.ts';
 
 const STORAGE_KEY = 'radhe_sweets_app_state_v1';
 const AUTH_USER_KEY = 'radhe_auth_user_v1';
@@ -371,6 +372,7 @@ const state = {
   showEditAdvanceModal: false,
   editingAdvanceOrder: null as any,
   showHeldCartsModal: false,
+  showFactoryResetModal: false,
   customersSortBy: stored?.customersSortBy || 'most-spent',
   expensesBranchFilter: 'all',
   analyticsPLScope: stored?.analyticsPLScope || 'branch',
@@ -1630,6 +1632,7 @@ function renderModals() {
     ${state.showCreateUserModal ? renderCreateUserModal(state) : ''}
     ${state.showEditUserModal && state.editingUser ? renderEditUserModal(state) : ''}
     ${state.quickNewCustomerPrompt ? renderQuickNewCustomerPromptModal(state.quickNewCustomerPrompt) : ''}
+    ${state.showFactoryResetModal ? renderFactoryResetModal() : ''}
   `;
 }
 
@@ -2607,6 +2610,109 @@ function attachEventListeners() {
       handleLogout();
     });
   });
+
+  // Owner Factory Reset & Clean Slate Handover Handlers
+  const openFactoryResetModal = () => {
+    state.showFactoryResetModal = true;
+    renderApp();
+    setTimeout(() => {
+      const input = document.getElementById('factory-reset-confirm-input') as HTMLInputElement | null;
+      input?.focus();
+    }, 60);
+  };
+  const closeFactoryResetModal = () => {
+    state.showFactoryResetModal = false;
+    renderApp();
+  };
+
+  document.getElementById('owner-factory-reset-btn')?.addEventListener('click', openFactoryResetModal);
+  document.getElementById('settings-factory-reset-btn')?.addEventListener('click', openFactoryResetModal);
+  document.getElementById('close-factory-reset-modal-btn')?.addEventListener('click', closeFactoryResetModal);
+  document.getElementById('cancel-factory-reset-btn')?.addEventListener('click', closeFactoryResetModal);
+  document.getElementById('factory-reset-modal-backdrop')?.addEventListener('click', (e: any) => {
+    if (e.target?.id === 'factory-reset-modal-backdrop') closeFactoryResetModal();
+  });
+
+  const resetInput = document.getElementById('factory-reset-confirm-input') as HTMLInputElement | null;
+  const executeResetBtn = document.getElementById('execute-factory-reset-btn') as HTMLButtonElement | null;
+  if (resetInput && executeResetBtn) {
+    resetInput.addEventListener('input', () => {
+      const val = resetInput.value.trim().toUpperCase();
+      if (val === 'RESET') {
+        executeResetBtn.disabled = false;
+        executeResetBtn.className = 'flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md';
+      } else {
+        executeResetBtn.disabled = true;
+        executeResetBtn.className = 'flex-1 py-3 px-4 rounded-xl bg-stone-200 text-stone-400 font-extrabold text-xs transition-all cursor-not-allowed flex items-center justify-center gap-1.5 shadow-xs';
+      }
+    });
+
+    executeResetBtn.addEventListener('click', () => {
+      if (resetInput.value.trim().toUpperCase() !== 'RESET') return;
+
+      // 1. Wipe all operational sales orders & invoices
+      state.orders = [];
+      state.lastPlacedOrder = null;
+      state.activeOrder = null;
+
+      // 2. Wipe all recorded operational expenses
+      state.expenses = { total: 0, change: '+0%', breakdown: [], items: [] };
+
+      // 3. Clear audit logs and add single reset entry
+      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      state.auditLogs = [{
+        time: nowTime,
+        user: state.currentUser?.name || 'Owner',
+        action: 'Factory Reset',
+        details: 'Store data wiped clean for new owner handover. Zero back data.'
+      }];
+
+      // 4. Wipe parked counter bills & active POS carts
+      state.parkedBills = [];
+      state.posCart = [];
+      state.quickCart = [];
+      state.userCart = [];
+      state.selectedCustomer = null;
+
+      // 5. Reset customer purchase metrics (spent = 0, orders = 0, loyalty = 50 welcome)
+      (state.customers || []).forEach((c: any) => {
+        c.totalOrders = 0;
+        c.totalSpent = 0;
+        c.loyaltyPoints = 50;
+      });
+
+      // 6. Reset KPIs to zero
+      if (state.kpis) {
+        state.kpis.revenue = { value: 0, formatted: '₹0', change: '+0%' };
+        state.kpis.orders = { value: 0, formatted: '0', change: '0 orders' };
+        if (state.kpis.customers) {
+          state.kpis.customers.value = state.customers.length;
+          state.kpis.customers.formatted = String(state.customers.length);
+          state.kpis.customers.change = `${state.customers.length} patrons`;
+        }
+      }
+
+      // 7. Clear browser localStorage cache of old transactions & branch snapshots
+      try {
+        localStorage.removeItem('RADHE_POS_STATE_V1');
+        localStorage.removeItem('radhe_sweets_app_state_v1');
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith('radhe_orders') || k.startsWith('radhe_expenses') || k.startsWith('radhe_branch_snap'))) {
+            localStorage.removeItem(k);
+          }
+        }
+      } catch (_) {}
+
+      // 8. Save clean state locally and sync to cloud
+      saveState();
+      saveBranchSnapshot(state.currentBranchId);
+
+      state.showFactoryResetModal = false;
+      renderApp();
+      showToast('🎉 Store factory reset complete! All test back data permanently cleared.', 'success');
+    });
+  }
 
   // User & Role Management Handlers
   document.getElementById('open-create-user-modal-btn')?.addEventListener('click', () => {
@@ -3656,6 +3762,11 @@ function attachEventListeners() {
     if (!state.quickNewCustomerPrompt) return;
     const nameInput = document.getElementById('quick-new-cust-name-input') as HTMLInputElement | null;
     const typedName = nameInput?.value?.trim();
+    if (!typedName) {
+      showToast('Please enter customer full name (Required).', 'warning');
+      nameInput?.focus();
+      return;
+    }
     const phone = state.quickNewCustomerPrompt.phone;
     const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
     const assignedId = `CUST-${1000 + (state.customers?.length || 0) + 1}`;
@@ -3663,7 +3774,7 @@ function attachEventListeners() {
       id: assignedId,
       branchId: state.currentBranchId,
       branchName: curBranch ? curBranch.name : 'Sector 21',
-      name: typedName || `Patron (${phone})`,
+      name: typedName,
       phone: phone,
       email: '',
       address: curBranch ? curBranch.address : 'Gandhinagar, Gujarat',
@@ -3684,41 +3795,13 @@ function attachEventListeners() {
     saveBranchSnapshot(state.currentBranchId);
     state.quickNewCustomerPrompt = null;
     completeCustomerSelection(newCust);
-    showToast(`✓ Registered patron ${newCust.name} (ID: #${newCust.id}) with +50 Welcome Points!`, 'success');
+    showToast(`✓ Registered customer ${newCust.name} (ID: #${newCust.id}) with +50 Welcome Points!`, 'success');
   });
 
   document.getElementById('quick-new-cust-skip-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
-    if (!state.quickNewCustomerPrompt) return;
-    const phone = state.quickNewCustomerPrompt.phone;
-    const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
-    const assignedId = `CUST-${1000 + (state.customers?.length || 0) + 1}`;
-    const newCust = {
-      id: assignedId,
-      branchId: state.currentBranchId,
-      branchName: curBranch ? curBranch.name : 'Sector 21',
-      name: `Patron (${phone})`,
-      phone: phone,
-      email: '',
-      address: curBranch ? curBranch.address : 'Gandhinagar, Gujarat',
-      type: 'Regular',
-      tier: 'Regular',
-      loyaltyPoints: 50,
-      totalOrders: 1,
-      totalSpent: 0,
-      notes: 'Registered via Quick Counter Attach'
-    };
-
-    state.customers.unshift(newCust);
-    if (state.kpis?.customers) {
-      state.kpis.customers.value = (state.kpis.customers.value || 0) + 1;
-      state.kpis.customers.formatted = String(state.kpis.customers.value);
-    }
-    saveCustomerToCloud(newCust, state.currentBranchId, state.customers);
-    saveBranchSnapshot(state.currentBranchId);
     state.quickNewCustomerPrompt = null;
-    completeCustomerSelection(newCust);
-    showToast(`✓ Attached customer ${newCust.name} (+50 Points)!`, 'success');
+    renderApp();
   });
 
   const closeQuickNewCustModal = () => {
@@ -7461,14 +7544,31 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
             }
           });
         });
-        document.getElementById('dialer-attach-new-instant-btn')?.addEventListener('click', () => {
+        document.getElementById('dialer-save-named-customer-btn')?.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const nameInput = document.getElementById('dialer-new-customer-name') as HTMLInputElement | null;
+          const typedName = nameInput?.value?.trim();
           const phone = formatDialerPhone(rawDigits);
+          if (!typedName) {
+            state.showCustomerDialerModal = false;
+            state.quickNewCustomerPrompt = { phone, cleanDigits: rawDigits };
+            renderApp();
+            setTimeout(() => {
+              const nInput = document.getElementById('quick-new-cust-name-input') as HTMLInputElement | null;
+              nInput?.focus();
+            }, 60);
+            return;
+          }
+          const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId);
           const newCust = {
             id: `CUST-${1000 + state.customers.length + 1}`,
-            name: `Patron (${phone})`,
+            branchId: state.currentBranchId,
+            branchName: curBranch ? curBranch.name : 'Sector 21',
+            name: typedName,
             phone: phone,
             email: '',
-            address: 'Ahmedabad, Gujarat',
+            address: curBranch ? curBranch.address : 'Gandhinagar, Gujarat',
             type: 'Regular',
             tier: 'Regular',
             loyaltyPoints: 50,

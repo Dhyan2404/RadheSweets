@@ -303,8 +303,48 @@ export function renderAnalyticsView(state: any) {
           </div>
         </div>
 
-        <!-- Daily Ledger Table -->
-        <div class="border border-[var(--border-color)] rounded-xl overflow-hidden bg-white shadow-2xs">
+        <!-- Daily Ledger: Mobile Cards (< 768px) -->
+        <div class="block md:hidden border border-[var(--border-color)] rounded-xl divide-y divide-stone-100 bg-white shadow-2xs">
+          ${ledger.days.map(day => `
+            <div class="p-3.5 space-y-2 hover:bg-amber-50/30 transition-colors">
+              <div class="flex items-center justify-between">
+                <span class="font-black text-stone-900 text-xs">
+                  ${day.date} <span class="text-stone-400 font-normal text-[10px]">(${day.dayOfWeek})</span>
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold text-[10px]">
+                  Margin: ${day.sales > 0 ? ((day.profit / day.sales) * 100).toFixed(1) : '0.0'}%
+                </span>
+              </div>
+
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 text-[10px] font-bold">
+                  ${day.customerOrders.length} Buys
+                </span>
+                <span class="text-[11px] text-stone-600 truncate max-w-[220px]">
+                  ${day.customerOrders.slice(0, 2).map(c => c.customerName).join(', ')}${day.customerOrders.length > 2 ? '...' : ''}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 pt-1 border-t border-stone-100 text-center">
+                <div class="bg-stone-50 p-1.5 rounded-lg">
+                  <p class="text-[9px] uppercase font-bold text-stone-400">Sales</p>
+                  <p class="font-black text-xs text-stone-900 mt-0.5">₹${day.sales.toLocaleString()}</p>
+                </div>
+                <div class="bg-rose-50/60 p-1.5 rounded-lg">
+                  <p class="text-[9px] uppercase font-bold text-rose-500">Cost</p>
+                  <p class="font-bold text-xs text-rose-700 mt-0.5">-₹${day.cost.toLocaleString()}</p>
+                </div>
+                <div class="bg-emerald-50 p-1.5 rounded-lg">
+                  <p class="text-[9px] uppercase font-bold text-emerald-600">Net Profit</p>
+                  <p class="font-black text-xs text-emerald-800 mt-0.5">+₹${day.profit.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Daily Ledger: Desktop Table (>= 768px) -->
+        <div class="hidden md:block border border-[var(--border-color)] rounded-xl overflow-hidden bg-white shadow-2xs">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead>

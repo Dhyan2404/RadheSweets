@@ -3069,7 +3069,7 @@ export const initialData = {
   {
     "id": "CUST-1001",
     "name": "Jignesh Shah",
-    "phone": "+91 98250 11001",
+    "phone": "+91 98251 43019",
     "email": "jigneshshah@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3084,7 +3084,7 @@ export const initialData = {
   {
     "id": "CUST-1002",
     "name": "Riya Patel",
-    "phone": "+91 98250 11002",
+    "phone": "+91 94285 71044",
     "email": "riyapatel@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3099,7 +3099,7 @@ export const initialData = {
   {
     "id": "CUST-1003",
     "name": "Amit Kumar",
-    "phone": "+91 98250 11003",
+    "phone": "+91 99099 82315",
     "email": "amitkumar@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3114,7 +3114,7 @@ export const initialData = {
   {
     "id": "CUST-1004",
     "name": "Priya Panchal",
-    "phone": "+91 98250 11004",
+    "phone": "+91 97277 64182",
     "email": "priyapanchal@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3129,7 +3129,7 @@ export const initialData = {
   {
     "id": "CUST-1005",
     "name": "Neha Shah",
-    "phone": "+91 98250 11005",
+    "phone": "+91 98791 55420",
     "email": "nehashah@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3144,7 +3144,7 @@ export const initialData = {
   {
     "id": "CUST-1006",
     "name": "Meet Kothari",
-    "phone": "+91 98250 11006",
+    "phone": "+91 99241 38976",
     "email": "meetkothari@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3159,7 +3159,7 @@ export const initialData = {
   {
     "id": "CUST-1007",
     "name": "Rakesh Thakkar",
-    "phone": "+91 98250 11007",
+    "phone": "+91 94088 19230",
     "email": "rakeshthakkar@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3174,7 +3174,7 @@ export const initialData = {
   {
     "id": "CUST-1008",
     "name": "Harshil Vora",
-    "phone": "+91 98250 11008",
+    "phone": "+91 98980 62145",
     "email": "harshilvora@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3189,7 +3189,7 @@ export const initialData = {
   {
     "id": "CUST-1009",
     "name": "Dipti Trivedi",
-    "phone": "+91 98250 11009",
+    "phone": "+91 97129 48312",
     "email": "diptitrivedi@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3204,7 +3204,7 @@ export const initialData = {
   {
     "id": "CUST-1010",
     "name": "Bhavesh Prajapati",
-    "phone": "+91 98250 11010",
+    "phone": "+91 99786 51729",
     "email": "bhaveshprajapati@gmail.com",
     "address": "Swagat Twincity High Street, Gandhinagar Bypass Rd, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-1",
@@ -3219,7 +3219,7 @@ export const initialData = {
   {
     "id": "CUST-1011",
     "name": "Shailesh Patel",
-    "phone": "+91 98250 22001",
+    "phone": "+91 98240 76391",
     "email": "shaileshpatel@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3234,7 +3234,7 @@ export const initialData = {
   {
     "id": "CUST-1012",
     "name": "Hiren Joshi",
-    "phone": "+91 98250 22002",
+    "phone": "+91 94260 84210",
     "email": "hirenjoshi@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3249,7 +3249,7 @@ export const initialData = {
   {
     "id": "CUST-1013",
     "name": "Alpa Desai",
-    "phone": "+91 98250 22003",
+    "phone": "+91 99044 19582",
     "email": "alpadesai@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3264,7 +3264,7 @@ export const initialData = {
   {
     "id": "CUST-1014",
     "name": "Nilesh Soni",
-    "phone": "+91 98250 22004",
+    "phone": "+91 97262 33814",
     "email": "nileshsoni@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3279,7 +3279,7 @@ export const initialData = {
   {
     "id": "CUST-1015",
     "name": "Bhavna Dave",
-    "phone": "+91 98250 22005",
+    "phone": "+91 98795 24190",
     "email": "bhavnadave@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3294,7 +3294,7 @@ export const initialData = {
   {
     "id": "CUST-1016",
     "name": "Chirag Modi",
-    "phone": "+91 98250 22006",
+    "phone": "+91 99252 87601",
     "email": "chiragmodi@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3309,7 +3309,7 @@ export const initialData = {
   {
     "id": "CUST-1017",
     "name": "Meena Rathod",
-    "phone": "+91 98250 22007",
+    "phone": "+91 94091 63528",
     "email": "meenarathod@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3324,7 +3324,7 @@ export const initialData = {
   {
     "id": "CUST-1018",
     "name": "Chetan Parmar",
-    "phone": "+91 98250 22008",
+    "phone": "+91 98982 71493",
     "email": "chetanparmar@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3339,7 +3339,7 @@ export const initialData = {
   {
     "id": "CUST-1019",
     "name": "Swati Chauhan",
-    "phone": "+91 98250 22009",
+    "phone": "+91 97140 28657",
     "email": "swatichauhan@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3354,7 +3354,7 @@ export const initialData = {
   {
     "id": "CUST-1020",
     "name": "Pratik Raval",
-    "phone": "+91 98250 22010",
+    "phone": "+91 99790 41238",
     "email": "pratikraval@gmail.com",
     "address": "231, Haveli Arcade, CH Rd, Sector 11, Gandhinagar, Gujarat 382011",
     "branchId": "br-2",
@@ -3369,7 +3369,7 @@ export const initialData = {
   {
     "id": "CUST-1021",
     "name": "Rohan Mehta",
-    "phone": "+91 98250 33001",
+    "phone": "+91 98245 19827",
     "email": "rohanmehta@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3384,7 +3384,7 @@ export const initialData = {
   {
     "id": "CUST-1022",
     "name": "Sneha Iyer",
-    "phone": "+91 98250 33002",
+    "phone": "+91 94270 35194",
     "email": "snehaiyer@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3399,7 +3399,7 @@ export const initialData = {
   {
     "id": "CUST-1023",
     "name": "Ankit Sharma",
-    "phone": "+91 98250 33003",
+    "phone": "+91 99048 62731",
     "email": "ankitsharma@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3414,7 +3414,7 @@ export const initialData = {
   {
     "id": "CUST-1024",
     "name": "Tanvi Kulkarni",
-    "phone": "+91 98250 33004",
+    "phone": "+91 97265 91823",
     "email": "tanvikulkarni@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3429,7 +3429,7 @@ export const initialData = {
   {
     "id": "CUST-1025",
     "name": "Kunal Verma",
-    "phone": "+91 98250 33005",
+    "phone": "+91 98798 45612",
     "email": "kunalverma@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3444,7 +3444,7 @@ export const initialData = {
   {
     "id": "CUST-1026",
     "name": "Pooja Nair",
-    "phone": "+91 98250 33006",
+    "phone": "+91 99255 12984",
     "email": "poojanair@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3459,7 +3459,7 @@ export const initialData = {
   {
     "id": "CUST-1027",
     "name": "Vikramaditya Singh",
-    "phone": "+91 98250 33007",
+    "phone": "+91 94094 78315",
     "email": "vikramadityasingh@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3474,7 +3474,7 @@ export const initialData = {
   {
     "id": "CUST-1028",
     "name": "Radhika Agarwal",
-    "phone": "+91 98250 33008",
+    "phone": "+91 98985 34219",
     "email": "radhikaagarwal@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3489,7 +3489,7 @@ export const initialData = {
   {
     "id": "CUST-1029",
     "name": "Siddharth Rao",
-    "phone": "+91 98250 33009",
+    "phone": "+91 97145 89201",
     "email": "siddharthrao@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3504,7 +3504,7 @@ export const initialData = {
   {
     "id": "CUST-1030",
     "name": "Manisha Gupta",
-    "phone": "+91 98250 33010",
+    "phone": "+91 99795 63478",
     "email": "manishagupta@gmail.com",
     "address": "205, District Shopping Center, Sector 21, Gandhinagar, Gujarat 382021",
     "branchId": "br-3",
@@ -3519,7 +3519,7 @@ export const initialData = {
   {
     "id": "CUST-1031",
     "name": "Paresh Gadhvi",
-    "phone": "+91 98250 44001",
+    "phone": "+91 98248 76123",
     "email": "pareshgadhvi@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3534,7 +3534,7 @@ export const initialData = {
   {
     "id": "CUST-1032",
     "name": "Kokila Ben Patel",
-    "phone": "+91 98250 44002",
+    "phone": "+91 94275 89012",
     "email": "kokilabenpatel@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3549,7 +3549,7 @@ export const initialData = {
   {
     "id": "CUST-1033",
     "name": "Bharatbhai Shah",
-    "phone": "+91 98250 44003",
+    "phone": "+91 99092 34187",
     "email": "bharatbhaishah@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3564,7 +3564,7 @@ export const initialData = {
   {
     "id": "CUST-1034",
     "name": "Hetalben Dave",
-    "phone": "+91 98250 44004",
+    "phone": "+91 97270 56291",
     "email": "hetalbendave@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3579,7 +3579,7 @@ export const initialData = {
   {
     "id": "CUST-1035",
     "name": "Dharmesh Suthar",
-    "phone": "+91 98250 44005",
+    "phone": "+91 98988 12470",
     "email": "dharmeshsuthar@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3594,7 +3594,7 @@ export const initialData = {
   {
     "id": "CUST-1036",
     "name": "Varsha Vaghela",
-    "phone": "+91 98250 44006",
+    "phone": "+91 99258 43905",
     "email": "varshavaghela@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3609,7 +3609,7 @@ export const initialData = {
   {
     "id": "CUST-1037",
     "name": "Alpesh Makwana",
-    "phone": "+91 98250 44007",
+    "phone": "+91 94097 21568",
     "email": "alpeshmakwana@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3624,7 +3624,7 @@ export const initialData = {
   {
     "id": "CUST-1038",
     "name": "Tejal Pancholi",
-    "phone": "+91 98250 44008",
+    "phone": "+91 98792 68341",
     "email": "tejalpancholi@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3639,7 +3639,7 @@ export const initialData = {
   {
     "id": "CUST-1039",
     "name": "Gaurav Pandya",
-    "phone": "+91 98250 44009",
+    "phone": "+91 97241 95082",
     "email": "gauravpandya@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3654,7 +3654,7 @@ export const initialData = {
   {
     "id": "CUST-1040",
     "name": "Rekhaben Barot",
-    "phone": "+91 98250 44010",
+    "phone": "+91 99798 14725",
     "email": "rekhabenbarot@gmail.com",
     "address": "The Landmark, A-23, opp. Kansar Hotel, Kudasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-4",
@@ -3669,7 +3669,7 @@ export const initialData = {
   {
     "id": "CUST-1041",
     "name": "Aditya Singhania",
-    "phone": "+91 98250 55001",
+    "phone": "+91 98253 65814",
     "email": "adityasinghania@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3684,7 +3684,7 @@ export const initialData = {
   {
     "id": "CUST-1042",
     "name": "Natasha Shroff",
-    "phone": "+91 98250 55002",
+    "phone": "+91 94280 12973",
     "email": "natashashroff@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3699,7 +3699,7 @@ export const initialData = {
   {
     "id": "CUST-1043",
     "name": "Sameer Merchant",
-    "phone": "+91 98250 55003",
+    "phone": "+91 99095 78426",
     "email": "sameermerchant@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3714,7 +3714,7 @@ export const initialData = {
   {
     "id": "CUST-1044",
     "name": "Arundhati Roy",
-    "phone": "+91 98250 55004",
+    "phone": "+91 97274 31695",
     "email": "arundhatiroy@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3729,7 +3729,7 @@ export const initialData = {
   {
     "id": "CUST-1045",
     "name": "Kabir Dewan",
-    "phone": "+91 98250 55005",
+    "phone": "+91 98989 54710",
     "email": "kabirdewan@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3744,7 +3744,7 @@ export const initialData = {
   {
     "id": "CUST-1046",
     "name": "Zoya Kapadia",
-    "phone": "+91 98250 55006",
+    "phone": "+91 99245 81263",
     "email": "zoyakapadia@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3759,7 +3759,7 @@ export const initialData = {
   {
     "id": "CUST-1047",
     "name": "Farhan Batliwala",
-    "phone": "+91 98250 55007",
+    "phone": "+91 94290 67381",
     "email": "farhanbatliwala@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3774,7 +3774,7 @@ export const initialData = {
   {
     "id": "CUST-1048",
     "name": "Simran Bhatia",
-    "phone": "+91 98250 55008",
+    "phone": "+91 98794 92150",
     "email": "simranbhatia@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3789,7 +3789,7 @@ export const initialData = {
   {
     "id": "CUST-1049",
     "name": "Rishabh Mittal",
-    "phone": "+91 98250 55009",
+    "phone": "+91 97246 18357",
     "email": "rishabhmittal@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3804,7 +3804,7 @@ export const initialData = {
   {
     "id": "CUST-1050",
     "name": "Ananya Goenka",
-    "phone": "+91 98250 55010",
+    "phone": "+91 99740 36982",
     "email": "ananyagoenka@gmail.com",
     "address": "Shop No. 15, 16, Sikshapatri Rd, Swatstik, Sargasan, Gandhinagar, Gujarat 382421",
     "branchId": "br-5",
@@ -3819,7 +3819,7 @@ export const initialData = {
   {
     "id": "CUST-1051",
     "name": "Kiritbhai Vyas",
-    "phone": "+91 98250 66001",
+    "phone": "+91 98256 94120",
     "email": "kiritbhaivyas@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3834,7 +3834,7 @@ export const initialData = {
   {
     "id": "CUST-1052",
     "name": "Dakshaben Jani",
-    "phone": "+91 98250 66002",
+    "phone": "+91 94283 56194",
     "email": "dakshabenjani@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3849,7 +3849,7 @@ export const initialData = {
   {
     "id": "CUST-1053",
     "name": "Jayesh Solanki",
-    "phone": "+91 98250 66003",
+    "phone": "+91 99098 21475",
     "email": "jayeshsolanki@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3864,7 +3864,7 @@ export const initialData = {
   {
     "id": "CUST-1054",
     "name": "Naynaben Shukla",
-    "phone": "+91 98250 66004",
+    "phone": "+91 97278 85032",
     "email": "naynabenshukla@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3879,7 +3879,7 @@ export const initialData = {
   {
     "id": "CUST-1055",
     "name": "Mukesh Chavda",
-    "phone": "+91 98250 66005",
+    "phone": "+91 98981 47269",
     "email": "mukeshchavda@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3894,7 +3894,7 @@ export const initialData = {
   {
     "id": "CUST-1056",
     "name": "Hansaben Thaker",
-    "phone": "+91 98250 66006",
+    "phone": "+91 99248 73510",
     "email": "hansabenthaker@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3909,7 +3909,7 @@ export const initialData = {
   {
     "id": "CUST-1057",
     "name": "Dilipbhai Ravat",
-    "phone": "+91 98250 66007",
+    "phone": "+91 94294 18625",
     "email": "dilipbhairavat@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3924,7 +3924,7 @@ export const initialData = {
   {
     "id": "CUST-1058",
     "name": "Parulben Bhatti",
-    "phone": "+91 98250 66008",
+    "phone": "+91 98796 35841",
     "email": "parulbenbhatti@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3939,7 +3939,7 @@ export const initialData = {
   {
     "id": "CUST-1059",
     "name": "Govindbhai Chauhan",
-    "phone": "+91 98250 66009",
+    "phone": "+91 97250 92416",
     "email": "govindbhaichauhan@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3954,7 +3954,7 @@ export const initialData = {
   {
     "id": "CUST-1060",
     "name": "Shilpaben Oza",
-    "phone": "+91 98250 66010",
+    "phone": "+91 99744 68153",
     "email": "shilpabenoza@gmail.com",
     "address": "1/2/3, Shree Rang Heights PDPU, Cross, Raysan Rd, Gandhinagar, Gujarat 382007",
     "branchId": "br-6",
@@ -3969,7 +3969,7 @@ export const initialData = {
   {
     "id": "CUST-1061",
     "name": "Arvindbhai Brahmbhatt",
-    "phone": "+91 98250 77001",
+    "phone": "+91 98258 31749",
     "email": "arvindbhaibrahmbhatt@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -3984,7 +3984,7 @@ export const initialData = {
   {
     "id": "CUST-1062",
     "name": "Geeta Ben Somani",
-    "phone": "+91 98250 77002",
+    "phone": "+91 94287 90432",
     "email": "geetabensomani@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -3999,7 +3999,7 @@ export const initialData = {
   {
     "id": "CUST-1063",
     "name": "Hareshbhai Dholakia",
-    "phone": "+91 98250 77003",
+    "phone": "+91 99042 58167",
     "email": "hareshbhaidholakia@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4014,7 +4014,7 @@ export const initialData = {
   {
     "id": "CUST-1064",
     "name": "Urmilaben Baxi",
-    "phone": "+91 98250 77004",
+    "phone": "+91 97260 41983",
     "email": "urmilabenbaxi@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4029,7 +4029,7 @@ export const initialData = {
   {
     "id": "CUST-1065",
     "name": "Narendrabhai Mandalia",
-    "phone": "+91 98250 77005",
+    "phone": "+91 98984 63520",
     "email": "narendrabhaimandalia@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4044,7 +4044,7 @@ export const initialData = {
   {
     "id": "CUST-1066",
     "name": "Sarojben Mehta",
-    "phone": "+91 98250 77006",
+    "phone": "+91 99250 17894",
     "email": "sarojbenmehta@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4059,7 +4059,7 @@ export const initialData = {
   {
     "id": "CUST-1067",
     "name": "Vinodbhai Soni",
-    "phone": "+91 98250 77007",
+    "phone": "+91 94297 84210",
     "email": "vinodbhaisoni@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4074,7 +4074,7 @@ export const initialData = {
   {
     "id": "CUST-1068",
     "name": "Kalpanaben Shah",
-    "phone": "+91 98250 77008",
+    "phone": "+91 98799 70532",
     "email": "kalpanabenshah@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4089,7 +4089,7 @@ export const initialData = {
   {
     "id": "CUST-1069",
     "name": "Pankajbhai Trivedi",
-    "phone": "+91 98250 77009",
+    "phone": "+91 97255 36184",
     "email": "pankajbhaitrivedi@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4104,7 +4104,7 @@ export const initialData = {
   {
     "id": "CUST-1070",
     "name": "Minakshiben Pathak",
-    "phone": "+91 98250 77010",
+    "phone": "+91 99748 29015",
     "email": "minakshibenpathak@gmail.com",
     "address": "A/1-2, Pramukh Arcade – 2 Kudasan – Reliance Cross Road, Kudasan, Gujarat 382421",
     "branchId": "br-7",
@@ -4119,7 +4119,7 @@ export const initialData = {
   {
     "id": "CUST-1071",
     "name": "Devang Patel",
-    "phone": "+91 98250 88001",
+    "phone": "+91 98259 84061",
     "email": "devangpatel@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4134,7 +4134,7 @@ export const initialData = {
   {
     "id": "CUST-1072",
     "name": "Krishna Ben Vora",
-    "phone": "+91 98250 88002",
+    "phone": "+91 94289 42715",
     "email": "krishnabenvora@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4149,7 +4149,7 @@ export const initialData = {
   {
     "id": "CUST-1073",
     "name": "Manharbhai Gandhi",
-    "phone": "+91 98250 88003",
+    "phone": "+91 99046 71928",
     "email": "manharbhaigandhi@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4164,7 +4164,7 @@ export const initialData = {
   {
     "id": "CUST-1074",
     "name": "Taraben Joshi",
-    "phone": "+91 98250 88004",
+    "phone": "+91 97264 85301",
     "email": "tarabenjoshi@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4179,7 +4179,7 @@ export const initialData = {
   {
     "id": "CUST-1075",
     "name": "Jagdishbhai Mistry",
-    "phone": "+91 98250 88005",
+    "phone": "+91 98987 19436",
     "email": "jagdishbhaimistry@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4194,7 +4194,7 @@ export const initialData = {
   {
     "id": "CUST-1076",
     "name": "Gitaben Panchal",
-    "phone": "+91 98250 88006",
+    "phone": "+91 99254 62078",
     "email": "gitabenpanchal@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4209,7 +4209,7 @@ export const initialData = {
   {
     "id": "CUST-1077",
     "name": "Ashokbhai Parekh",
-    "phone": "+91 98250 88007",
+    "phone": "+91 94080 37192",
     "email": "ashokbhaiparekh@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4224,7 +4224,7 @@ export const initialData = {
   {
     "id": "CUST-1078",
     "name": "Bhavikaben Rana",
-    "phone": "+91 98250 88008",
+    "phone": "+91 98790 58421",
     "email": "bhavikabenrana@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4239,7 +4239,7 @@ export const initialData = {
   {
     "id": "CUST-1079",
     "name": "Sandipbhai Sheth",
-    "phone": "+91 98250 88009",
+    "phone": "+91 97259 14680",
     "email": "sandipbhaisheth@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",
@@ -4254,7 +4254,7 @@ export const initialData = {
   {
     "id": "CUST-1080",
     "name": "Vaishaliben Bhatt",
-    "phone": "+91 98250 88010",
+    "phone": "+91 99749 82356",
     "email": "vaishalibenbhatt@gmail.com",
     "address": "307, near GH-6 Corner, Sector 29, Gandhinagar, Gujarat 382029",
     "branchId": "br-8",

@@ -317,6 +317,55 @@ export function renderOwnerManageView(state: any): string {
 
       </section>
 
+      <!-- 4. Owner Handover & Clean Slate Factory Reset (Exclusive to Owner) -->
+      ${isOwner ? `
+      <section class="p-5 sm:p-6 bg-gradient-to-br from-rose-50/80 via-amber-50/30 to-white rounded-3xl border-2 border-rose-200/90 shadow-subtle space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black text-xl shadow-md shrink-0">
+              🧹
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base sm:text-lg font-black text-stone-900">
+                  Store Factory Reset • Clean Slate for New Owner
+                </h3>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-300">
+                  Handover &amp; Resale Tool
+                </span>
+              </div>
+              <p class="text-xs text-stone-600 mt-1 max-w-2xl leading-relaxed">
+                Selling or deploying this POS system to a sweet shop owner? Wipe all test sales, sample orders, demo expenses, audit logs, and parked counter bills with 1-click. <strong>Your 100+ sweets catalog, pricing, recipes, branch outlets, user accounts, and shop settings remain 100% intact.</strong>
+              </p>
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            id="owner-factory-reset-btn"
+            class="px-5 py-3.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <span>⚡ Wipe All Back Data (Clean Slate)</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 text-xs">
+          <div class="p-3 bg-white/90 rounded-xl border border-emerald-200 flex items-center gap-2 text-stone-700">
+            <span class="text-emerald-600 font-bold">✓ Preserves:</span>
+            <span>100+ Sweets, Prices &amp; Categories</span>
+          </div>
+          <div class="p-3 bg-white/90 rounded-xl border border-emerald-200 flex items-center gap-2 text-stone-700">
+            <span class="text-emerald-600 font-bold">✓ Preserves:</span>
+            <span>Branches, UPI &amp; Printer Settings</span>
+          </div>
+          <div class="p-3 bg-white/90 rounded-xl border border-rose-200 flex items-center gap-2 text-stone-700">
+            <span class="text-rose-600 font-bold">✕ Wipes:</span>
+            <span>All Demo Orders, Expenses &amp; Logs</span>
+          </div>
+        </div>
+      </section>
+      ` : ''}
+
     </div>
   `;
 }

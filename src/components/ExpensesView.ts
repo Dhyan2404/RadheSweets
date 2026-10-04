@@ -154,7 +154,69 @@ export function renderExpensesView(state: any) {
           </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- Mobile Card List View (< 768px): Zero-Cramp Touch-Optimized Feed -->
+        <div class="block md:hidden divide-y divide-[var(--border-color)]/70">
+          ${filteredItems.length === 0 ? `
+            <div class="py-10 px-4 text-center text-[var(--text-muted)] space-y-1">
+              <p class="font-bold text-sm">No expenses found for this selection</p>
+              <p class="text-xs">Try switching branch or category filter, or click "+ Add Expense" above.</p>
+            </div>
+          ` : filteredItems.map((item: any) => {
+            const isRawMaterial = item.category === 'Raw Materials';
+            const isAllBranches = !item.branchId || item.branchId === 'all';
+            return `
+              <div class="p-4 space-y-2.5 hover:bg-[var(--bg-highlight)]/40 transition-colors ${isRawMaterial ? 'bg-amber-50/20' : ''}">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-[var(--text-muted)]">${item.date}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ${item.status || 'Paid'}
+                    </span>
+                    <button 
+                      data-delete-expense="${item.id}"
+                      class="text-[var(--text-light)] hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 text-xs transition-colors cursor-pointer"
+                      title="Delete expense"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-2 min-w-0">
+                    ${isRawMaterial ? '<span class="text-lg select-none shrink-0">🌾</span>' : '<span class="text-lg select-none shrink-0">🧾</span>'}
+                    <span class="font-bold text-sm text-[var(--text-main)] truncate">${item.description}</span>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="text-base font-black text-[#C86D3B] tabular-nums">
+                      ₹${(Number(item.amount) || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap pt-0.5">
+                  <span class="inline-block px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${
+                    isRawMaterial 
+                      ? 'bg-[#FFF7ED] text-[#C86D3B] border border-[#FED7AA]'
+                      : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-color)]'
+                  }">
+                    ${isRawMaterial ? '🌾 Raw Materials' : item.category}
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${
+                    isAllBranches
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200'
+                  }">
+                    ${isAllBranches ? '🌐 All Branches' : `🏢 ${item.branchName || 'Branch'}`}
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- Desktop Ledger Table (>= 768px): Spacious Tabular Format -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>
               <tr class="bg-[var(--bg-subtle)] border-b border-[var(--border-color)] text-[var(--text-muted)] font-semibold text-[11px] uppercase tracking-wider">

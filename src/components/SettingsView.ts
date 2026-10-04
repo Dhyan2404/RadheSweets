@@ -818,6 +818,38 @@ export function renderSettingsView(state: any) {
         </div>
       </section>
 
+      <!-- 5. Owner Danger Zone: Factory Reset Store Data (Handover to New Owner) -->
+      <section class="p-5 sm:p-6 bg-gradient-to-br from-rose-50/80 via-amber-50/30 to-white rounded-3xl border-2 border-rose-200/90 shadow-subtle space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black text-xl shadow-md shrink-0">
+              🧹
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base sm:text-lg font-black text-stone-900">
+                  Store Factory Reset • Clean Slate for New Owner
+                </h3>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-300">
+                  Resale &amp; Handover
+                </span>
+              </div>
+              <p class="text-xs text-stone-600 mt-1 max-w-2xl leading-relaxed">
+                Selling or deploying this POS system to a sweet shop owner? Wipe all test sales, sample orders, demo expenses, audit logs, and parked counter bills with 1-click. <strong>Your sweets catalog, branch setup, user accounts, and shop settings remain 100% intact.</strong>
+              </p>
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            id="settings-factory-reset-btn"
+            class="px-5 py-3.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <span>⚡ Wipe All Back Data</span>
+          </button>
+        </div>
+      </section>
+
     </div>
   `;
 }
