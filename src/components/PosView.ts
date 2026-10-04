@@ -2,20 +2,41 @@
 // Features 100 Authentic Mithais with Image Sprite Support, Quick Weight Chips,
 // and Instant Zero-Scroll Mobile Sticky Checkout Bar + Slide-up Cart Drawer.
 
-export function renderCardActionBtn(sweetId: string, inCartItem?: any): string {
+export function renderCardActionBtn(sweetId: any, inCartItem?: any): string {
+  const id = typeof sweetId === 'object' && sweetId ? (sweetId as any).id : sweetId;
   if (inCartItem && inCartItem.qty > 0) {
+    const isPcs = (inCartItem.unit || '').toLowerCase() === 'pcs';
+    const displayQty = isPcs 
+      ? `${inCartItem.qty} pc${inCartItem.qty > 1 ? 's' : ''}` 
+      : (inCartItem.qty >= 1 ? `${inCartItem.qty}kg` : `${Math.round(inCartItem.qty * 1000)}g`);
+    const isMinQty = isPcs ? inCartItem.qty <= 1 : inCartItem.qty <= 0.25;
+
     return `
       <div class="flex items-center gap-1 bg-[var(--bg-subtle)] p-0.5 rounded-lg border border-[var(--border-color)]">
-        <button type="button" data-dec-cart="${sweetId}" class="w-6 h-6 rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-[var(--brand-primary)] hover:text-white flex items-center justify-center transition-colors cursor-pointer">-</button>
-        <span class="text-xs font-extrabold px-1 text-[var(--brand-primary)]">${inCartItem.qty}</span>
-        <button type="button" data-inc-cart="${sweetId}" class="w-6 h-6 rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-[var(--brand-primary)] hover:text-white flex items-center justify-center transition-colors cursor-pointer">+</button>
+        <button 
+          type="button" 
+          data-dec-cart="${id}" 
+          class="w-6 h-6 rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+          title="${isMinQty ? 'Remove from Cart' : 'Decrease Quantity'}"
+        >
+          ${isMinQty ? '🗑️' : '-'}
+        </button>
+        <span class="text-xs font-black px-1 text-[var(--brand-primary)] whitespace-nowrap">${displayQty}</span>
+        <button 
+          type="button" 
+          data-inc-cart="${id}" 
+          class="w-6 h-6 rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-[var(--brand-primary)] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          title="Increase Quantity"
+        >
+          +
+        </button>
       </div>
     `;
   }
   return `
     <button 
       type="button"
-      data-add-to-pos="${sweetId}"
+      data-add-to-pos="${id}"
       class="w-7 h-7 rounded-lg bg-[var(--brand-primary-light)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white font-bold text-sm flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-90"
       title="Add to cart"
     >
@@ -75,13 +96,15 @@ export function renderDesktopCartItemsHtml(posCart: any[] = []): string {
 
       <div class="flex items-center space-x-3">
         <div class="flex items-center gap-1 bg-[var(--bg-subtle)] rounded-lg p-0.5 border border-[var(--border-color)]">
-          <button type="button" data-dec-cart="${item.id}" class="w-5 h-5 flex items-center justify-center rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-[var(--brand-primary)] hover:text-white transition-colors cursor-pointer">-</button>
+          <button type="button" data-dec-cart="${item.id}" class="w-5 h-5 flex items-center justify-center rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer" title="${(item.unit || '').toLowerCase() === 'pcs' ? (item.qty <= 1 ? 'Remove' : 'Decrease 1 pc') : (item.qty <= 0.25 ? 'Remove' : 'Decrease 250g')}">
+            ${((item.unit || '').toLowerCase() === 'pcs' ? item.qty <= 1 : item.qty <= 0.25) ? '🗑️' : '-'}
+          </button>
           <span class="text-xs font-extrabold px-1.5">${item.qty}</span>
-          <button type="button" data-inc-cart="${item.id}" class="w-5 h-5 flex items-center justify-center rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-[var(--brand-primary)] hover:text-white transition-colors cursor-pointer">+</button>
+          <button type="button" data-inc-cart="${item.id}" class="w-5 h-5 flex items-center justify-center rounded bg-[var(--bg-surface)] text-[var(--text-main)] font-bold text-xs hover:bg-[var(--brand-primary)] hover:text-white transition-colors cursor-pointer" title="${(item.unit || '').toLowerCase() === 'pcs' ? 'Increase 1 pc' : 'Increase 250g'}">+</button>
         </div>
         <span class="font-bold text-[var(--text-main)] w-14 text-right">₹${Math.round(item.qty * item.rate)}</span>
-        <button type="button" data-remove-cart="${item.id}" class="text-stone-300 hover:text-rose-500 transition-colors p-1 cursor-pointer" title="Remove item">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        <button type="button" data-remove-cart="${item.id}" class="p-1 rounded text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer" title="Delete sweet from cart">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
         </button>
       </div>
     </div>
@@ -132,12 +155,14 @@ export function renderMobileCartItemsHtml(posCart: any[] = []): string {
 
       <div class="flex items-center space-x-2.5">
         <div class="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5 border border-stone-200">
-          <button type="button" data-dec-cart="${item.id}" class="w-6 h-6 flex items-center justify-center rounded bg-white text-stone-800 font-bold text-xs hover:bg-[#C86D3B] hover:text-white transition-colors cursor-pointer">-</button>
+          <button type="button" data-dec-cart="${item.id}" class="w-6 h-6 flex items-center justify-center rounded bg-white text-stone-800 font-bold text-xs hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer" title="${(item.unit || '').toLowerCase() === 'pcs' ? (item.qty <= 1 ? 'Remove' : 'Decrease 1 pc') : (item.qty <= 0.25 ? 'Remove' : 'Decrease 250g')}">
+            ${((item.unit || '').toLowerCase() === 'pcs' ? item.qty <= 1 : item.qty <= 0.25) ? '🗑️' : '-'}
+          </button>
           <span class="text-xs font-extrabold px-1.5">${item.qty}</span>
-          <button type="button" data-inc-cart="${item.id}" class="w-6 h-6 flex items-center justify-center rounded bg-white text-stone-800 font-bold text-xs hover:bg-[#C86D3B] hover:text-white transition-colors cursor-pointer">+</button>
+          <button type="button" data-inc-cart="${item.id}" class="w-6 h-6 flex items-center justify-center rounded bg-white text-stone-800 font-bold text-xs hover:bg-[#C86D3B] hover:text-white transition-colors cursor-pointer" title="${(item.unit || '').toLowerCase() === 'pcs' ? 'Increase 1 pc' : 'Increase 250g'}">+</button>
         </div>
         <span class="font-bold text-[#2A1F1D] w-12 text-right">₹${Math.round(item.qty * item.rate)}</span>
-        <button type="button" data-remove-cart="${item.id}" class="text-stone-400 hover:text-rose-500 p-1 cursor-pointer">
+        <button type="button" data-remove-cart="${item.id}" class="p-1 rounded text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer" title="Delete sweet from cart">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
         </button>
       </div>
@@ -502,7 +527,7 @@ export function renderPosView(state: any) {
                           </span>
 
                           <!-- Add or In-Cart Counter Container -->
-                          <div data-card-action-container="${sweet.id}">
+                          <div id="action-container-${sweet.id}" data-card-action-container="${sweet.id}">
                             ${renderCardActionBtn(sweet.id, inCartItem)}
                           </div>
                         </div>
@@ -626,10 +651,11 @@ export function renderPosView(state: any) {
       <!-- Pinned Floating Action Bar & Slide-up Cart Bottom Sheet  -->
       <!-- ======================================================== -->
 
-      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, hidden if empty) - Styled in Sleek Translucent Black Glass -->
+      <!-- 1. Sticky Floating Mobile Checkout Bar (Always in DOM, pinned 74px from bottom directly above island nav) -->
       <aside 
         id="mobile-floating-checkout-bar" 
-        class="md:hidden fixed bottom-18 sm:bottom-20 inset-x-3 z-30 bg-black/85 backdrop-blur-xl text-white p-3 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.65)] border border-white/15 flex items-center justify-between transition-all duration-200 transform-gpu ${posCart.length > 0 ? '' : 'hidden'}"
+        style="bottom: 74px;"
+        class="md:hidden fixed inset-x-3 z-50 bg-[#2A1F1D]/95 backdrop-blur-xl text-white p-3 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.55)] border border-stone-700/60 flex items-center justify-between transition-all duration-200 transform-gpu ${posCart.length > 0 ? '' : 'hidden'}"
         aria-label="Mobile Sticky Checkout Bar"
       >
         <button type="button" id="mobile-cart-toggle-btn" class="flex items-center gap-2.5 text-left cursor-pointer active:scale-95 transition-transform">

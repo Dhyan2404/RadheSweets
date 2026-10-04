@@ -3231,12 +3231,14 @@ function attachEventListeners() {
     if (mobileFloatingBar) {
       if (state.posCart.length > 0) {
         mobileFloatingBar.classList.remove('hidden');
+        mobileFloatingBar.style.display = 'flex';
       } else {
         mobileFloatingBar.classList.add('hidden');
+        mobileFloatingBar.style.display = 'none';
       }
     }
     const mobileBarCount = document.getElementById('mobile-bar-count');
-    if (mobileBarCount) mobileBarCount.textContent = `${state.posCart.length} items`;
+    if (mobileBarCount) mobileBarCount.textContent = `${state.posCart.length} item${state.posCart.length > 1 ? 's' : ''}`;
     const mobileBarTotal = document.getElementById('mobile-bar-total');
     if (mobileBarTotal) mobileBarTotal.textContent = `₹${totalPayable.toLocaleString()}`;
 
@@ -3260,7 +3262,7 @@ function attachEventListeners() {
       const container = document.getElementById(`action-container-${sweet.id}`);
       if (container) {
         const item = state.posCart.find((i: any) => i.id === sweet.id);
-        container.innerHTML = renderCardActionBtn(sweet, item);
+        container.innerHTML = renderCardActionBtn(sweet.id, item);
       }
     });
 
@@ -3364,18 +3366,20 @@ function attachEventListeners() {
         const sweetId = addBtn.getAttribute('data-add-to-pos') || addBtn.getAttribute('data-add-sweet');
         const sweet = state.sweets.find((s: any) => s.id === sweetId);
         if (sweet) {
+          const isPcs = (sweet.unit || '').toLowerCase() === 'pcs';
           const existing = state.posCart.find((i: any) => i.id === sweetId);
           if (existing) {
-            existing.qty += 0.5;
+            existing.qty = isPcs ? Math.round(existing.qty + 1) : Math.round((existing.qty + 0.25) * 100) / 100;
             existing.total = Math.round(existing.qty * existing.rate);
           } else {
+            const initQty = isPcs ? 1 : 0.25;
             state.posCart.push({
               id: sweet.id,
               name: sweet.name,
-              qty: 1,
+              qty: initQty,
               rate: sweet.pricePerKg,
-              unit: sweet.unit || 'kg',
-              total: sweet.pricePerKg,
+              unit: sweet.unit || (isPcs ? 'pcs' : 'kg'),
+              total: Math.round(initQty * sweet.pricePerKg),
               image: sweet.image || `/assets/sweets/${sweet.id}.png`,
               fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
             });
@@ -3395,7 +3399,8 @@ function attachEventListeners() {
         const id = incBtn.getAttribute('data-inc-cart');
         const item = state.posCart.find((i: any) => i.id === id);
         if (item) {
-          item.qty += 0.5;
+          const isPcs = (item.unit || '').toLowerCase() === 'pcs';
+          item.qty = isPcs ? Math.round(item.qty + 1) : Math.round((item.qty + 0.25) * 100) / 100;
           item.total = Math.round(item.qty * item.rate);
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
@@ -3404,7 +3409,7 @@ function attachEventListeners() {
         return;
       }
 
-      // 5. Decrement Cart
+      // 5. Decrement Cart (Strict Whole Pieces, 250g for kg, Deletes at 0)
       const decBtn = target.closest('[data-dec-cart]') as HTMLElement | null;
       if (decBtn) {
         e.preventDefault();
@@ -3412,7 +3417,9 @@ function attachEventListeners() {
         const id = decBtn.getAttribute('data-dec-cart');
         const item = state.posCart.find((i: any) => i.id === id);
         if (item) {
-          item.qty -= 0.5;
+          const isPcs = (item.unit || '').toLowerCase() === 'pcs';
+          const step = isPcs ? 1 : 0.25;
+          item.qty = isPcs ? Math.round(item.qty - 1) : Math.round((item.qty - step) * 100) / 100;
           if (item.qty <= 0) {
             state.posCart = state.posCart.filter((i: any) => i.id !== id);
           } else {
@@ -3425,7 +3432,7 @@ function attachEventListeners() {
         return;
       }
 
-      // 6. Remove from Cart
+      // 6. Remove / Delete from Cart
       const removeBtn = target.closest('[data-remove-cart]') as HTMLElement | null;
       if (removeBtn) {
         e.preventDefault();
@@ -3438,34 +3445,37 @@ function attachEventListeners() {
         return;
       }
 
-      // 7. Weight Presets (250g, 500g, 750g, 1kg)
+      // 7. Weight / Quantity Presets (Replaces / Sets quantity directly, never accumulates)
       const weightBtn = target.closest('[data-add-weight]') as HTMLElement | null;
       if (weightBtn) {
         e.preventDefault();
         e.stopPropagation();
         const sweetId = weightBtn.getAttribute('data-add-weight');
-        const weight = parseFloat(weightBtn.getAttribute('data-weight') || '0.25');
+        const weightVal = parseFloat(weightBtn.getAttribute('data-weight') || '0.25');
         const sweet = state.sweets.find((s: any) => s.id === sweetId);
         if (sweet) {
+          const isPcs = (sweet.unit || '').toLowerCase() === 'pcs';
+          const targetQty = isPcs ? Math.max(1, Math.round(weightVal)) : weightVal;
           const existing = state.posCart.find((i: any) => i.id === sweetId);
           if (existing) {
-            existing.qty = Math.round((existing.qty + weight) * 100) / 100;
-            existing.total = Math.round(existing.qty * existing.rate);
+            // Replaces / Changes quantity directly instead of adding onto previous weight!
+            existing.qty = targetQty;
+            existing.total = Math.round(targetQty * existing.rate);
           } else {
             state.posCart.push({
               id: sweet.id,
               name: sweet.name,
-              qty: weight,
+              qty: targetQty,
               rate: sweet.pricePerKg,
-              unit: sweet.unit || 'kg',
-              total: Math.round(weight * sweet.pricePerKg),
+              unit: sweet.unit || (isPcs ? 'pcs' : 'kg'),
+              total: Math.round(targetQty * sweet.pricePerKg),
               image: sweet.image || `/assets/sweets/${sweet.id}.png`,
               fallbackImage: sweet.fallbackImage || `/assets/sweets/${sweet.id}.png`
             });
           }
           state.quickCart = [...state.posCart];
           updatePosCartDOM();
-          playBeep('add');
+          playBeep('click');
         }
         return;
       }
