@@ -2,7 +2,8 @@
 // Supports holding and recalling multiple active carts during counter rushes
 
 export function renderHeldCartsModal(state: any): string {
-  const parkedBills = state.parkedBills || [];
+  const currentBranchId = state.currentBranchId || 'br-1';
+  const parkedBills = (state.parkedBills || []).filter((b: any) => !b.branchId || b.branchId === currentBranchId);
   const currentCart = state.posCart || [];
   const currentCartSubtotal = currentCart.reduce((sum: number, it: any) => sum + (it.rate * it.qty), 0);
   const currentCartDiscount = Math.round((currentCartSubtotal * (state.discountPercent || 0)) / 100);

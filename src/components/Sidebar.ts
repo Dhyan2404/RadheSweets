@@ -95,23 +95,16 @@ export function renderSidebar(currentTab: string, state?: any) {
   const branchName = branchObj ? branchObj.name : 'Main Store';
 
   return `
-    <aside class="hidden md:flex w-64 bg-white border-r border-[#F0ECE4] flex-shrink-0 flex-col justify-between p-5 h-screen sticky top-0 select-none overflow-y-auto" data-purpose="desktop-sidebar">
+    <aside class="hidden md:flex w-64 bg-white border-r-2 border-[#D9CEB8] flex-shrink-0 flex-col justify-between p-4 h-screen sticky top-0 select-none overflow-y-auto shadow-[4px_0_20px_rgba(42,31,29,0.04)]" data-purpose="desktop-sidebar">
       <div class="space-y-4">
         
-        <!-- Brand Header -->
-        <div class="flex items-center space-x-3 px-1 pt-1 cursor-pointer group" id="brand-header-btn" data-tab="${visibleNavItems[0]?.id || 'pos'}">
-          <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/70 flex items-center justify-center text-[#C86D3B] shadow-xs group-hover:scale-105 transition-transform">
-            <!-- Lotus Emblem Icon -->
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24">
-              <path d="M12 3c1.5 3.5 4 6 8 7-2 4-5 6-8 11-3-5-6-7-8-11 4-1 6.5-3.5 8-7Z"></path>
-              <path d="M12 10c0 4 2 7 5 9"></path>
-              <path d="M12 10c0 4-2 7-5 9"></path>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-lg font-bold tracking-tight text-[#2A1F1D] leading-snug">Radhe Sweets</h1>
-            <p class="text-[11px] font-semibold text-amber-700 tracking-wide uppercase">SWEETS &amp; MORE</p>
-          </div>
+        <!-- Brand Header with Official Prem Ni Mithaas Logo -->
+        <div class="px-2 pt-1 pb-2 cursor-pointer group flex flex-col items-center justify-center border-b border-[#E8DEC8]" id="brand-header-btn" data-tab="${visibleNavItems[0]?.id || 'pos'}" title="Radhe - Prem Ni Mithaas">
+          <img 
+            src="/radhe-premnimithaas-logo-2048x898.png" 
+            alt="Radhe - Prem Ni Mithaas" 
+            class="w-full h-auto max-h-16 object-contain group-hover:scale-102 transition-transform drop-shadow-2xs"
+          />
         </div>
 
         <!-- Active Branch Section -->
@@ -179,20 +172,20 @@ export function renderSidebar(currentTab: string, state?: any) {
             return `
               <button 
                 data-tab="${item.id}"
-                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all text-left cursor-pointer ${
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all text-left cursor-pointer border ${
                   isActive 
-                    ? 'bg-orange-50 text-[#C86D3B] font-semibold shadow-xs' 
-                    : 'text-[#7C7267] hover:text-[#2A1F1D] hover:bg-stone-50 font-medium'
+                    ? 'active-nav-tab bg-gradient-to-r from-[#FFF5EC] to-[#FFEDD5] text-[#9E4A20] font-extrabold border-l-4 border-l-[#C86D3B] border-t border-b border-r border-[#FED7AA] shadow-xs' 
+                    : 'text-[#61544E] hover:text-[#2A1F1D] hover:bg-[#F9F6F0] hover:border-[#E8DFC8] border-transparent font-medium'
                 }"
               >
                 <div class="flex items-center space-x-3">
-                  <span class="${isActive ? 'text-[#C86D3B]' : 'text-[#7C7267]'}">
+                  <span class="${isActive ? 'text-[#C86D3B]' : 'text-[#8C7E77]'}">
                     ${item.icon}
                   </span>
                   <span>${item.label}</span>
                 </div>
                 ${isActive ? `
-                  <span class="w-1.5 h-1.5 rounded-full bg-[#C86D3B]"></span>
+                  <span class="w-2 h-2 rounded-full bg-[#C86D3B] shadow-2xs"></span>
                 ` : ''}
               </button>
             `;
@@ -201,7 +194,7 @@ export function renderSidebar(currentTab: string, state?: any) {
       </div>
 
       <!-- Sweet Moments Dessert Bowl & User Profile Card -->
-      <div class="mt-auto space-y-3 pt-3 border-t border-[#F0ECE4]" data-purpose="sidebar-user-footer">
+      <div class="mt-auto space-y-3 pt-3 border-t border-[#E8DEC8]" data-purpose="sidebar-user-footer">
         
         <!-- Sweet Moments Dessert Bowl Artwork -->
         <div class="px-1">
@@ -244,9 +237,9 @@ export function renderSidebar(currentTab: string, state?: any) {
           </button>
         </div>
 
-        <div class="text-center">
-          <p class="text-[11px] font-bold text-[#C86D3B]/90 tracking-wide">🙏 Jai Radhe Krishna</p>
-          <p class="text-[10px] text-stone-400">Sweet Moments... Better Together</p>
+        <div class="text-center pt-1 border-t border-[#E8DEC8]">
+          <p class="text-[11px] font-extrabold text-[#C86D3B] tracking-wide">Prem Ni Mithaas</p>
+          <p class="text-[10px] text-stone-500 font-medium">Sweet Moments • Est. 1984</p>
         </div>
 
       </div>

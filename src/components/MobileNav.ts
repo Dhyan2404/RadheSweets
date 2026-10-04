@@ -181,18 +181,12 @@ export function renderMobileDrawer(state: any) {
         <div>
           <!-- Header with Close Button -->
           <div class="flex items-center justify-between pb-4 border-b border-stone-200">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200/70 flex items-center justify-center text-[#C86D3B] shadow-xs shrink-0">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24">
-                  <path d="M12 3c1.5 3.5 4 6 8 7-2 4-5 6-8 11-3-5-6-7-8-11 4-1 6.5-3.5 8-7Z"></path>
-                  <path d="M12 10c0 4 2 7 5 9"></path>
-                  <path d="M12 10c0 4-2 7-5 9"></path>
-                </svg>
-              </div>
-              <div>
-                <h3 class="font-extrabold text-base text-[#2A1F1D] tracking-tight">Radhe Sweets</h3>
-                <p class="text-[9px] font-black text-[#C86D3B] tracking-widest uppercase">Sweets &amp; More • Est. 1984</p>
-              </div>
+            <div class="flex items-center space-x-2">
+              <img 
+                src="/radhe-premnimithaas-logo-2048x898.png" 
+                alt="Radhe - Prem Ni Mithaas" 
+                class="h-9 w-auto max-w-[150px] object-contain drop-shadow-2xs"
+              />
             </div>
             <button 
               id="close-mobile-drawer-btn" 
@@ -319,8 +313,8 @@ export function renderMobileDrawer(state: any) {
           </div>
 
           <div class="text-center">
-            <p class="text-xs font-black text-[#C86D3B]">Jai Radhe Krishna</p>
-            <p class="text-[10px] text-stone-400 font-medium">Sweet Moments... Better Together</p>
+            <p class="text-xs font-black text-[#C86D3B]">Prem Ni Mithaas</p>
+            <p class="text-[10px] text-stone-500 font-medium">Authentic Indian Confectionery • Est. 1984</p>
           </div>
 
         </div>

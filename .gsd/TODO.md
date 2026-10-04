@@ -144,3 +144,76 @@ This document tracks all 100 critical items, real-world retail edge cases, legal
 - [x] 101. Fix POS render crash (branches destructuring in PosView.ts) and CustomersView import path `high` — 2026-10-04
 - [x] 102. Eliminate 100x refresh loop in Firestore subscribeToBranches and startup branch sync `high` — 2026-10-04
 - [x] 103. Strictly hide desktop sidebar and navigation elements on mobile viewports `high` — 2026-10-04
+
+---
+
+## 11. Code Defects, Bugs & Calculation Issues Audit (67 Concrete Issues Found & Fix Roadmap)
+
+- [x] 104. Stock decrement decimal rounding bug: `sweet.stock - cartItem.qty` leaves floating point residues like `49.75000000000001kg` instead of clean rounded decimal. `high` — 2026-10-04
+- [x] 105. Void order inventory restore bug: `item.quantity` used when items store `item.qty`, restoring `undefined` or 1kg fallback. `high` — 2026-10-04
+- [x] 106. POS quick-weight chips overwrite cart item quantity instead of adding weight to existing line item. `high` — 2026-10-04
+- [x] 107. Hardcoded order date `'25 Sep 2026'` instead of real dynamic date in counter order creation. `high` — 2026-10-04
+- [x] 108. Multi-branch switch loses in-memory orders snapshot when switching branches. `high` — 2026-10-04
+- [x] 109. Staff salary expense logging misses `branchId` and `branchName`, causing ledger leakage across branches. `high` — 2026-10-04
+- [x] 110. Phone lookup matching uses loose substring (`cDigits.includes(cleanPhoneDigits)`), falsely matching 98250 to 9825012345. `high` — 2026-10-04
+- [x] 111. Fallback shop address hardcoded to `'Ahmedabad, Gujarat'` instead of actual store branch Gandhinagar. `medium` — 2026-10-04
+- [x] 112. Parked bills token index collision using `parkedBills.length` instead of monotonically incrementing ID. `high` — 2026-10-04
+- [x] 113. Offline UPI QR code fails because `api.qrserver.com` requires active internet connection; must use local SVG generator. `high` — 2026-10-04
+- [x] 114. Piece-based sweets (`unit: 'pcs'`) display gram buttons (250g, 500g, 1kg) in POS, resulting in fractional piece quantities. `high` — 2026-10-04
+- [x] 115. Quick cash chips array `[100, 200, 500, 1000, 2000]` returns empty `[]` when `totalPayable > 2000`. `medium` — 2026-10-04
+- [x] 116. LocalStorage quota overflow throws unhandled `QuotaExceededError` during `saveState`, crashing the app. `high` — 2026-10-04
+- [x] 117. Voiding a Khata payment order fails to reduce customer's `khataDue` outstanding balance. `high` — 2026-10-04
+- [x] 118. Thermal printout in dark mode prints white/faded text because styles use theme variables instead of solid `#000000`. `high` — 2026-10-04
+- [x] 119. Customer deletion doesn't clear `GLOBAL_CUSTOMERS_KEY`, reviving deleted customers on page refresh. `high` — 2026-10-04
+- [x] 120. Deleting an expense doesn't update `state.expenses.breakdown` percentages or recalculate `state.kpis.cost`. `medium` — 2026-10-04
+- [x] 121. Staff salary disbursement does not update `state.expenses.breakdown` or recalculate `state.kpis.cost`. `medium` — 2026-10-04
+- [x] 122. Stock adjust modal sets status to `'Low Stock'` when stock is 0 instead of `'Out of Stock'`. `medium` — 2026-10-04
+- [x] 123. Analytics view hardcodes month 8 (September 2026), filtering out all expenses and orders in other months. `high` — 2026-10-04
+- [x] 124. Profit modal injects hardcoded fake baseline orders from Sep 2026 into real shop profit calculations. `high` — 2026-10-04
+- [x] 125. Stock adjust modal doesn't round decimal weights when adding or subtracting fractional inventory. `medium` — 2026-10-04
+- [x] 126. Held cart modal doesn't filter by branch ID, displaying held carts from other branch locations. `high` — 2026-10-04
+- [ ] 127. Search modal sweet search doesn't handle special characters or accented strings gracefully. `medium` — 2026-10-04
+- [ ] 128. POS cart item removal doesn't reset active card counter action button in sweet card grid. `medium` — 2026-10-04
+- [x] 129. Discount percentage input allows values `< 0` or `> 100`, resulting in negative bill totals or negative profit. `high` — 2026-10-04
+- [ ] 130. Cart subtotal floating point precision issue in tax calculation: `Math.round((totalPayable * 0.05) / 1.05)` can mismatch item sums. `medium` — 2026-10-04
+- [ ] 131. Mobile cart sticky bar total does not update dynamically when cart items are incremented/decremented inside the drawer. `medium` — 2026-10-04
+- [ ] 132. Quick cash tender input does not update change due display in real-time when user types manually. `medium` — 2026-10-04
+- [ ] 133. Slide to checkout handle gets stuck if touch drag is released outside the container window. `medium` — 2026-10-04
+- [ ] 134. Advance order modal accepts delivery date in the past without validation error. `medium` — 2026-10-04
+- [ ] 135. Customer dialer modal doesn't strip spaces, dashes or `+91` prefix when checking for duplicate phone numbers. `medium` — 2026-10-04
+- [ ] 136. Branch delete modal allows deleting the currently active branch without switching to another branch first. `high` — 2026-10-04
+- [ ] 137. Product catalog CSV export breaks if sweet description contains commas or quotes without CSV escaping. `medium` — 2026-10-04
+- [ ] 138. Inventory valuation uses hardcoded `0.6` multiplier when `costPrice` is 0 instead of flagging missing cost. `low` — 2026-10-04
+- [ ] 139. Low stock banner counter includes discontinued/inactive sweets. `low` — 2026-10-04
+- [ ] 140. Staff view daily wage attendance calculation multiplies negative attendance if days are set below 0. `medium` — 2026-10-04
+- [ ] 141. Order details modal does not show payment method for UPI transactions (displays blank instead of UTR). `low` — 2026-10-04
+- [ ] 142. Thermal receipt modal QR toggle button disappears or fails to re-render QR code SVG after closing and reopening. `medium` — 2026-10-04
+- [ ] 143. Toast notification container overlaps with mobile sticky bottom navigation bar. `medium` — 2026-10-04
+- [ ] 144. Sweet category filter "Bengali & Chhena" fails to match items categorized as "Bengali Sweets". `medium` — 2026-10-04
+- [ ] 145. Cashier role can access owner financial analytics by manually setting URL hash or inspecting elements. `high` — 2026-10-04
+- [ ] 146. Order reprint button in Orders table view doesn't load branch specific thermal header data. `medium` — 2026-10-04
+- [ ] 147. Customer total orders count increments even when order fails or is parked. `medium` — 2026-10-04
+- [ ] 148. Expense category dropdown does not sanitize custom category input, leading to broken breakdown chart colors. `low` — 2026-10-04
+- [ ] 149. Mobile drawer overlay does not lock background body scrolling on iOS Safari. `medium` — 2026-10-04
+- [ ] 150. Parked bill restore does not validate if sweet items still exist in active branch inventory. `medium` — 2026-10-04
+- [ ] 151. Khata settlement payment does not record an offsetting entry in expenses or ledger. `high` — 2026-10-04
+- [ ] 152. Customer profile modal lifetime spend metric fails to parse string totals like `"₹1,500"`. `medium` — 2026-10-04
+- [ ] 153. POS search bar autofocus triggers virtual keyboard layout jump on mobile devices. `low` — 2026-10-04
+- [ ] 154. Stock audit log doesn't record branch ID, mixing audit trails across multi-store locations. `medium` — 2026-10-04
+- [ ] 155. Order search input in Orders view crashes if user types regular expression special characters like `[` or `(`. `medium` — 2026-10-04
+- [ ] 156. WhatsApp invoice link generation fails when customer phone has fewer than 10 digits or invalid country code. `medium` — 2026-10-04
+- [ ] 157. Dashboard revenue card percentage change calculation divides by zero when previous period sales are 0. `medium` — 2026-10-04
+- [ ] 158. Multi-branch switcher dropdown in top bar closes unexpectedly when clicking the search sub-input. `medium` — 2026-10-04
+- [ ] 159. Adding a new sweet with duplicate name or code overwrites existing item without warning. `medium` — 2026-10-04
+- [ ] 160. Quick weight buttons in desktop cart do not recalculate line item total when clicked. `high` — 2026-10-04
+- [ ] 161. Customer edit form does not validate email format or phone number digit length. `medium` — 2026-10-04
+- [ ] 162. Expense date picker defaults to empty instead of today's date in add expense modal. `low` — 2026-10-04
+- [ ] 163. Profit modal margin percentage shows `NaN%` when total sales are ₹0. `medium` — 2026-10-04
+- [ ] 164. Thermal receipt paper size selector (58mm vs 80mm) does not persist cashier preference in localStorage. `low` — 2026-10-04
+- [ ] 165. SwipeRow swipe-to-delete action triggers accidental deletion if dragged too quickly without confirmation. `high` — 2026-10-04
+- [ ] 166. Kitchen packing order status update does not notify or reflect in live orders count badge. `medium` — 2026-10-04
+- [ ] 167. Raw materials inward cost is not deducted from daily net cash drawer balance. `medium` — 2026-10-04
+- [ ] 168. Offline queue retry mechanism loops indefinitely on malformed payload without exponential backoff. `high` — 2026-10-04
+- [ ] 169. Settings view shop name update does not sync to active branch name in Firestore. `medium` — 2026-10-04
+- [ ] 170. Restock batch modal accepts negative quantity inputs, corrupting inventory stock count. `medium` — 2026-10-04
+

@@ -138,7 +138,7 @@ export function getStoredGlobalCustomers(): any[] | null {
 
 export function saveGlobalCustomers(customers: any[]) {
   try {
-    if (Array.isArray(customers) && customers.length > 0) {
+    if (Array.isArray(customers)) {
       localStorage.setItem(GLOBAL_CUSTOMERS_KEY, JSON.stringify(customers));
     }
   } catch (_) {}
@@ -485,8 +485,18 @@ function saveState() {
       analyticsPLCustomFrom: state.analyticsPLCustomFrom,
       analyticsPLCustomTo: state.analyticsPLCustomTo
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-    if (state.customers && state.customers.length > 0) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch (quotaErr) {
+      console.warn('LocalStorage quota exceeded in saveState; pruning orders archive:', quotaErr);
+      if (toSave.orders && toSave.orders.length > 30) {
+        toSave.orders = toSave.orders.slice(0, 30);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        } catch (_) {}
+      }
+    }
+    if (state.customers) {
       saveGlobalCustomers(state.customers);
     }
     if (broadcast) {
@@ -500,6 +510,39 @@ function saveState() {
 // Initial persistence without broadcasting to peer tabs
 saveState(false);
 saveGlobalCustomers(state.customers);
+
+export function recomputeExpensesBreakdown() {
+  if (!state.expenses) state.expenses = { total: 0, items: [], breakdown: [] };
+  const items = state.expenses.items || [];
+  const total = items.reduce((sum: number, it: any) => sum + (Number(it.amount) || 0), 0);
+  state.expenses.total = total;
+
+  const categoryTotals: Record<string, number> = {};
+  items.forEach((it: any) => {
+    const cat = it.category || 'Other';
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + (Number(it.amount) || 0);
+  });
+
+  const catColors: Record<string, string> = {
+    'Raw Materials': '#C86D3B',
+    'Staff Salary': '#3B82F6',
+    'Utilities': '#10B981',
+    'Marketing': '#EC4899',
+    'Other': '#8B5CF6'
+  };
+
+  state.expenses.breakdown = Object.entries(categoryTotals).map(([cat, amt]) => ({
+    category: cat,
+    amount: amt,
+    percentage: total > 0 ? Math.round((amt / total) * 100) : 0,
+    color: catColors[cat] || '#7C7267'
+  }));
+
+  if (state.kpis?.cost) {
+    state.kpis.cost.value = total;
+    state.kpis.cost.formatted = `₹${total.toLocaleString()}`;
+  }
+}
 
 // Real-time Peer Bus for Multi-Tab & Device Viewport Synchronization
 const peerSyncBus = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('radhe_sweets_peer_bus') : null;
@@ -1130,6 +1173,9 @@ export async function handleBranchSwitch(targetBranchId: string, isSystemSwitch 
       };
     }
 
+    if (existingSnapshot.orders) {
+      state.orders = existingSnapshot.orders;
+    }
     state.orderStatusCounts = existingSnapshot.orderStatusCounts || {
       total: state.orders.length,
       completed: state.orders.filter(o => o.status === 'Completed').length,
@@ -1395,19 +1441,16 @@ export function renderApp() {
         <!-- Main Content Area with Persistent Scroll Container -->
         <div id="main-content-scroll-container" class="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto w-full max-w-[100vw] overflow-x-hidden">
           <!-- Mobile Top Navigation Bar (Mobile / Small Screens Only) -->
-          <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-[#F0ECE4] sticky top-0 z-30 shadow-2xs">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/70 flex items-center justify-center text-[#C86D3B] shadow-2xs">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewBox="0 0 24 24">
-                  <path d="M12 3c1.5 3.5 4 6 8 7-2 4-5 6-8 11-3-5-6-7-8-11 4-1 6.5-3.5 8-7Z"></path>
-                  <path d="M12 10c0 4 2 7 5 9"></path>
-                  <path d="M12 10c0 4-2 7-5 9"></path>
-                </svg>
-              </div>
-              <div>
-                <h1 class="text-sm font-black tracking-tight text-[#2A1F1D] leading-none">Radhe Sweets</h1>
-                <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mt-0.5">${state.branches?.find((b: any) => b.id === state.currentBranchId)?.name || 'Main Store'}</p>
-              </div>
+          <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-[#DCCFB7] sticky top-0 z-30 shadow-2xs">
+            <div class="flex items-center space-x-2">
+              <img 
+                src="/radhe-premnimithaas-logo-2048x898.png" 
+                alt="Radhe - Prem Ni Mithaas" 
+                class="h-8 w-auto max-w-[130px] object-contain drop-shadow-2xs"
+              />
+              <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                ${state.branches?.find((b: any) => b.id === state.currentBranchId)?.name || 'Main Store'}
+              </span>
             </div>
             
             <div class="flex items-center gap-2">
@@ -3393,7 +3436,7 @@ function attachEventListeners() {
         if (sweet) {
           const existing = state.posCart.find((i: any) => i.id === sweetId);
           if (existing) {
-            existing.qty = weight;
+            existing.qty = Math.round((existing.qty + weight) * 100) / 100;
             existing.total = Math.round(existing.qty * existing.rate);
           } else {
             state.posCart.push({
@@ -3480,7 +3523,7 @@ function attachEventListeners() {
 
   // Discount Select in POS (ZERO REFRESH!)
   document.getElementById('pos-discount-select')?.addEventListener('change', (e: any) => {
-    state.discountPercent = Number(e.target.value) || 0;
+    state.discountPercent = Math.min(100, Math.max(0, Number(e.target.value) || 0));
     saveState();
     updatePosCartDOM();
   });
@@ -3942,7 +3985,7 @@ function attachEventListeners() {
         id: `SA00${orderNum}`,
         branchId: state.currentBranchId,
         branchName: activeBranch.name || state.shopInfo?.name || 'Radhe Sweets',
-        branchAddress: activeBranch.address || state.shopInfo?.address || 'Ahmedabad, Gujarat',
+        branchAddress: activeBranch.address || state.shopInfo?.address || 'Gandhinagar, Gujarat',
         branchPhone: activeBranch.phone || state.shopInfo?.phone || '+91 98250 12345',
         branchUpiId: activeBranch.upiId || state.shopInfo?.upiId || 'radhesweets@oksbi',
         branchUpiName: activeBranch.upiName || activeBranch.name || state.shopInfo?.upiName || 'Radhe Sweets',
@@ -3951,11 +3994,11 @@ function attachEventListeners() {
         branchPaperSize: activeBranch.paperSize || '80mm',
         branchGstin: activeBranch.gstin || state.shopInfo?.gstin || '24AAACR1234F1Z8',
         branchFssai: activeBranch.fssai || state.shopInfo?.fssai || '10722026000412',
-        date: `25 Sep 2026, ${timeStr}`,
+        date: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, ${timeStr}`,
         customerId: state.selectedCustomer?.id || `walkin-${Date.now()}`,
         customerName: state.selectedCustomer?.name || 'Walk-in Counter Customer',
         customerPhone: state.selectedCustomer?.phone || 'OTC Cash / UPI',
-        customerAddress: state.selectedCustomer?.address || 'Ahmedabad, Gujarat',
+        customerAddress: state.selectedCustomer?.address || 'Gandhinagar, Gujarat',
         itemsCount: state.posCart.length,
         subtotal: cartSubtotal,
         discount: discountAmount,
@@ -3973,6 +4016,7 @@ function attachEventListeners() {
         items: state.posCart.map(item => ({
           name: item.name,
           quantity: item.qty,
+          qty: item.qty,
           unit: item.unit,
           rate: item.rate,
           total: item.total
@@ -4009,12 +4053,18 @@ function attachEventListeners() {
       state.kpis.cost.value = Math.max(0, state.kpis.sales.value - state.kpis.profit.value);
       state.kpis.cost.formatted = `₹${state.kpis.cost.value.toLocaleString()}`;
 
-      // Decrement sweet inventory
+      // Decrement sweet inventory with decimal precision
       state.posCart.forEach(cartItem => {
         const sweet = state.sweets.find(s => s.id === cartItem.id);
         if (sweet) {
-          sweet.stock = Math.max(0, Math.round(sweet.stock - cartItem.qty));
-          if (sweet.stock <= 10) sweet.stockStatus = 'Low Stock';
+          sweet.stock = Math.max(0, Math.round((sweet.stock - cartItem.qty) * 100) / 100);
+          if (sweet.stock === 0) {
+            sweet.stockStatus = 'Out of Stock';
+          } else if (sweet.stock <= 10) {
+            sweet.stockStatus = 'Low Stock';
+          } else {
+            sweet.stockStatus = 'In Stock';
+          }
         }
       });
 
@@ -4307,9 +4357,12 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       order.items.forEach((item: any) => {
         const sweet = state.sweets.find((s: any) => s.name === item.name || s.id === item.id);
         if (sweet) {
-          sweet.stock = Math.round(((sweet.stock || 0) + (item.quantity || 1)) * 10) / 10;
-          if (sweet.stock > 10 && sweet.stockStatus === 'Low Stock') {
+          const restoreQty = Number(item.qty ?? item.quantity ?? 1) || 1;
+          sweet.stock = Math.round(((sweet.stock || 0) + restoreQty) * 100) / 100;
+          if (sweet.stock > 10) {
             sweet.stockStatus = 'In Stock';
+          } else if (sweet.stock > 0) {
+            sweet.stockStatus = 'Low Stock';
           }
         }
       });
@@ -4321,6 +4374,9 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       if (cust) {
         cust.totalSpent = Math.max(0, (cust.totalSpent || 0) - (order.total || 0));
         cust.totalOrders = Math.max(0, (cust.totalOrders || 0) - 1);
+        if (order.paymentMethod === 'Khata') {
+          cust.khataDue = Math.max(0, (cust.khataDue || 0) - (order.total || 0));
+        }
         saveCustomerToCloud(cust, state.currentBranchId, state.customers);
       }
     }
@@ -4334,6 +4390,17 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       if (state.kpis.orders) {
         state.kpis.orders.value = Math.max(0, (state.kpis.orders.value || 0) - 1);
         state.kpis.orders.formatted = String(state.kpis.orders.value);
+      }
+      if (state.kpis.profit && state.kpis.sales) {
+        if (state.kpis.sales.value > 0) {
+          state.kpis.profit.margin = `${((state.kpis.profit.value / state.kpis.sales.value) * 100).toFixed(1)}%`;
+        } else {
+          state.kpis.profit.margin = '0.0%';
+        }
+        if (state.kpis.cost) {
+          state.kpis.cost.value = Math.max(0, state.kpis.sales.value - state.kpis.profit.value);
+          state.kpis.cost.formatted = `₹${state.kpis.cost.value.toLocaleString()}`;
+        }
       }
     }
 
@@ -4699,7 +4766,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const cleanPhoneDigits = rawPhone.slice(-10);
     const existing = state.customers.find((c: any) => {
       const cDigits = (c.phone || '').replace(/\D/g, '').slice(-10);
-      return cleanPhoneDigits.length >= 6 && (cDigits === cleanPhoneDigits || cDigits.includes(cleanPhoneDigits) || cleanPhoneDigits.includes(cDigits));
+      return cleanPhoneDigits.length === 10 && cDigits === cleanPhoneDigits;
     });
 
     if (existing) {
@@ -5441,13 +5508,17 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const fd = new FormData(e.target);
     const sweetId = fd.get('sweetId');
     const qty = Number(fd.get('quantity'));
+    if (!qty || isNaN(qty) || qty <= 0) {
+      showToast('Please enter a valid positive restock quantity.', 'warning');
+      return;
+    }
     const batchNo = fd.get('batchNumber');
     const chef = fd.get('chefName');
-    const sweet = state.sweets.find(s => s.id === sweetId);
+    const sweet = state.sweets.find((s: any) => s.id === sweetId);
     if (sweet) {
-      sweet.stock += qty;
+      sweet.stock = Math.round(((sweet.stock || 0) + qty) * 100) / 100;
       sweet.batchNumber = batchNo;
-      sweet.stockStatus = sweet.stock <= (sweet.minStock || 15) ? 'Low Stock' : 'In Stock';
+      sweet.stockStatus = sweet.stock <= 0 ? 'Out of Stock' : (sweet.stock <= (sweet.minStock || 15) ? 'Low Stock' : 'In Stock');
       state.auditLogs.unshift({
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         user: chef || 'Head Halwai',
@@ -5494,13 +5565,19 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     if (sweet) {
       const oldStock = sweet.stock;
       if (mode === 'set') {
-        sweet.stock = qty;
+        sweet.stock = Math.max(0, Math.round(qty * 100) / 100);
       } else if (mode === 'subtract') {
-        sweet.stock = Math.max(0, sweet.stock - qty);
+        sweet.stock = Math.max(0, Math.round((sweet.stock - qty) * 100) / 100);
       } else if (mode === 'add') {
-        sweet.stock += qty;
+        sweet.stock = Math.max(0, Math.round((sweet.stock + qty) * 100) / 100);
       }
-      sweet.stockStatus = sweet.stock <= (sweet.minStock || 15) ? 'Low Stock' : 'In Stock';
+      if (sweet.stock === 0) {
+        sweet.stockStatus = 'Out of Stock';
+      } else if (sweet.stock <= (sweet.minStock || 15)) {
+        sweet.stockStatus = 'Low Stock';
+      } else {
+        sweet.stockStatus = 'In Stock';
+      }
       state.auditLogs.unshift({
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         user: state.shopInfo.owner || 'Admin',
@@ -5553,24 +5630,7 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     };
 
     state.expenses.items.unshift(newExp);
-    state.expenses.total += amount;
-
-    // Update breakdown
-    const catItem = state.expenses.breakdown.find((b: any) => b.category === category);
-    if (catItem) {
-      catItem.amount += amount;
-      catItem.percentage = Math.round((catItem.amount / state.expenses.total) * 100);
-    } else {
-      state.expenses.breakdown.push({
-        category: category,
-        amount: amount,
-        percentage: Math.round((amount / state.expenses.total) * 100) || 10,
-        color: category === 'Raw Materials' ? '#C86D3B' : '#7C7267'
-      });
-    }
-
-    state.kpis.cost.value += amount;
-    state.kpis.cost.formatted = `₹${state.kpis.cost.value.toLocaleString()}`;
+    recomputeExpensesBreakdown();
     
     // User requested: "expenss click on save it still show up dont go that pop up"
     // Modal closes immediately upon clicking Save Expense!
@@ -5630,8 +5690,8 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
       const id = btn.getAttribute('data-delete-expense');
       const item = state.expenses.items.find((i: any) => i.id === id);
       if (item) {
-        state.expenses.total = Math.max(0, state.expenses.total - item.amount);
         state.expenses.items = state.expenses.items.filter((i: any) => i.id !== id);
+        recomputeExpensesBreakdown();
         deleteExpenseFromCloud(id, item.branchId || state.currentBranchId, state.expenses);
         saveState();
         renderApp();
@@ -5986,17 +6046,21 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
 
     // Automatically record Store Expense under Staff Salary
     if (!state.expenses) state.expenses = { total: 0, items: [] };
-    if (!state.expenses.items) state.expenses.items = [];
-    state.expenses.items.unshift({
+    const curBranch = (state.branches || []).find((b: any) => b.id === state.currentBranchId) || state.branches[0] || {};
+    const salaryExp = {
       id: `exp-${Date.now()}`,
+      branchId: state.currentBranchId,
+      branchName: curBranch.name || 'Gandhinagar Outlet',
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
       description: `Staff Salary: ${state.payingStaff.name} (${month}${isDaily ? ` - Daily Wage ₹${dailyRate}/day` : ''})`,
       category: 'Staff Salary',
       amount: net,
       status: 'Paid',
       paymentMode: mode
-    });
-    state.expenses.total = (state.expenses.total || 0) + net;
+    };
+    state.expenses.items.unshift(salaryExp);
+    recomputeExpensesBreakdown();
+    saveExpenseToCloud(salaryExp, state.currentBranchId, state.expenses);
 
     showToast(`Disbursed ₹${net.toLocaleString()} salary to ${state.payingStaff.name}`, 'success');
     state.showPaySalaryModal = false;
@@ -6417,9 +6481,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
     const customerLabel = state.selectedCustomer?.name || 'Walk-in (OTC)';
 
     state.parkedBills = state.parkedBills || [];
+    state.nextParkToken = (state.nextParkToken || 10) + 1;
     state.parkedBills.unshift({
       id: parkId,
-      label: `Token #${10 + state.parkedBills.length} (${customerLabel})`,
+      branchId: state.currentBranchId,
+      label: `Token #${state.nextParkToken} (${customerLabel})`,
       time: timeStr,
       itemsCount: state.posCart.length,
       total: parkTotal,
@@ -6489,9 +6555,11 @@ Shop Address: ${state.shopInfo?.address || 'Ahmedabad, Gujarat'}`;
         const currentParkId = `park-${Date.now()}`;
         const currentSub = state.posCart.reduce((s: number, it: any) => s + (it.rate * it.qty), 0);
         const currentDisc = Math.round((currentSub * (state.discountPercent || 0)) / 100);
+        state.nextParkToken = (state.nextParkToken || 10) + 1;
         state.parkedBills.push({
           id: currentParkId,
-          label: `Token #${10 + state.parkedBills.length} (${state.selectedCustomer?.name || 'Walk-in'})`,
+          branchId: state.currentBranchId,
+          label: `Token #${state.nextParkToken} (${state.selectedCustomer?.name || 'Walk-in'})`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           itemsCount: state.posCart.length,
           total: Math.max(0, currentSub - currentDisc),

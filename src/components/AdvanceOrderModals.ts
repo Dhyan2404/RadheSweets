@@ -64,6 +64,7 @@ export function renderAddAdvanceOrderModal(state: any) {
                 type="date" 
                 name="eventDate" 
                 required 
+                min="${today}"
                 value="${today}"
                 class="w-full px-3.5 py-2 bg-stone-50 hover:bg-white focus:bg-white border border-stone-200 focus:border-[#C86D3B] rounded-xl text-xs font-semibold text-[#2A1F1D] outline-none transition-all shadow-2xs"
               />

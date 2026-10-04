@@ -44,40 +44,38 @@ export function renderSplashView(options: { isModal?: boolean; progress?: number
         </div>
 
         <div class="flex items-center space-x-2 text-[11px] sm:text-xs font-semibold text-amber-900 bg-amber-50/80 border border-amber-200/80 px-3 py-1 rounded-full shadow-2xs">
-          <span>Jai Radhe Krishna</span>
+          <span>Prem Ni Mithaas</span>
         </div>
       </div>
 
-      <!-- Center Main Artwork (1:1 with Stitch Reference) -->
+      <!-- Center Main Artwork -->
       <div class="relative z-10 my-auto flex flex-col items-center justify-center px-4 max-w-4xl w-full text-center">
         
         <!-- Desktop Art (Visible on >= 640px) -->
-        <div class="hidden sm:block relative w-full max-w-[620px] transition-transform duration-500 hover:scale-[1.015]">
-          <div class="relative rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(74,58,47,0.18)] border border-amber-200/70 bg-[#FAF7F2]">
+        <div class="hidden sm:block relative w-full max-w-[540px] transition-transform duration-500 hover:scale-[1.015]">
+          <div class="relative rounded-3xl p-8 shadow-[0_25px_60px_-15px_rgba(74,58,47,0.14)] border border-[#DCCFB7] bg-white">
             <img 
-              src="./assets/radha_krishna_hero.png" 
-              alt="Radhe Sweets - Sweet Moments With Radhe Krishna" 
-              class="w-full h-auto object-cover max-h-[460px] mx-auto filter drop-shadow-sm"
-              onerror="this.onerror=null; this.src='./assets/festive_banner.png';"
+              src="/radhe-premnimithaas-logo-2048x898.png" 
+              alt="Radhe - Prem Ni Mithaas" 
+              class="w-full h-auto object-contain max-h-[220px] mx-auto filter drop-shadow-xs"
             />
           </div>
         </div>
 
         <!-- Mobile Art (Visible on < 640px) -->
-        <div class="sm:hidden relative w-full max-w-[340px]">
-          <div class="rounded-3xl overflow-hidden shadow-[0_20px_45px_-10px_rgba(74,58,47,0.18)] border border-amber-200/70 bg-[#FAF7F2]">
+        <div class="sm:hidden relative w-full max-w-[320px]">
+          <div class="rounded-3xl p-6 shadow-[0_20px_45px_-10px_rgba(74,58,47,0.14)] border border-[#DCCFB7] bg-white">
             <img 
-              src="./assets/mobile_splash.png" 
-              alt="Radhe Sweets - Sweet Moments With Radhe Krishna" 
-              class="w-full h-auto max-h-[420px] object-contain mx-auto"
-              onerror="this.onerror=null; this.src='./assets/radha_krishna_hero.png';"
+              src="/radhe-premnimithaas-logo-2048x898.png" 
+              alt="Radhe - Prem Ni Mithaas" 
+              class="w-full h-auto max-h-[160px] object-contain mx-auto"
             />
           </div>
         </div>
 
         <!-- Devotional Motto -->
         <p class="font-serif italic text-sm sm:text-base text-amber-950/80 mt-4 tracking-wide font-medium">
-          "Sweet Moments With Radhe Krishna"
+          "Prem Ni Mithaas • Authentic Indian Confectionery"
         </p>
       </div>
 

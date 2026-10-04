@@ -200,20 +200,23 @@ export function computeProfitLedger(
     }
   ];
 
-  baselineDays.forEach(baseDay => {
-    if (!dayMap.has(baseDay.date)) {
-      dayMap.set(baseDay.date, {
-        date: baseDay.date,
-        dayOfWeek: baseDay.dayOfWeek,
-        monthKey: baseDay.monthKey,
-        timestamp: baseDay.timestamp,
-        sales: baseDay.sales,
-        cost: baseDay.cost,
-        profit: baseDay.profit,
-        customerOrders: baseDay.customerOrders
-      });
-    }
-  });
+  // Only add baseline days if there are no real orders in the shop yet
+  if (orders.length === 0) {
+    baselineDays.forEach(baseDay => {
+      if (!dayMap.has(baseDay.date)) {
+        dayMap.set(baseDay.date, {
+          date: baseDay.date,
+          dayOfWeek: baseDay.dayOfWeek,
+          monthKey: baseDay.monthKey,
+          timestamp: baseDay.timestamp,
+          sales: baseDay.sales,
+          cost: baseDay.cost,
+          profit: baseDay.profit,
+          customerOrders: baseDay.customerOrders
+        });
+      }
+    });
+  }
 
   // Convert to array
   let allDays = Array.from(dayMap.values());
@@ -262,8 +265,16 @@ export function computeProfitLedger(
     const sevenDaysAgo = latestTimestamp - (7 * 24 * 60 * 60 * 1000);
     allDays = allDays.filter(d => d.timestamp >= sevenDaysAgo);
   } else if (filterType === 'quarter') {
-    periodLabel = 'Q3 Festive Quarter (Jul - Sep 2026)';
-    allDays = allDays.filter(d => d.monthKey.includes('Sep') || d.monthKey.includes('Aug') || d.monthKey.includes('Jul'));
+    const now = new Date();
+    const qNum = Math.floor(now.getMonth() / 3) + 1;
+    periodLabel = `Q${qNum} Quarter (${now.getFullYear()})`;
+    const qMonths = [
+      ['Jan', 'Feb', 'Mar'],
+      ['Apr', 'May', 'Jun'],
+      ['Jul', 'Aug', 'Sep'],
+      ['Oct', 'Nov', 'Dec']
+    ][qNum - 1];
+    allDays = allDays.filter(d => qMonths.some(m => d.monthKey.startsWith(m) && d.monthKey.includes(String(now.getFullYear()))));
   } else if (filterType === 'custom' && customFrom && customTo) {
     const fromTs = new Date(customFrom).setHours(0, 0, 0, 0);
     const toTs = new Date(customTo).setHours(23, 59, 59, 999);
@@ -274,8 +285,10 @@ export function computeProfitLedger(
     // No filter
   } else {
     // Default 'month'
-    periodLabel = 'This Month (September 2026)';
-    allDays = allDays.filter(d => d.monthKey.toLowerCase().includes('sep') || d.monthKey.toLowerCase().includes('current'));
+    const now = new Date();
+    const curMonthKey = `${now.toLocaleDateString('en-GB', { month: 'short' })} ${now.getFullYear()}`;
+    periodLabel = `This Month (${now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })})`;
+    allDays = allDays.filter(d => d.monthKey === curMonthKey || (orders.length === 0 && d.monthKey.toLowerCase().includes('sep')));
   }
 
   // Calculate Real Period Aggregates

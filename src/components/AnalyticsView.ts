@@ -47,7 +47,10 @@ export function renderAnalyticsView(state: any) {
   let ledgerFilter = 'month';
   let filterParamFrom = customFrom;
   let filterParamTo = customTo;
-  let timeframeLabel = 'Full Month (Sep 2026)';
+  const now = new Date();
+  const currentMonthName = now.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  const currentQNum = Math.floor(now.getMonth() / 3) + 1;
+  let timeframeLabel = `Full Month (${currentMonthName})`;
 
   if (plTimeframe === 'daily' || plTimeframe === 'today') {
     ledgerFilter = 'daily';
@@ -56,7 +59,7 @@ export function renderAnalyticsView(state: any) {
     timeframeLabel = `Daily (${dailyDate})`;
   } else if (plTimeframe === 'quarter') {
     ledgerFilter = 'quarter';
-    timeframeLabel = 'Q3 Festive Quarter (Jul - Sep 2026)';
+    timeframeLabel = `Q${currentQNum} Quarter (${now.getFullYear()})`;
   } else if (plTimeframe === 'custom') {
     ledgerFilter = 'custom';
     filterParamFrom = customFrom;
@@ -64,7 +67,7 @@ export function renderAnalyticsView(state: any) {
     timeframeLabel = `Custom Range: ${customFrom} to ${customTo}`;
   } else {
     ledgerFilter = 'month';
-    timeframeLabel = 'Full Month (Sep 2026)';
+    timeframeLabel = `Full Month (${currentMonthName})`;
   }
 
   const targetBranchId = isBranchAdmin ? currentBranch.id : (plScope === 'branch' ? currentBranch.id : undefined);
@@ -87,11 +90,11 @@ export function renderAnalyticsView(state: any) {
       return expTs === targetTs;
     } else if (plTimeframe === 'month') {
       const expDate = new Date(expTs);
-      return expDate.getMonth() === 8 && expDate.getFullYear() === 2026;
+      return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
     } else if (plTimeframe === 'quarter') {
       const expDate = new Date(expTs);
-      const m = expDate.getMonth();
-      return expDate.getFullYear() === 2026 && (m === 6 || m === 7 || m === 8);
+      const expQ = Math.floor(expDate.getMonth() / 3) + 1;
+      return expDate.getFullYear() === now.getFullYear() && expQ === currentQNum;
     } else if (plTimeframe === 'custom') {
       const fromTs = parseDateToTimestamp(customFrom);
       const toTs = parseDateToTimestamp(customTo);

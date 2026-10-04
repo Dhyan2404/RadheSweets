@@ -40,8 +40,8 @@ export function renderDialerMatchesHtml(
   const cleanDigits = (rawDigits || '').replace(/\D/g, '').slice(0, 10);
   const formattedDialed = cleanDigits.length > 0 ? formatDialerPhone(cleanDigits) : '';
   const exactMatch = matches.find(c => {
-    const cDigits = (c.phone || '').replace(/\D/g, '');
-    return cleanDigits.length >= 4 && (cDigits.includes(cleanDigits) || cleanDigits.includes(cDigits));
+    const cDigits = (c.phone || '').replace(/\D/g, '').slice(-10);
+    return cleanDigits.length === 10 && cDigits === cleanDigits;
   });
 
   // If no matches found in directory for this query or dialed digits

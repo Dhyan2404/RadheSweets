@@ -11,7 +11,7 @@
 @theme {
   --color-brand-cream: #FAF7F2;
   --color-brand-card: #FFFFFF;
-  --color-brand-border: #F0ECE4;
+  --color-brand-border: #DCCFB7;
   --color-brand-primary: #C86D3B;
   --color-brand-primary-hover: #B25D2E;
   --color-brand-primaryHover: #B25D2E;
@@ -29,13 +29,13 @@
 }
 
 :root {
-  /* Default: Radhe Warm Terracotta Theme */
+  /* Default: Radhe Warm Terracotta Theme with Crisp Distinct Borders */
   --bg-canvas: #FAF7F2;
   --bg-surface: #FFFFFF;
   --bg-subtle: #F6F1E9;
   --bg-highlight: #FFF8F1;
-  --border-color: #EFE7DE;
-  --border-subtle: #F4EFE9;
+  --border-color: #DCCFB7;
+  --border-subtle: #E8DEC8;
   --text-main: #2A1F1D;
   --text-muted: #7C7267;
   --text-light: #A89F95;
@@ -542,6 +542,13 @@ body.is-printing-receipt #toast-container {
     break-inside: avoid !important;
   }
 
+  .thermal-receipt *,
+  #thermal-receipt-modal * {
+    color: #000000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
   .thermal-receipt hr {
     border: none !important;
     border-top: 1px dashed #000000 !important;
@@ -909,3 +916,53 @@ body.is-printing-receipt #toast-container {
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   UI Contrast & Border Separation (Prevents Blending)
+   ========================================================================== */
+aside[data-purpose="desktop-sidebar"],
+#desktop-sidebar-container aside,
+.desktop-sidebar {
+  border-right: 2px solid #D8CBB6 !important;
+  box-shadow: 4px 0 20px rgba(42, 31, 29, 0.05) !important;
+  background-color: #FFFFFF !important;
+}
+
+/* Card and Panel Border Definition Across All Views */
+.kpi-card,
+article.kpi-card,
+[data-purpose="greeting-header"],
+[data-purpose="quick-pos-widget"],
+section.bg-white,
+div.bg-white,
+.dashboard-card {
+  border: 1px solid #DCCFB7 !important;
+}
+
+/* Active Navigation Item Highlights: Rich Warm Terracotta Temple Theme */
+[data-purpose="main-nav"] button.active-nav-tab,
+[data-purpose="main-nav"] button[data-active="true"] {
+  background: linear-gradient(90deg, #FFF5EC 0%, #FFEDD5 100%) !important;
+  color: #9E4A20 !important;
+  border: 1px solid #FDBA74 !important;
+  border-left: 4px solid #C86D3B !important;
+  font-weight: 800 !important;
+}
+
+/* Temple Theme Accent for Primary POS Actions */
+.btn-temple-pos,
+#proceed-to-checkout-btn,
+#pos-proceed-checkout-btn,
+#confirm-place-order-btn {
+  background: linear-gradient(135deg, #C86D3B 0%, #B25D2E 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #A54F22 !important;
+  box-shadow: 0 4px 14px rgba(200, 109, 59, 0.25) !important;
+}
+.btn-temple-pos:hover,
+#proceed-to-checkout-btn:hover,
+#pos-proceed-checkout-btn:hover,
+#confirm-place-order-btn:hover {
+  background: linear-gradient(135deg, #B85D2A 0%, #9E4A20 100%) !important;
+}
+

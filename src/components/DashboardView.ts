@@ -228,7 +228,7 @@ export function renderDashboardView(state: any) {
     <div class="space-y-6 animate-fadeIn select-none" data-purpose="radhe-dashboard">
       
       <!-- Greeting & Top Context Bar -->
-      <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)]" data-purpose="greeting-header">
+      <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 bg-white rounded-3xl border border-[#DCCFB7] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)]" data-purpose="greeting-header">
         <div>
           <div class="flex items-center gap-2.5 flex-wrap">
             <span class="w-8 h-8 rounded-xl ${isOwner ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-900'} flex items-center justify-center font-black text-sm">
@@ -301,7 +301,7 @@ export function renderDashboardView(state: any) {
 
           <!-- Time Filter Dropdown -->
           <div class="relative">
-            <select id="dashboard-time-filter" class="appearance-none bg-white border border-[#F0ECE4] text-xs sm:text-sm font-bold text-stone-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors">
+            <select id="dashboard-time-filter" class="appearance-none bg-white border border-[#DCCFB7] text-xs sm:text-sm font-bold text-stone-700 py-2 pl-3.5 pr-8 rounded-xl shadow-xs hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors">
               <option value="month" ${timeFilter === 'month' ? 'selected' : ''}>This Month</option>
               <option value="today" ${timeFilter === 'today' ? 'selected' : ''}>Today</option>
               <option value="week" ${timeFilter === 'week' ? 'selected' : ''}>This Week</option>
@@ -371,15 +371,15 @@ export function renderDashboardView(state: any) {
           </div>
         </article>
 
-        <!-- CARD 2: Sales -->
-        <article class="kpi-card animate-card-pop stagger-2 interactive-scale bg-gradient-to-br from-[#F4FAF6] via-[#EAF5EE] to-[#E2F2E7] border border-[#E0EFE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
+        <!-- CARD 2: Sales (Royal Confectionery Golden Amber Temple Theme) -->
+        <article class="kpi-card animate-card-pop stagger-2 interactive-scale bg-gradient-to-br from-[#FFFBF5] via-[#FFF3E6] to-[#FDE8D4] border border-[#FCD2B0] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:p-6 shadow-[0_2px_10px_rgba(74,58,47,0.04)] hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group cursor-pointer" data-tab="pos">
           <div class="kpi-top-row flex items-center justify-between">
-            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#EAF7EE] text-[#16A34A] flex items-center justify-center shadow-2xs">
+            <span class="kpi-icon-badge w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FFF0DF] text-[#C86D3B] flex items-center justify-center shadow-2xs">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C9.5 2 7.8 3.5 7.4 5.5L4 7.2v1.5l1.6.8C5.2 11.2 5 13 5 15c0 4.4 3.1 7 7 7s7-2.6 7-7c0-2-.2-3.8-.6-5.5l1.6-.8V7.2l-3.4-1.7C16.2 3.5 14.5 2 12 2zm0 6c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm0 8c1.7 0 3 .9 3 2H9c0-1.1 1.3-2 3-2z"></path>
               </svg>
             </span>
-            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${isOwner ? 'bg-emerald-200/80 text-emerald-950' : 'bg-stone-200/80 text-stone-800'}">
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${isOwner ? 'bg-amber-200/80 text-amber-950' : 'bg-orange-100 text-orange-900 border border-orange-200'}">
               ${isOwner ? 'Combined Revenue' : 'Outlet Sales'}
             </span>
           </div>
@@ -394,13 +394,13 @@ export function renderDashboardView(state: any) {
                 prefix: '₹',
                 fontWeight: 800,
                 gradientHeight: 6,
-                gradientFrom: 'rgba(244, 250, 246, 0.75)'
+                gradientFrom: 'rgba(255, 248, 240, 0.75)'
               })}
             </div>
           </div>
 
           <div class="kpi-trend-row mt-2.5 sm:mt-4 flex items-end justify-between relative">
-            <div class="kpi-trend-badge flex items-center text-emerald-600 font-bold text-[10px] sm:text-xs z-10">
+            <div class="kpi-trend-badge flex items-center text-[#C86D3B] font-bold text-[10px] sm:text-xs z-10">
               <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17l10-10M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
               <span>+9.6%</span>
             </div>
@@ -557,7 +557,7 @@ export function renderDashboardView(state: any) {
       <!-- OWNER EXCLUSIVE: OUTLETS PERFORMANCE ARENA               -->
       <!-- ======================================================== -->
       ${isOwner ? `
-        <section class="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4" data-purpose="outlets-arena">
+        <section class="bg-white rounded-3xl p-5 sm:p-6 border border-[#DCCFB7] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4" data-purpose="outlets-arena">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F4EFE9] pb-3">
             <div>
               <div class="flex items-center gap-2">
@@ -673,7 +673,7 @@ export function renderDashboardView(state: any) {
       <!-- "WHICH BRANCH HOW MUCH LEFT" MATRIX TABLE                 -->
       <!-- ======================================================== -->
       ${isOwner ? `
-        <section class="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0ECE4] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4" data-purpose="cross-branch-stock-matrix">
+        <section class="bg-white rounded-3xl p-5 sm:p-6 border border-[#DCCFB7] shadow-[0_4px_20px_-4px_rgba(74,58,47,0.04)] space-y-4" data-purpose="cross-branch-stock-matrix">
           
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#F4EFE9] pb-4">
             <div>
@@ -866,8 +866,8 @@ export function renderDashboardView(state: any) {
         <div class="lg:col-span-8 space-y-6">
           
           <!-- SECTION 1: Sales Overview Area Chart -->
-          <section id="section-sales-overview" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="sales-chart-card">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F0ECE4]/70 gap-2">
+          <section id="section-sales-overview" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#DCCFB7] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="sales-chart-card">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#DCCFB7]/70 gap-2">
               <div>
                 <h3 class="text-base font-bold text-[#2A1F1D]">
                   ${isOwner ? 'Consolidated Sales Trajectory' : 'Branch Sales Overview'}
@@ -927,8 +927,8 @@ export function renderDashboardView(state: any) {
           <!-- SECTION 2: Fast Selling Sweets or Live Combined Orders Table -->
           ${isOwner ? `
             <!-- OWNER: Combined Live Orders Across Outlets -->
-            <section class="bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="combined-orders-table">
-              <div class="p-5 border-b border-[#F0ECE4] flex items-center justify-between">
+            <section class="bg-white rounded-3xl border border-[#DCCFB7] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="combined-orders-table">
+              <div class="p-5 border-b border-[#DCCFB7] flex items-center justify-between">
                 <div>
                   <h3 class="text-base font-bold text-[#2A1F1D]">Combined Live Orders Across Outlets</h3>
                   <p class="text-xs text-stone-400">Chronological feed of bills generated at all store outlets</p>
@@ -990,8 +990,8 @@ export function renderDashboardView(state: any) {
             </section>
           ` : `
             <!-- BRANCH MANAGER: Fast Selling Sweets & Stock Table -->
-            <section id="section-fast-selling" class="scroll-reveal-item bg-white rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="fast-selling-sweets-table">
-              <div class="p-5 border-b border-[#F0ECE4] flex items-center justify-between">
+            <section id="section-fast-selling" class="scroll-reveal-item bg-white rounded-3xl border border-[#DCCFB7] shadow-[0_2px_10px_rgba(74,58,47,0.04)] overflow-hidden" data-purpose="fast-selling-sweets-table">
+              <div class="p-5 border-b border-[#DCCFB7] flex items-center justify-between">
                 <div>
                   <h3 class="text-base font-bold text-[#2A1F1D]">Fast Selling Sweets &amp; Stock</h3>
                   <p class="text-xs text-stone-400">Live fresh batch stock for ${activeBranchObj.name}</p>
@@ -1004,7 +1004,7 @@ export function renderDashboardView(state: any) {
               <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs sm:text-sm">
                   <thead>
-                    <tr class="bg-stone-50 border-b border-[#F0ECE4] text-stone-500 font-semibold text-[11px] uppercase tracking-wider">
+                    <tr class="bg-stone-50 border-b border-[#DCCFB7] text-stone-500 font-semibold text-[11px] uppercase tracking-wider">
                       <th class="py-3 px-5">Sweet Name</th>
                       <th class="py-3 px-4">Category</th>
                       <th class="py-3 px-4">Rate (₹)</th>
@@ -1065,7 +1065,7 @@ export function renderDashboardView(state: any) {
         <div class="lg:col-span-4 space-y-6">
           
           <!-- SECTION 3: Order Status Donut Chart -->
-          <section id="section-order-status" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="order-status-card">
+          <section id="section-order-status" class="scroll-reveal-item bg-white p-5 sm:p-6 rounded-3xl border border-[#DCCFB7] shadow-[0_2px_10px_rgba(74,58,47,0.04)]" data-purpose="order-status-card">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-base font-bold text-[#2A1F1D]">
                 ${isOwner ? 'Consolidated Orders Breakdown' : 'Branch Order Status'}
@@ -1132,9 +1132,9 @@ export function renderDashboardView(state: any) {
           </section>
 
           <!-- SECTION 4: Quick Billing (POS) Widget -->
-          <section id="section-quick-billing" class="scroll-reveal-item bg-white p-5 rounded-3xl border border-[#F0ECE4] shadow-[0_2px_10px_rgba(74,58,47,0.04)] flex flex-col justify-between" data-purpose="quick-pos-widget">
+          <section id="section-quick-billing" class="scroll-reveal-item bg-white p-5 rounded-3xl border border-[#DCCFB7] shadow-[0_2px_10px_rgba(74,58,47,0.04)] flex flex-col justify-between" data-purpose="quick-pos-widget">
             <div>
-              <div class="flex items-center justify-between border-b border-[#F0ECE4] pb-3 mb-4">
+              <div class="flex items-center justify-between border-b border-[#DCCFB7] pb-3 mb-4">
                 <div>
                   <h3 class="text-base font-bold text-[#2A1F1D]">Quick Counter POS</h3>
                   <p class="text-xs text-stone-400">${activeBranchObj.name}</p>
@@ -1179,17 +1179,33 @@ export function renderDashboardView(state: any) {
               `}
             </div>
 
-            <!-- Proceed to Checkout Action -->
-            <button 
-              id="proceed-to-checkout-btn"
-              data-tab="pos"
-              class="w-full py-3 px-4 bg-[#C86D3B] hover:bg-[#B25D2E] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer mt-2"
-            >
-              <span>Launch Point of Sale Counter</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path>
-              </svg>
-            </button>
+            <!-- Quick POS Launch Bar with Temple Brand Color -->
+            <div class="mt-4 pt-3 border-t border-[#DCCFB7] flex items-center gap-2">
+              <button 
+                id="proceed-to-checkout-btn"
+                data-tab="pos"
+                class="flex-1 py-3.5 px-4 bg-gradient-to-r from-[#C86D3B] to-[#B25D2E] hover:from-[#B85D2A] hover:to-[#9E4A20] active:scale-[0.98] text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md shadow-[#C86D3B]/25 transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#A54F22]"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span>Open POS &rarr;</span>
+              </button>
+              <button 
+                type="button"
+                data-tab="pos"
+                class="py-3 px-3 bg-stone-50 hover:bg-stone-100 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                title="New OTC Order"
+              >
+                <span>+ Order</span>
+              </button>
+              <button 
+                type="button"
+                data-tab="orders"
+                class="py-3 px-3 bg-stone-50 hover:bg-stone-100 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                title="View All Orders"
+              >
+                <span>Bills</span>
+              </button>
+            </div>
           </section>
 
         </div>

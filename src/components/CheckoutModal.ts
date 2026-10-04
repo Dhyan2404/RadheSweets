@@ -1,6 +1,7 @@
 // Checkout Modal Component
 // Streamlined Counter Billing with Cash, UPI & Card
 import { renderSlideCommit } from './SlideCommit.ts';
+import { generateUpiQrSvg } from './ThermalReceiptModal.ts';
 
 export function renderCheckoutModal(state: any) {
   const { selectedCustomer, posCart, discountPercent = 0, paymentMethod = 'Cash', shopInfo = {}, branches = [], currentBranchId = 'br-1' } = state;
@@ -13,8 +14,9 @@ export function renderCheckoutModal(state: any) {
 
   const storeUpiId = activeBranch?.upiId || shopInfo.upiId || 'radhesweets@oksbi';
   const storeUpiName = activeBranch?.upiName || activeBranch?.name || shopInfo.upiName || shopInfo.name || 'Radhe Sweets';
-  const branchAddress = activeBranch?.address || shopInfo.address || 'Ahmedabad, Gujarat';
-  const upiQrUri = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=${storeUpiId}&pn=${encodeURIComponent(storeUpiName)}&am=${totalPayable}&cu=INR`)}`;
+  const branchAddress = activeBranch?.address || shopInfo.address || 'Gandhinagar, Gujarat';
+  const upiUri = `upi://pay?pa=${storeUpiId}&pn=${encodeURIComponent(storeUpiName)}&am=${totalPayable}&cu=INR`;
+  const upiQrSvg = generateUpiQrSvg(upiUri, 100);
 
   return `
     <div class="modal-backdrop" id="checkout-modal">
@@ -274,16 +276,33 @@ export function renderCheckoutModal(state: any) {
                 <button type="button" data-cash-quick="${totalPayable}" class="px-2 py-1 rounded-lg bg-white border border-stone-200 text-[11px] font-bold text-stone-700 hover:border-amber-400 hover:bg-amber-50 transition-all cursor-pointer">
                   Exact (₹${totalPayable})
                 </button>
-                ${[100, 200, 500, 1000, 2000].filter(d => d >= totalPayable).map(denom => `
-                  <button type="button" data-cash-quick="${denom}" class="px-2 py-1 rounded-lg bg-white border border-stone-200 text-[11px] font-bold text-stone-700 hover:border-amber-400 hover:bg-amber-50 transition-all cursor-pointer">
-                    ₹${denom}
-                  </button>
-                `).join('')}
+                ${(() => {
+                  const standard = [100, 200, 500, 1000, 2000].filter(d => d >= totalPayable);
+                  if (standard.length > 0) {
+                    return standard.map(denom => `
+                      <button type="button" data-cash-quick="${denom}" class="px-2 py-1 rounded-lg bg-white border border-stone-200 text-[11px] font-bold text-stone-700 hover:border-amber-400 hover:bg-amber-50 transition-all cursor-pointer">
+                        ₹${denom}
+                      </button>
+                    `).join('');
+                  }
+                  // For totals > ₹2000, offer nearest rounded amounts
+                  const higherDenoms = Array.from(new Set([
+                    Math.ceil(totalPayable / 100) * 100,
+                    Math.ceil(totalPayable / 500) * 500,
+                    Math.ceil(totalPayable / 1000) * 1000,
+                    Math.ceil(totalPayable / 2000) * 2000
+                  ])).filter(d => d > totalPayable).slice(0, 4);
+                  return higherDenoms.map(denom => `
+                    <button type="button" data-cash-quick="${denom}" class="px-2 py-1 rounded-lg bg-white border border-stone-200 text-[11px] font-bold text-stone-700 hover:border-amber-400 hover:bg-amber-50 transition-all cursor-pointer">
+                      ₹${denom}
+                    </button>
+                  `).join('');
+                })()}
               </div>
             </div>
           ` : ''}
 
-          <!-- 2. UPI Tender: Dynamic QR Code with Exact Amount -->
+          <!-- 2. UPI Tender: Dynamic QR Code with Exact Amount (100% Offline SVG Generator) -->
           ${paymentMethod === 'UPI' ? `
             <div class="mt-3 p-3.5 bg-gradient-to-br from-indigo-50/90 to-purple-50/80 border border-indigo-200 rounded-2xl text-xs space-y-3 animate-fadeIn">
               <div class="flex items-center justify-between">
@@ -296,18 +315,15 @@ export function renderCheckoutModal(state: any) {
               </div>
 
               <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs">
-                <div class="w-24 h-24 bg-stone-100 rounded-xl p-1 border border-stone-200 flex items-center justify-center shrink-0">
-                  <img 
-                    src="${upiQrUri}"
-                    alt="UPI QR Code" 
-                    class="w-full h-full object-contain"
-                    onerror="this.onerror=null; this.src='/favicon.svg';"
-                  />
+                <div class="w-24 h-24 bg-stone-50 rounded-xl p-1 border border-stone-200 flex items-center justify-center shrink-0">
+                  <div class="w-full h-full flex items-center justify-center">
+                    ${upiQrSvg}
+                  </div>
                 </div>
                 <div class="min-w-0 space-y-1">
                   <p class="font-extrabold text-[var(--text-main)] text-xs">Scan via GPay / PhonePe / Paytm</p>
                   <p class="text-[11px] font-mono text-stone-500">VPA: ${storeUpiId}</p>
-                  <p class="text-[10px] text-emerald-700 font-bold">✓ Amount locked to ₹${totalPayable}</p>
+                  <p class="text-[10px] text-emerald-700 font-bold">✓ Offline Instant QR • ₹${totalPayable}</p>
                   <div class="pt-1">
                     <input 
                       type="text" 
